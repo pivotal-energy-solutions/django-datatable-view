@@ -1,0 +1,9 @@
+<table class="datatable" data-source-url="{{ url }}">
+    <thead>
+        <tr>
+            {% for name, attributes in column_info %}
+                <th{{ attributes }}>{{ name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table>
