@@ -247,8 +247,6 @@ class DatatableMixin(MultipleObjectMixin):
         
         if isinstance(name, (tuple, list)):
             name = name[0]
-        else:
-            name = name
         mangled_name = re.sub(r'[\W_]+', '_', name)
             
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
