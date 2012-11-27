@@ -246,6 +246,14 @@ class DatatableMixin(MultipleObjectMixin):
         """
         
         if isinstance(name, (tuple, list)):
+            if len(name) == 3:
+                # Method name is explicitly given
+                method_name = name[2]
+                if callable(method_name):
+                    return True, method_name
+                return True, getattr(self, method_name)
+            
+            # Treat the 'nice name' as the starting point for looking up a method
             name = name[0]
         mangled_name = re.sub(r'[\W_]+', '_', name)
             
@@ -273,7 +281,7 @@ class DatatableMixin(MultipleObjectMixin):
         
         
         if isinstance(name, (tuple, list)):
-            name, field_lookup = name
+            name, field_lookup = name[0], name[1]
         else:
             field_lookup = name
         
