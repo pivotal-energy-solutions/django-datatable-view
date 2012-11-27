@@ -112,10 +112,12 @@ class DatatableOptions(UserDict):
     #     return self.data
     # 
     def __getattr__(self, k):
+        if k.startswith('_'):
+            return UserDict.__getattr__(self, k)
         try:
             return self.data[k]
         except KeyError:
-            raise ValueError("%s doesn't support option %r" % (self.__class__, k))
+            raise ValueError("%s doesn't support option %r" % (self.__class__.__name__, k))
     
     def _normalize_options(self, query, options):
         """
