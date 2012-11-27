@@ -191,20 +191,6 @@ class DatatableMixin(MultipleObjectMixin):
         """
         Returns a list of column data intended to be passed directly back to dataTables.js.
         
-        Each field can supply custom data by defining a method on the view called either
-        "get_column_FIELD_NAME_data" or "get_column_INDEX_data".
-        
-        If the FIELD_NAME approach is used, the name is the raw field name (e.g., "street_name") or
-        else the friendly representation defined in a 2-tuple such as
-        ("Street name", "subdivision__home__street_name"), where the name has non-alphanumeric
-        characters stripped to single underscores.  For example, the friendly name
-        "Region: Subdivision Type" would convert to "Region_Subdivision_Type", requiring the method
-        name "get_column_Region_Subdivision_Type_data".
-        
-        Alternatively, if the INDEX approach is used, a method will be fetched called
-        "get_column_0_data", or otherwise using the 0-based index of the column's position as
-        defined in the view's ``datatable_options['columns']`` setting.
-        
         """
         
         preloaded_data = self.preload_record_data(obj)
@@ -236,6 +222,29 @@ class DatatableMixin(MultipleObjectMixin):
         return ()
     
     def _get_resolver_method(self, i, name):
+        """
+        Using a slightly mangled version of the column's name (explained below) each column's value
+        is derived.
+        
+        Each field can generate customized data by defining a method on the view called either
+        "get_column_FIELD_NAME_data" or "get_column_INDEX_data".
+        
+        If the FIELD_NAME approach is used, the name is the raw field name (e.g., "street_name") or
+        else the friendly representation defined in a 2-tuple such as
+        ("Street name", "subdivision__home__street_name"), where the name has non-alphanumeric
+        characters stripped to single underscores.  For example, the friendly name
+        "Region: Subdivision Type" would convert to "Region_Subdivision_Type", requiring the method
+        name "get_column_Region_Subdivision_Type_data".
+        
+        Alternatively, if the INDEX approach is used, a method will be fetched called
+        "get_column_0_data", or otherwise using the 0-based index of the column's position as
+        defined in the view's ``datatable_options['columns']`` setting.
+        
+        Finally, if a third element is defined in the tuple, it will be treated as the function or
+        name of a member attribute which will be used directly.
+        
+        """
+        
         if isinstance(name, (tuple, list)):
             name = name[0]
         else:
