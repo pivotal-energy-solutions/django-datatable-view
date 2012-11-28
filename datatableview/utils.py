@@ -108,8 +108,11 @@ class DatatableOptions(UserDict):
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
     
     def __getattr__(self, k):
-        if k.startswith('__'):
-            return UserDict.__getattr__(self, k)
+        if k.startswith('_'):
+            try:
+                return self.__dict__[k]
+            except KeyError:
+                raise AttributeError
         try:
             return self.data[k]
         except KeyError:
