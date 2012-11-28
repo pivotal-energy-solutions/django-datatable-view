@@ -1,12 +1,15 @@
 import json
 import re
+import operator
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Model, Manager
+from django.db import models
+from django.db.models import Model, Manager, Q
+from django.utils.cache import add_never_cache_headers
 
-from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields
+from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, filter_real_fields
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -48,39 +51,46 @@ class DatatableMixin(MultipleObjectMixin):
     
     def get_datatable_options(self):
         """ Returns the session's options for this view's datatable. """
-        session = self.request.session
+        if not hasattr(self, '_datatable_options'):
+            session = self.request.session
         
-        if 'datatables' not in session or not isinstance(session['datatables'], dict):
-            session['datatables'] = dict()
+            if 'datatables' not in session or not isinstance(session['datatables'], dict):
+                session['datatables'] = dict()
         
-        options = session['datatables'].get(self.request.path, None)
+            options = session['datatables'].get(self.request.path, None)
         
-        if options is None:
-            # No existing session options for this page
-            if not self.datatable_options:
-                # No options defined on the view
-                if self.model is None:
-                    # Unfortunately, asking for the queryset for model class extraction might have
-                    # enormous performance implications, so we raise the error.
-                    raise ImproperlyConfigured("%s must declare 'model' class." % (
-                            self.__class__.__name__,))
-                options = DatatableOptions(self.model, self.request.GET)
-            elif isinstance(self.datatable_options, DatatableOptions):
-                # Options are defined, already in DatatableOptions instance
-                options = self.datatable_options
-            else:
-                # Options are defined, but probably in a raw dict format
-                if self.model is None:
-                    # Unfortunately, asking for the queryset for model class extraction might have
-                    # enormous performance implications, so we raise the error.
-                    raise ImproperlyConfigured("%s must declare 'model' class." % (
-                            self.__class__.__name__,))
-                options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
+            if options is None:
+                # No existing session options for this page
+                if not self.datatable_options:
+                    # No options defined on the view
+                    if self.model is None:
+                        # Unfortunately, asking for the queryset for model class extraction might have
+                        # enormous performance implications, so we raise the error.
+                        raise ImproperlyConfigured("%s must declare 'model' class." % (
+                                self.__class__.__name__,))
+                    options = DatatableOptions(self.model, self.request.GET)
+                elif isinstance(self.datatable_options, DatatableOptions):
+                    # Options are defined, already in DatatableOptions instance
+                    options = self.datatable_options
+                else:
+                    # Options are defined, but probably in a raw dict format
+                    if self.model is None:
+                        # Unfortunately, asking for the queryset for model class extraction might have
+                        # enormous performance implications, so we raise the error.
+                        raise ImproperlyConfigured("%s must declare 'model' class." % (
+                                self.__class__.__name__,))
+                    options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
             
-            # Store the proper DatatableOptions instance in the session for future use.
-            session['datatables'][self.request.path] = options
+                # Store the proper DatatableOptions instance in the session for future use.
+                session['datatables'][self.request.path] = options
+            else:
+                options.update_from_request(self.request.GET)
+            
+            session.save()
+            
+            self._datatable_options = options
         
-        return options
+        return self._datatable_options
     
     def apply_queryset_options(self, queryset):
         """
@@ -98,6 +108,7 @@ class DatatableMixin(MultipleObjectMixin):
         # in these variables by the end will be handled manually (read: less efficiently)
         sort_fields = []
         filters = []
+        searches = {}
         
         if options.ordering:
             db_fields, sort_fields = split_real_fields(self.model, options.ordering)
@@ -119,6 +130,40 @@ class DatatableMixin(MultipleObjectMixin):
             db_filters, filters = filter_real_fields(self.model, filters, key=key_function)
             
             queryset = queryset.filter(**dict(db_filters))
+        
+        if options.search:
+            key_function = lambda item: str(item[1]).split('__')[0] if isinstance(item, tuple) else item
+            db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
+            
+            queries = []
+            search_terms = map(unicode.strip, options.search.split())
+            
+            for name in db_fields:
+                if isinstance(name, (tuple, list)):
+                    name = name[1]
+                
+                bits = name.split('__')
+                obj = reduce(getattr, [self.model] + bits[:-1])
+                print(obj, type(obj))
+                if not issubclass(obj, models.Model):
+                    print(obj, obj.field)
+                    field = obj.field
+                else:
+                    try:
+                        field, model, direct, m2m = obj._meta.get_field_by_name(bits[-1])
+                    except models.fields.FieldDoesNotExist:
+                        # Virtual column name won't be found on the model
+                        continue
+                if isinstance(field, models.CharField):
+                    print(dict((name + '__icontains', term) for term in search_terms))
+                    query = Q(**dict((name + '__icontains', term) for term in search_terms))
+                else:
+                    raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
+                
+                queries.append(query)
+            
+            query = reduce(operator.and_, queries)
+            queryset = queryset.filter(query)
         
         # Get ready to turn the results into a normal iterable, which might happen during any of the
         # following operations.
@@ -165,6 +210,8 @@ class DatatableMixin(MultipleObjectMixin):
         queryset = self.get_queryset()
         response = HttpResponse(self.serialize_to_json(queryset), mimetype="application/json")
         
+        add_never_cache_headers(response)
+        
         return response
     
     def serialize_to_json(self, object_list):
@@ -185,7 +232,7 @@ class DatatableMixin(MultipleObjectMixin):
             'aaData': [self.get_record_data(obj) for obj in object_list],
         }
         
-        return json.dumps(response_obj)
+        return json.dumps(response_obj, indent=4)
     
     def get_record_data(self, obj):
         """

@@ -81,8 +81,6 @@ class DatatableOptions(UserDict):
     Modifications made to the object's "self" are automatically associated with the current user
     session, making them sticky between page views.
     
-    TODO: A serializable session state object so that it can be stored in session.
-    
     ``columns``: An iterable of column names.  If any item is a 2-tuple, it is treated as a
     description in the form of ('Display Name', 'attribute_name'), where 'attribute_name' will be
     looked up in the following order: instance.attribute_name(), instance.attribute_name,
@@ -98,41 +96,34 @@ class DatatableOptions(UserDict):
     """
     
     def __init__(self, model, query_parameters, *args, **kwargs):
-        self._model = model
+        # Core options, not modifiable by client updates
+        if 'columns' not in kwargs:
+            model_fields = model._meta.local_fields
+            kwargs['columns'] = map(lambda f: f.verbose_name.capitalize(), model_fields)
         
+        # Absorb query GET params
         kwargs = self._normalize_options(query_parameters, kwargs)
         
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
     
-    # def __getinitargs__(self):
-    #     """ Used when unpickling the object. """
-    #     return (self.data,)
-    # 
-    # def __getstate__(self):
-    #     return self.data
-    # 
     def __getattr__(self, k):
-        if k.startswith('_'):
+        if k.startswith('__'):
             return UserDict.__getattr__(self, k)
         try:
             return self.data[k]
         except KeyError:
             raise ValueError("%s doesn't support option %r" % (self.__class__.__name__, k))
     
+    def update_from_request(self, query):
+        new_options = self._normalize_options(query, self.data)
+        self.update(new_options)
+        
     def _normalize_options(self, query, options):
         """
-        Irons out reasonable defaults for configuration options left blank, and validates incoming
-        options in the request.
+        Validates incoming options in the request query parameters.
         
         """
         
-        ## Core options
-        if 'columns' not in options:
-            model_fields = self._model._meta.local_fields
-            options['columns'] = map(lambda f: f.verbose_name.capitalize(), model_fields)
-        
-        
-        ## Flexible client-side options
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
         
@@ -201,7 +192,6 @@ class DatatableOptions(UserDict):
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
         
         return options
-
 def split_real_fields(model, field_list, key=None):
     """
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This
@@ -236,8 +226,16 @@ def filter_real_fields(model, field_list, key=None):
     """
     
     if key:
-        field_list = map(key, field_list)
-    field_list = set(field_list)
+        field_map = dict(zip(map(key, field_list), field_list))
+    else:
+        field_map = dict(zip(field_list, field_list))
+    
+    field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())
     
-    return concrete_names.intersection(field_list), field_list.difference(concrete_names)
+    # Do some math with sets
+    concrete_fields = concrete_names.intersection(field_list)
+    virtual_fields = field_list.difference(concrete_names)
+    
+    # Get back the original data items that correspond to the found data
+    return map(field_map.get, concrete_fields), map(field_map.get, virtual_fields)
