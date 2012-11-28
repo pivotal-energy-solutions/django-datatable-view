@@ -181,7 +181,7 @@ class DatatableMixin(MultipleObjectMixin):
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
                             
-                        print query
+                        # print query
                         
                         # Append each field inspection for this term
                         term_queries.append(Q(**query))
