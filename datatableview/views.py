@@ -132,38 +132,63 @@ class DatatableMixin(MultipleObjectMixin):
             queryset = queryset.filter(**dict(db_filters))
         
         if options.search:
-            key_function = lambda item: str(item[1]).split('__')[0] if isinstance(item, tuple) else item
+            def key_function(item):
+                """
+                Converts items in the 'columns' definition to field names for determining if it's
+                concrete or not.
+                
+                """
+                if isinstance(item, (tuple, list)):
+                    item = item[1]
+                    if item is None:
+                        return item
+                    if not isinstance(item, (tuple, list)):
+                        item = (item,)
+                    return item[0].split('__')[0]
+                return item
             db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
             
             queries = []
             search_terms = map(unicode.strip, options.search.split())
             
-            for name in db_fields:
-                if isinstance(name, (tuple, list)):
-                    name = name[1]
-                
-                bits = name.split('__')
-                obj = reduce(getattr, [self.model] + bits[:-1])
-                print(obj, type(obj))
-                if not issubclass(obj, models.Model):
-                    print(obj, obj.field)
-                    field = obj.field
-                else:
-                    try:
-                        field, model, direct, m2m = obj._meta.get_field_by_name(bits[-1])
-                    except models.fields.FieldDoesNotExist:
-                        # Virtual column name won't be found on the model
-                        continue
-                if isinstance(field, models.CharField):
-                    print(dict((name + '__icontains', term) for term in search_terms))
-                    query = Q(**dict((name + '__icontains', term) for term in search_terms))
-                else:
-                    raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
-                
-                queries.append(query)
-            
-            query = reduce(operator.and_, queries)
-            queryset = queryset.filter(query)
+            for term in search_terms:
+                term_queries = []
+                # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
+                for name in db_fields:
+                    if isinstance(name, (tuple, list)):
+                        name = name[1]
+                    if not isinstance(name, (tuple, list)):
+                        name = (name,)
+                        
+                    for component_name in name:
+                        bits = component_name.split('__')
+                        obj = reduce(getattr, [self.model] + bits[:-1])
+                        
+                        if obj is not self.model:
+                            obj = obj.field.rel.to
+                            
+                        # Get the Field type from the related model
+                        try:
+                            field, model, direct, m2m = obj._meta.get_field_by_name(bits[-1])
+                        except models.fields.FieldDoesNotExist:
+                            # Virtual columns won't be found on the model, so this is the escape hatch
+                            continue
+                            
+                        if isinstance(field, models.CharField):
+                            query = {component_name + '__icontains': term}
+                            # subqueries = [{component_name + '__icontains': term} for term in search_terms]
+                            # query = dict((component_name + '__icontains', term) for term in search_terms)
+                        else:
+                            raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
+                            
+                        print query
+                        
+                        # Append each field inspection for this term
+                        term_queries.append(Q(**query))
+                # Append the logical OR of all field inspections for this term
+                queries.append(reduce(operator.or_, term_queries))
+            # Apply the logical AND of all term inspections
+            queryset = queryset.filter(reduce(operator.and_, queries))
         
         # Get ready to turn the results into a normal iterable, which might happen during any of the
         # following operations.
