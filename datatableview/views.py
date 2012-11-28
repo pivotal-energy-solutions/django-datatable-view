@@ -9,7 +9,8 @@ from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 
-from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, filter_real_fields
+from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
+        filter_real_fields, manual_sort_key_function
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -107,30 +108,30 @@ class DatatableMixin(MultipleObjectMixin):
         # These will hold residue queries that cannot be handled in at the database level.  Anything
         # in these variables by the end will be handled manually (read: less efficiently)
         sort_fields = []
-        filters = []
-        searches = {}
+        # filters = []
+        searches = []
         
         if options.ordering:
             db_fields, sort_fields = split_real_fields(self.model, options.ordering)
             queryset = queryset.order_by(*db_fields)
         
-        if options.filters:
-            if isinstance(options.filters, dict):
-                filters = options.filters.items()
-            else:
-                # sequence of 2-tuples
-                filters = options.filters
-            
-            # The first field in a string like "description__icontains" determines if the lookup
-            # is concrete (can be handled by the database query) or virtual.  A query such as
-            # "foreignkey__virtualfield__icontains" is not supported.  A query such as
-            # "virtualfield__icontains" IS supported but will be handled manually.
-            key_function = lambda item: item[0].split('__')[0]
-            
-            db_filters, filters = filter_real_fields(self.model, filters, key=key_function)
-            
-            queryset = queryset.filter(**dict(db_filters))
-        
+        # if options.filters:
+        #     if isinstance(options.filters, dict):
+        #         filters = options.filters.items()
+        #     else:
+        #         # sequence of 2-tuples
+        #         filters = options.filters
+        #     
+        #     # The first field in a string like "description__icontains" determines if the lookup
+        #     # is concrete (can be handled by the database query) or virtual.  A query such as
+        #     # "foreignkey__virtualfield__icontains" is not supported.  A query such as
+        #     # "virtualfield__icontains" IS supported but will be handled manually.
+        #     key_function = lambda item: item[0].split('__')[0]
+        #     
+        #     db_filters, filters = filter_real_fields(self.model, filters, key=key_function)
+        #     
+        #     queryset = queryset.filter(**dict(db_filters))
+        # 
         if options.search:
             def key_function(item):
                 """
@@ -192,17 +193,40 @@ class DatatableMixin(MultipleObjectMixin):
         
         # Get ready to turn the results into a normal iterable, which might happen during any of the
         # following operations.
-        object_list = queryset
-        
-        
+        object_list = list(queryset)
         
         # Sort the results manually for whatever remaining sort options are left over
-        # object_list = sorted(object_list, )
+        for sort_field in sort_fields:
+            if sort_field.startswith('-'):
+                reverse = True
+                sort_field = sort_field[1:]
+            else:
+                reverse = False
+            
+            object_list = sorted(object_list, key=manual_sort_key_function, reverse=reverse)
         
-        # TODO: This is broken out to facilitate data validation, but we're not yet validating it.
+        # # Manual searches
+        # for i, obj in enumerate(object_list[::]):
+        #     keep = False
+        #     for column_info in searches:
+        #         for term in search_terms:
+        #             column_index = options.columns.index(column_info)
+        #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
+        #             if term in plain_data:
+        #                 keep = True
+        #                 break
+        #         if keep:
+        #             break
+        #     
+        #     if not keep:
+        #         object_list.pop(i)
+        #         # print column_info
+        #         # print data
+        #         # print '===='
+            
+        
         # TODO: This shouldn't take place unless all sorting is done.
-        page_slice = slice(options.start_offset, options.start_offset + options.page_length)
-        object_list = object_list[page_slice]
+        object_list = object_list[options.start_offset : options.start_offset+options.page_length]
         
         return object_list
     
@@ -263,25 +287,33 @@ class DatatableMixin(MultipleObjectMixin):
         """
         Returns a list of column data intended to be passed directly back to dataTables.js.
         
-        """
+        Each column generates a 2-tuple of data. [0] is the data meant to be displayed to the client
+        and [1] is the data in plain-text form, meant for manual searches.  One wouldn't want to
+        include HTML in [1], for example.
         
-        preloaded_data = self.preload_record_data(obj)
-        if not isinstance(preloaded_data, (tuple, list)):
-            preloaded_data = (preloaded_data,)
+        """
         
         options = self.get_datatable_options()
         
         data = []
         for i, name in enumerate(options.columns):
-            is_custom, f = self._get_resolver_method(i, name)
-            
-            if is_custom:
-                value = f(obj, *preloaded_data)
-            else:
-                value = f(obj, name)
-            data.append(value)
+            data.append(self.get_column_data(i, name, obj)[0])
         
         return data
+    
+    def get_column_data(self, i, name, instance):
+        """ Finds the backing method for column ``name`` and returns the generated data. """
+        is_custom, f = self._get_resolver_method(i, name)
+            
+        if is_custom:
+            values = f(instance, *self._get_preloaded_data(instance))
+        else:
+            values = f(instance, name)
+        
+        if not isinstance(values, (tuple, list)):
+            values = (values, re.sub(r'<[^>]+>', '', values))
+        
+        return values
     
     def preload_record_data(self, instance):
         """
@@ -293,6 +325,13 @@ class DatatableMixin(MultipleObjectMixin):
         
         return ()
     
+    def _get_preloaded_data(self, instance):
+        """ Fetches value from ``preload_record_data()`` and ensures it's a tuple. """
+        preloaded_data = self.preload_record_data(instance)
+        if not isinstance(preloaded_data, (tuple, list)):
+            preloaded_data = (preloaded_data,)
+        return preloaded_data
+        
     def _get_resolver_method(self, i, name):
         """
         Using a slightly mangled version of the column's name (explained below) each column's value
@@ -362,7 +401,7 @@ class DatatableMixin(MultipleObjectMixin):
         if isinstance(value, Model):
             value = unicode(value)
         
-        return value
+        return value, value
     
 
 class DatatableView(DatatableMixin, ListView):

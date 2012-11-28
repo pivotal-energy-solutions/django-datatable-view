@@ -28,7 +28,7 @@ OPTION_NAME_MAP = {
     'search': 'sSearch',
     'num_sorting_columns': 'iSortingCols',
     'sort_column': 'iSortCol_%d',
-    'sort_column_direction': 'iSortDir_%d',
+    'sort_column_direction': 'sSortDir_%d',
 }
 
 class DatatableStructure(StrAndUnicode):
@@ -170,10 +170,13 @@ class DatatableOptions(UserDict):
                     
                     field_name = options['columns'][column_index]
                     if isinstance(field_name, (tuple, list)):
-                        name, field_name = field_name
+                        if len(field_name) == 2:
+                            name, field_name = field_name
+                        else:
+                            name, field_name, data_f = field_name
                     else:
                         name = field_name
-                    
+
                     # Reject requests for unsortable columns
                     if name in options.get('unsortable_columns', []):
                         continue
@@ -190,6 +193,7 @@ class DatatableOptions(UserDict):
                         continue
                         
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
+                    print(options['ordering'])
         
         return options
 def split_real_fields(model, field_list, key=None):
@@ -207,7 +211,6 @@ def split_real_fields(model, field_list, key=None):
     
     if key:
         field_list = map(key, field_list)
-    field_list = frozenset(field_list)
     concrete_names = model._meta.get_all_field_names()
     
     i = 0
@@ -239,3 +242,9 @@ def filter_real_fields(model, field_list, key=None):
     
     # Get back the original data items that correspond to the found data
     return map(field_map.get, concrete_fields), map(field_map.get, virtual_fields)
+
+def manual_sort_key_function(field_name):
+    def key(obj):
+        return reduce(getattr, [obj] + field_name.split('__'))
+    return key
+
