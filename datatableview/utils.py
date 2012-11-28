@@ -245,9 +245,3 @@ def filter_real_fields(model, field_list, key=None):
     
     # Get back the original data items that correspond to the found data
     return map(field_map.get, concrete_fields), map(field_map.get, virtual_fields)
-
-def manual_sort_key_function(field_name):
-    def key(obj):
-        return reduce(getattr, [obj] + field_name.split('__'))
-    return key
-

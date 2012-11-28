@@ -10,7 +10,7 @@ from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 
 from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
-        filter_real_fields, manual_sort_key_function
+        filter_real_fields
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -196,6 +196,15 @@ class DatatableMixin(MultipleObjectMixin):
         object_list = list(queryset)
         
         # Sort the results manually for whatever remaining sort options are left over
+        def data_getter_orm(field_name):
+            def key(obj):
+                return reduce(getattr, [obj] + field_name.split('__'))
+            return key
+        def data_getter_custom(i):
+            def key(obj):
+                rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
+                return plain_value
+            return key
         for sort_field in sort_fields:
             if sort_field.startswith('-'):
                 reverse = True
@@ -203,7 +212,12 @@ class DatatableMixin(MultipleObjectMixin):
             else:
                 reverse = False
             
-            object_list = sorted(object_list, key=manual_sort_key_function, reverse=reverse)
+            if sort_field.startswith('!'):
+                key_function = data_getter_custom
+                sort_field = int(sort_field[1:])
+            else:
+                key_function = data_getter_orm
+            object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
         
         # # Manual searches
         # for i, obj in enumerate(object_list[::]):
