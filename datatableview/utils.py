@@ -96,6 +96,7 @@ class DatatableOptions(UserDict):
     """
     
     def __init__(self, model, query_parameters, *args, **kwargs):
+        self._model = model
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
@@ -174,8 +175,11 @@ class DatatableOptions(UserDict):
                             name, field_name = field_name
                         else:
                             name, field_name, data_f = field_name
+                        field_name = '!{}'.format(column_index)
                     else:
                         name = field_name
+                        if field_name not in self._model._meta.get_all_field_names():
+                            field_name = '!{}'.format(column_index)
 
                     # Reject requests for unsortable columns
                     if name in options.get('unsortable_columns', []):
@@ -193,7 +197,6 @@ class DatatableOptions(UserDict):
                         continue
                         
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
-                    print(options['ordering'])
         
         return options
 def split_real_fields(model, field_list, key=None):
