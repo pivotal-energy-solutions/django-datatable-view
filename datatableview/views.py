@@ -111,6 +111,8 @@ class DatatableMixin(MultipleObjectMixin):
         # filters = []
         searches = []
         
+        total_initial_record_count = queryset.count()
+        
         if options.ordering:
             db_fields, sort_fields = split_real_fields(self.model, options.ordering)
             queryset = queryset.order_by(*db_fields)
@@ -219,6 +221,9 @@ class DatatableMixin(MultipleObjectMixin):
                 key_function = data_getter_orm
             object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
         
+        # This is broken until it searches all items in object_list previous to the database sort.
+        # That represents a runtime load that hits every row in code, rather than in the database.
+        # If enabled, this would cripple performance on large datasets.
         # # Manual searches
         # for i, obj in enumerate(object_list[::]):
         #     keep = False
@@ -237,12 +242,13 @@ class DatatableMixin(MultipleObjectMixin):
         #         # print column_info
         #         # print data
         #         # print '===='
-            
+        
+        unpaged_total = len(object_list)
         
         # TODO: This shouldn't take place unless all sorting is done.
         object_list = object_list[options.start_offset : options.start_offset+options.page_length]
         
-        return object_list
+        return object_list, total_initial_record_count, unpaged_total
     
     def get_datatable_context_name(self):
         return self.datatable_context_name
@@ -288,10 +294,12 @@ class DatatableMixin(MultipleObjectMixin):
         
         """
         
+        object_list, total_records, unpaged_total = object_list
+        
         response_obj = {
             'sEcho': self.request.GET.get('sEcho', None),
-            'iTotalRecords': '__totalrecords__', # FIXME
-            'iTotalDisplayRecords': len(object_list),
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': unpaged_total,
             'aaData': [self.get_record_data(obj) for obj in object_list],
         }
         
