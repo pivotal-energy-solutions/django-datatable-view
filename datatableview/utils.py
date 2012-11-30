@@ -117,15 +117,10 @@ class DatatableOptions(UserDict):
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
     
     def __getattr__(self, k):
-        if k.startswith('_'):
-            try:
-                return self.__dict__[k]
-            except KeyError:
-                raise AttributeError
         try:
             return self.data[k]
         except KeyError:
-            raise ValueError("%s doesn't support option %r" % (self.__class__.__name__, k))
+            raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
     
     def update_from_request(self, query):
         new_options = self._normalize_options(query, self.data)

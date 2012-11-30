@@ -49,8 +49,6 @@ class DatatableMixin(MultipleObjectMixin):
     def get_datatable_options(self):
         """ Returns the DatatableOptions object for this view's configuration. """
         if not hasattr(self, '_datatable_options'):
-            # if options is None:
-            # No existing session options for this page
             if not self.datatable_options:
                 # No options defined on the view
                 if self.model is None:
@@ -70,13 +68,6 @@ class DatatableMixin(MultipleObjectMixin):
                     raise ImproperlyConfigured("%s must declare 'model' class." % (
                             self.__class__.__name__,))
                 options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
-            
-            # # Store the proper DatatableOptions instance in the session for future use.
-            # session['datatables'][self.request.path] = options
-            # else:
-            #     options.update_from_request(self.request.GET)
-            
-            # session.save()
             
             self._datatable_options = options
         
