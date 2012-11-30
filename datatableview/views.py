@@ -14,7 +14,7 @@ from datatableview.utils import DatatableStructure, DatatableOptions, split_real
 
 class DatatableMixin(MultipleObjectMixin):
     """
-    Converts a view into an AJAX interface for obtaining records via a session-stored configuration.
+    Converts a view into an AJAX interface for obtaining records.
     
     The normal GET execution adds a ``DataTable`` object to the context which can be used to
     streamline the dumping of the HTML skeleton required for datatables.js to hook.  A ``DataTable``
@@ -23,10 +23,6 @@ class DatatableMixin(MultipleObjectMixin):
     
     The template is responsible for making the AJAX request back to this view to populate the table
     with data.
-    
-    When data is requested, the current state snapshot is kept in the user's session dictionary, so
-    that navigating away and back won't lose the current view of the data.  This includes the
-    current page, sort direction, search terms, etc.
     
     """
     
@@ -51,43 +47,36 @@ class DatatableMixin(MultipleObjectMixin):
         return self.apply_queryset_options(queryset)
     
     def get_datatable_options(self):
-        """ Returns the session's options for this view's datatable. """
+        """ Returns the DatatableOptions object for this view's configuration. """
         if not hasattr(self, '_datatable_options'):
-            session = self.request.session
-        
-            if 'datatables' not in session or not isinstance(session['datatables'], dict):
-                session['datatables'] = dict()
-        
-            options = session['datatables'].get(self.request.path, None)
-        
-            if options is None:
-                # No existing session options for this page
-                if not self.datatable_options:
-                    # No options defined on the view
-                    if self.model is None:
-                        # Unfortunately, asking for the queryset for model class extraction might have
-                        # enormous performance implications, so we raise the error.
-                        raise ImproperlyConfigured("%s must declare 'model' class." % (
-                                self.__class__.__name__,))
-                    options = DatatableOptions(self.model, self.request.GET)
-                elif isinstance(self.datatable_options, DatatableOptions):
-                    # Options are defined, already in DatatableOptions instance
-                    options = self.datatable_options
-                else:
-                    # Options are defined, but probably in a raw dict format
-                    if self.model is None:
-                        # Unfortunately, asking for the queryset for model class extraction might have
-                        # enormous performance implications, so we raise the error.
-                        raise ImproperlyConfigured("%s must declare 'model' class." % (
-                                self.__class__.__name__,))
-                    options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
-            
-                # Store the proper DatatableOptions instance in the session for future use.
-                session['datatables'][self.request.path] = options
+            # if options is None:
+            # No existing session options for this page
+            if not self.datatable_options:
+                # No options defined on the view
+                if self.model is None:
+                    # Unfortunately, asking for the queryset for model class extraction might have
+                    # enormous performance implications, so we raise the error.
+                    raise ImproperlyConfigured("%s must declare 'model' class." % (
+                            self.__class__.__name__,))
+                options = DatatableOptions(self.model, self.request.GET)
+            elif isinstance(self.datatable_options, DatatableOptions):
+                # Options are defined, already in DatatableOptions instance
+                options = self.datatable_options
             else:
-                options.update_from_request(self.request.GET)
+                # Options are defined, but probably in a raw dict format
+                if self.model is None:
+                    # Unfortunately, asking for the queryset for model class extraction might have
+                    # enormous performance implications, so we raise the error.
+                    raise ImproperlyConfigured("%s must declare 'model' class." % (
+                            self.__class__.__name__,))
+                options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
             
-            session.save()
+            # # Store the proper DatatableOptions instance in the session for future use.
+            # session['datatables'][self.request.path] = options
+            # else:
+            #     options.update_from_request(self.request.GET)
+            
+            # session.save()
             
             self._datatable_options = options
         
@@ -95,7 +84,7 @@ class DatatableMixin(MultipleObjectMixin):
     
     def apply_queryset_options(self, queryset):
         """
-        Interprets the session's datatable options.
+        Interprets the datatable options.
         
         Options requiring manual massaging of the queryset are handled here.  The output of this
         method should be treated as a list, since complex options might convert it out of the

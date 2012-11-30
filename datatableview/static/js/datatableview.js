@@ -24,24 +24,30 @@ $(function(){
                     }
                     
                     options[name] = value;
-                    console.log(attr.name + ": " + attr.value);
                 }
             }
             column_options.push(options);
         });
         
-        datatable.dataTable({
+        var initialized_datatable = datatable.dataTable({
             "bServerSide": true,
+            "bStateSave": true,
             "aoColumns": column_options,
             "sAjaxSource": datatable.attr('data-source-url'),
             "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                 $("#id_count").html(iTotal); // # TODO: Find this dynamically instead of by hard ID
                 var infoString = "Showing "+iStart +" to "+ iEnd+" of "+iTotal+" entries";
                 if (iMax != iTotal) {
-                    infoString +=  "(filtered from "+iMax+" total entries)";
+                    infoString +=  " (filtered from "+iMax+" total entries)";
                 }
                 return infoString;
             }
         });
+        
+        try {
+            initialized_datatable.fnSetFilteringDelay();
+        } catch (e) {
+            console.info("datatable plugin fnSetFilteringDelay not available");
+        }
     });
 });

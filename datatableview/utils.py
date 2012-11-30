@@ -89,9 +89,6 @@ class DatatableStructure(StrAndUnicode):
 
 class DatatableOptions(UserDict):
     """
-    Modifications made to the object's "self" are automatically associated with the current user
-    session, making them sticky between page views.
-    
     ``columns``: An iterable of column names.  If any item is a 2-tuple, it is treated as a
     description in the form of ('Display Name', 'attribute_name'), where 'attribute_name' will be
     looked up in the following order: instance.attribute_name(), instance.attribute_name,
@@ -108,6 +105,7 @@ class DatatableOptions(UserDict):
     
     def __init__(self, model, query_parameters, *args, **kwargs):
         self._model = model
+        
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
