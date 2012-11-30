@@ -1,4 +1,8 @@
 $(function(){
+    var options_name_map = {
+        'sortable': 'bSortable'
+    };
+    
     $('.datatable').each(function(){
         var datatable = $(this);
         var column_options = [];
@@ -7,12 +11,14 @@ $(function(){
             var header = $(this);
             var options = {};
             for (var i = 0; i < header[0].attributes.length; i++) {
-                var attr = header[i];
+                var attr = header[0].attributes[i];
                 if (attr.specified && /^data-/.test(attr.name)) {
                     var name = attr.name.replace(/^data-/, '');
                     var value = attr.value;
                     
                     // Typecasting out of string
+                    name = options_name_map[name];
+                    
                     if (/^b[A-Z]/.test(name)) {
                         value = (value === 'true');
                     }

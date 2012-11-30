@@ -72,9 +72,20 @@ class DatatableStructure(StrAndUnicode):
             #     # Purely virtual column name
             #     name = name.capitalize()
             
-            column_info.append((name, ' data-bSortable="true"'))
+            attributes = self.get_column_attributes(name)
+            
+            
+            attributes_string = ' '.join('{}="{}"'.format(*item) for item in attributes.items())
+            column_info.append((name, attributes_string))
         
         return column_info
+    
+    def get_column_attributes(self, name):
+        attributes = {
+            'data-sortable': 'true' if name not in self.options.unsortable_columns else 'false',
+        }
+        
+        return attributes
 
 class DatatableOptions(UserDict):
     """

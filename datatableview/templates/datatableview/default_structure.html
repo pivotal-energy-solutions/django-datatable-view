@@ -2,7 +2,7 @@
     <thead>
         <tr>
             {% for name, attributes in column_info %}
-                <th{{ attributes }}>{{ name }}</th>
+            <th {{ attributes|safe }}>{{ name }}</th>
             {% endfor %}
         </tr>
     </thead>
