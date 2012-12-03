@@ -40,12 +40,10 @@ class DatatableMixin(MultipleObjectMixin):
             return self.get_ajax(request, *args, **kwargs)
         return super(DatatableMixin, self).get(request, *args, **kwargs)
     
-    def get_queryset(self):
-        """ Considers ``self.datatable_options`` to create a queryset. """
+    def get_object_list(self):
+        """ Gets the core queryset, but applies the datatable options to it. """
+        return self.apply_queryset_options(self.get_queryset())
         
-        queryset = super(DatatableMixin, self).get_queryset()
-        return self.apply_queryset_options(queryset)
-    
     def get_datatable_options(self):
         """ Returns the DatatableOptions object for this view's configuration. """
         if not hasattr(self, '_datatable_options'):
@@ -256,8 +254,8 @@ class DatatableMixin(MultipleObjectMixin):
         
         """
         
-        queryset = self.get_queryset()
-        response = HttpResponse(self.serialize_to_json(queryset), mimetype="application/json")
+        object_list = self.get_object_list()
+        response = HttpResponse(self.serialize_to_json(object_list), mimetype="application/json")
         
         add_never_cache_headers(response)
         
