@@ -182,7 +182,6 @@ class DatatableOptions(UserDict):
                             name, field_name = field_name
                         else:
                             name, field_name, data_f = field_name
-                        field_name = '!{}'.format(column_index)
                         
                         # If the database source for the field is None, then this column will be
                         # forcefully sorted in code
@@ -236,7 +235,7 @@ def split_real_fields(model, field_list, key=None):
         if field_name not in concrete_names:
             break
     
-    return field_list[:i], field_list[i:]
+    return field_list[:i+1], field_list[i+1:]
 
 def filter_real_fields(model, field_list, key=None):
     """
