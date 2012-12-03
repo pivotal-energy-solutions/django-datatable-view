@@ -47,29 +47,25 @@ class DatatableMixin(MultipleObjectMixin):
         
     def get_datatable_options(self):
         """ Returns the DatatableOptions object for this view's configuration. """
+        
+        return self.datatable_options
+    
+    def _get_datatable_options(self):
+        """ Internal safe access. """
+        
         if not hasattr(self, '_datatable_options'):
-            if not self.datatable_options:
-                # No options defined on the view
-                if self.model is None:
-                    # Unfortunately, asking for the queryset for model class extraction might have
-                    # enormous performance implications, so we raise the error.
-                    raise ImproperlyConfigured("%s must declare 'model' class." % (
-                            self.__class__.__name__,))
-                options = DatatableOptions(self.model, self.request.GET)
-            elif isinstance(self.datatable_options, DatatableOptions):
-                # Options are defined, already in DatatableOptions instance
-                options = self.datatable_options
-            else:
+            if self.model is None:
+                self.model = self.get_queryset()._model
+            
+            options = self.get_datatable_options()
+            if options:
                 # Options are defined, but probably in a raw dict format
-                if self.model is None:
-                    # Unfortunately, asking for the queryset for model class extraction might have
-                    # enormous performance implications, so we raise the error.
-                    raise ImproperlyConfigured("%s must declare 'model' class." % (
-                            self.__class__.__name__,))
-                options = DatatableOptions(self.model, self.request.GET, **dict(self.datatable_options))
+                options = DatatableOptions(self.model, self.request.GET, **dict(options))
+            else:
+                # No options defined on the view
+                options = DatatableOptions(self.model, self.request.GET)
             
             self._datatable_options = options
-        
         return self._datatable_options
     
     def apply_queryset_options(self, queryset):
@@ -82,7 +78,7 @@ class DatatableMixin(MultipleObjectMixin):
         
         """
         
-        options = self.get_datatable_options()
+        options = self._get_datatable_options()
         
         # These will hold residue queries that cannot be handled in at the database level.  Anything
         # in these variables by the end will be handled manually (read: less efficiently)
@@ -244,7 +240,6 @@ class DatatableMixin(MultipleObjectMixin):
         
         unpaged_total = len(object_list)
         
-        # TODO: This shouldn't take place unless all sorting is done.
         object_list = object_list[options.start_offset : options.start_offset+options.page_length]
         
         return object_list, total_initial_record_count, unpaged_total
@@ -258,7 +253,7 @@ class DatatableMixin(MultipleObjectMixin):
         
         """
         
-        return DatatableStructure(self.request.path, self.model, self.get_datatable_options())
+        return DatatableStructure(self.request.path, self.model, self._get_datatable_options())
     
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
@@ -314,7 +309,7 @@ class DatatableMixin(MultipleObjectMixin):
         
         """
         
-        options = self.get_datatable_options()
+        options = self._get_datatable_options()
         
         data = []
         for i, name in enumerate(options.columns):
@@ -325,7 +320,6 @@ class DatatableMixin(MultipleObjectMixin):
     def get_column_data(self, i, name, instance):
         """ Finds the backing method for column ``name`` and returns the generated data. """
         is_custom, f = self._get_resolver_method(i, name)
-            
         if is_custom:
             values = f(instance, *self._get_preloaded_data(instance))
         else:
@@ -388,7 +382,7 @@ class DatatableMixin(MultipleObjectMixin):
             # Treat the 'nice name' as the starting point for looking up a method
             name = name[0]
         mangled_name = re.sub(r'[\W_]+', '_', name)
-            
+        
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
         if f:
             return True, f
