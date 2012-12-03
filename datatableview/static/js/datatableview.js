@@ -3,6 +3,8 @@ $(function(){
         'sortable': 'bSortable'
     };
     
+    var template_clear_button = $('<a href="#" class="clear-search">Clear</a>');
+    
     $('.datatable').each(function(){
         var datatable = $(this);
         var column_options = [];
@@ -49,5 +51,12 @@ $(function(){
         } catch (e) {
             console.info("datatable plugin fnSetFilteringDelay not available");
         }
+        
+        var search_input = initialized_datatable.closest('.dataTables_wrapper').find('.dataTables_filter input');
+        var clear_button = template_clear_button.clone().click(function(){
+            search_input.val('').keyup();
+            return false;
+        });
+        search_input.after(clear_button).after(' ');
     });
 });
