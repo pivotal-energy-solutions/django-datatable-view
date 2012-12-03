@@ -183,8 +183,15 @@ class DatatableOptions(UserDict):
                         else:
                             name, field_name, data_f = field_name
                         field_name = '!{}'.format(column_index)
+                        
+                        # If the database source for the field is None, then this column will be
+                        # forcefully sorted in code
+                        if not field_name:
+                            field_name = '!{}'.format(column_index)
                     else:
                         name = field_name
+                        
+                        # If the singular column name isn't a model field, mark it for manual handling
                         if field_name not in self._model._meta.get_all_field_names():
                             field_name = '!{}'.format(column_index)
 
