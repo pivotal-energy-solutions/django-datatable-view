@@ -46,12 +46,21 @@ class DatatableMixin(MultipleObjectMixin):
         return self.apply_queryset_options(self.get_queryset())
         
     def get_datatable_options(self):
-        """ Returns the DatatableOptions object for this view's configuration. """
+        """
+        Returns the DatatableOptions object for this view's configuration.
+        
+        This method is guaranteed to be called only once per request.
+        
+        """
         
         return self.datatable_options
     
     def _get_datatable_options(self):
-        """ Internal safe access. """
+        """
+        Internal safe access.  Guarantees that ``get_datatable_options()`` is called only once, so
+        that subclasses can use that method to modify the class attribute ``datatable_options``.
+        
+        """
         
         if not hasattr(self, '_datatable_options'):
             if self.model is None:
