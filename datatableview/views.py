@@ -89,6 +89,7 @@ class DatatableMixin(MultipleObjectMixin):
         # filters = []
         searches = []
         
+        # This count is for the benefit of the frontend datatables.js
         total_initial_record_count = queryset.count()
         
         if options.ordering:
@@ -157,8 +158,6 @@ class DatatableMixin(MultipleObjectMixin):
                             
                         if isinstance(field, models.CharField):
                             query = {component_name + '__icontains': term}
-                            # subqueries = [{component_name + '__icontains': term} for term in search_terms]
-                            # query = dict((component_name + '__icontains', term) for term in search_terms)
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
                             
@@ -185,6 +184,7 @@ class DatatableMixin(MultipleObjectMixin):
                 rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
                 return plain_value
             return key
+
         for sort_field in sort_fields:
             if sort_field.startswith('-'):
                 reverse = True
@@ -197,6 +197,7 @@ class DatatableMixin(MultipleObjectMixin):
                 sort_field = int(sort_field[1:])
             else:
                 key_function = data_getter_orm
+            
             object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
         
         # This is broken until it searches all items in object_list previous to the database sort.
