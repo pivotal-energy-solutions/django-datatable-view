@@ -404,11 +404,15 @@ class DatatableMixin(MultipleObjectMixin):
         """ Default mechanism for resolving ``name`` through the model instance ``obj``. """
         
         def chain_lookup(obj, bit):
-            value = getattr(obj, bit)
-            if isinstance(value, Manager):
-                value = value.all()
-            if callable(value):
-                value = value()
+            try:
+                value = getattr(obj, bit)
+            except ObjectDoesNotExist, AttributeError:
+                value = None
+            else:
+                if isinstance(value, Manager):
+                    value = value.all()
+                if callable(value):
+                    value = value()
             return value
         
         
