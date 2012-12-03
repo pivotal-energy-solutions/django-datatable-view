@@ -8,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
+import dateutil.parser
 
 from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
         filter_real_fields
@@ -130,11 +131,11 @@ class DatatableMixin(MultipleObjectMixin):
                 return item
             db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
             
-            queries = []
+            queries = [] # Queries generated to search all fields for all terms
             search_terms = map(unicode.strip, options.search.split())
             
             for term in search_terms:
-                term_queries = []
+                term_queries = [] # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
                 for name in db_fields:
                     if isinstance(name, (tuple, list)):
@@ -143,6 +144,7 @@ class DatatableMixin(MultipleObjectMixin):
                         name = (name,)
                         
                     for component_name in name:
+                        field_queries = [] # Queries generated to search this database field for the search term
                         bits = component_name.split('__')
                         obj = reduce(getattr, [self.model] + bits[:-1])
                         
@@ -157,14 +159,32 @@ class DatatableMixin(MultipleObjectMixin):
                             continue
                             
                         if isinstance(field, models.CharField):
-                            query = {component_name + '__icontains': term}
+                            field_queries = [{component_name + '__icontains': term}]
+                        elif isinstance(field, (models.DateTimeField, models.DateField)):
+                            try:
+                                date_obj = dateutil.parser.parse(term)
+                            except ValueError:
+                                # This exception is theoretical, but it doesn't seem to raise.
+                                pass
+                            else:
+                                field_queries.append({component_name: date_obj})
+                            try:
+                                numerical_value = int(term)
+                            except ValueError:
+                                pass
+                            else:
+                                field_queries.extend([
+                                    {component_name + '__year': numerical_value},
+                                    {component_name + '__month': numerical_value},
+                                    {component_name + '__day': numerical_value},
+                                ])
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
                             
-                        # print query
+                        # print field_queries
                         
                         # Append each field inspection for this term
-                        term_queries.append(Q(**query))
+                        term_queries.extend(map(lambda q: Q(**q), field_queries))
                 # Append the logical OR of all field inspections for this term
                 queries.append(reduce(operator.or_, term_queries))
             # Apply the logical AND of all term inspections
