@@ -4,7 +4,7 @@ import operator
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
