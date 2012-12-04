@@ -340,7 +340,8 @@ class DatatableMixin(MultipleObjectMixin):
         """ Finds the backing method for column ``name`` and returns the generated data. """
         is_custom, f = self._get_resolver_method(i, name)
         if is_custom:
-            values = f(instance, *self._get_preloaded_data(instance))
+            args, kwargs = self._get_preloaded_data(instance)
+            values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
         
@@ -360,11 +361,30 @@ class DatatableMixin(MultipleObjectMixin):
         return ()
     
     def _get_preloaded_data(self, instance):
-        """ Fetches value from ``preload_record_data()`` and ensures it's a tuple. """
+        """
+        Fetches value from ``preload_record_data()``.
+        
+        If a single value is returned and it is not a dict, list or tuple, it is made into a tuple.
+        The tuple will be supplied to the resolved method as ``*args``.
+        
+        If the returned value is already a list/tuple, it will also be sent as ``*args``.
+        
+        If the returned value is a dict, it will be sent as ``**kwargs``.
+        
+        The two types cannot be mixed.
+        
+        """
         preloaded_data = self.preload_record_data(instance)
-        if not isinstance(preloaded_data, (tuple, list)):
-            preloaded_data = (preloaded_data,)
-        return preloaded_data
+        if isinstance(preloaded_data, dict):
+            preloaded_args = ()
+            preloaded_kwargs = preloaded_data
+        elif isinstance(preloaded_data, (tuple, list)):
+            preloaded_args = preloaded_data
+            preloaded_kwargs = {}
+        else:
+            preloaded_args = (preloaded_data,)
+            preloaded_kwargs = {}
+        return preloaded_args, preloaded_kwargs
         
     def _get_resolver_method(self, i, name):
         """
