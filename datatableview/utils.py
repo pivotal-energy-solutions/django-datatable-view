@@ -122,10 +122,6 @@ class DatatableOptions(UserDict):
         except KeyError:
             raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
     
-    def update_from_request(self, query):
-        new_options = self._normalize_options(query, self.data)
-        self.update(new_options)
-        
     def _normalize_options(self, query, options):
         """
         Validates incoming options in the request query parameters.
@@ -184,8 +180,9 @@ class DatatableOptions(UserDict):
                             name, field_name, data_f = field_name
                         
                         # If the database source for the field is None, then this column will be
-                        # forcefully sorted in code
-                        if not field_name:
+                        # forcefully sorted in code.  If the field_name is an iterable of compound
+                        # sources, the final output from the data method should also be used.
+                        if not field_name or isinstance(field_name, (tuple, list)):
                             field_name = '!{}'.format(column_index)
                     else:
                         name = field_name
@@ -218,7 +215,8 @@ def split_real_fields(model, field_list, key=None):
     is used repeatedly for allowing a client to request sorting or filtering on virtual or compound
     columns in the display.
     
-    If ``key`` is specified, it is used to access items in ``field_list`` for the comparison.
+    If ``key`` is specified, it is used to access items in ``field_list`` for the comparison, in
+    the same fashion as the built-in ``sort`` function.
     
     Returns a 2-tuple, where the database can safely handle the first item, and the second must be
     handled in code.
