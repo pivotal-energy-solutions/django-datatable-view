@@ -48,6 +48,16 @@ class DatatableStructure(StrAndUnicode):
             'url': self.url,
             'column_info': self.get_column_info(),
         })
+    def __iter__(self):
+        """
+        Yields the column information suitable for rendering HTML.
+        
+        Each time is returned as a 2-tuple in the form ("Column Name", "data-attribute='asdf'"),
+        
+        """
+        
+        for column_info in self.get_column_info():
+            yield column_info
     
     def get_column_info(self):
         """
