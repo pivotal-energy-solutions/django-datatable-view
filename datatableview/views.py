@@ -183,6 +183,15 @@ class DatatableMixin(MultipleObjectMixin):
                                     {component_name + '__month': numerical_value},
                                     {component_name + '__day': numerical_value},
                                 ])
+                        elif isinstance(field, models.BooleanField):
+                            if term.lower() in ('true', 'yes'):
+                                term = True
+                            elif term.lower() in ('false', 'no'):
+                                term = False
+                            else:
+                                continue
+                            
+                            field_queries.append({component_name: term})
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
                             
