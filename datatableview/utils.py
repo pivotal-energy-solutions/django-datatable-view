@@ -219,6 +219,15 @@ class DatatableOptions(UserDict):
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
         
         return options
+
+# def build_datatable(options):
+#     """
+#     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
+#     
+#     """
+#     
+#     pass
+# 
 def split_real_fields(model, field_list, key=None):
     """
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This
