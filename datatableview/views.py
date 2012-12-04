@@ -458,10 +458,20 @@ class DatatableMixin(MultipleObjectMixin):
         else:
             field_lookup = name
         
-        value = reduce(chain_lookup, [instance] + field_lookup.split('__'))
+        if not isinstance(field_lookup, (tuple, list)):
+            field_lookup = (field_lookup,)
         
-        if isinstance(value, Model):
-            value = unicode(value)
+        values = []
+        for field_name in field_lookup:
+            value = reduce(chain_lookup, [instance] + field_name.split('__'))
+            
+            if isinstance(value, Model):
+                value = unicode(value)
+            
+            if value is not None:
+                values.append(value)
+        
+        value = ' '.join(map(unicode, values))
         
         return value, value
     
