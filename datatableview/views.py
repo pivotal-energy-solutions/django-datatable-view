@@ -272,6 +272,7 @@ class DatatableMixin(MultipleObjectMixin):
         """
         
         options = self._get_datatable_options()
+        return DatatableStructure(self.request.path, self.model, options)
     
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
