@@ -224,7 +224,10 @@ class DatatableMixin(MultipleObjectMixin):
         # Sort the results manually for whatever remaining sort options are left over
         def data_getter_orm(field_name):
             def key(obj):
-                return reduce(getattr, [obj] + field_name.split('__'))
+                try:
+                    return reduce(getattr, [obj] + field_name.split('__'))
+                except (AttributeError, ObjectDoesNotExist):
+                    return None
             return key
         def data_getter_custom(i):
             def key(obj):
