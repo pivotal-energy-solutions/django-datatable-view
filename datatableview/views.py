@@ -439,7 +439,7 @@ class DatatableMixin(MultipleObjectMixin):
         def chain_lookup(obj, bit):
             try:
                 value = getattr(obj, bit)
-            except ObjectDoesNotExist, AttributeError:
+            except (AttributeError, ObjectDoesNotExist):
                 value = None
             else:
                 if isinstance(value, Manager):
