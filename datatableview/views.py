@@ -64,7 +64,7 @@ class DatatableMixin(MultipleObjectMixin):
         
         if not hasattr(self, '_datatable_options'):
             if self.model is None:
-                self.model = self.get_queryset()._model
+                self.model = self.get_queryset().model
             
             options = self.get_datatable_options()
             if options:
