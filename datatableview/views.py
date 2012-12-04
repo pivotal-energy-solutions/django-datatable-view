@@ -442,7 +442,11 @@ class DatatableMixin(MultipleObjectMixin):
             except (AttributeError, ObjectDoesNotExist):
                 value = None
             else:
-                if isinstance(value, Manager):
+                # This check solves a problem where sometimes people make their Models inherit
+                # from a custom Manager in order to make available certain methods.  This line
+                # should only execute if we're looking at a proper Manager, not some mix-in of the
+                # Manager and Model classes.
+                if not isinstance(value, Model) and isinstance(value, Manager):
                     value = value.all()
                 if callable(value):
                     value = value()
