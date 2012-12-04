@@ -39,13 +39,13 @@ class DatatableStructure(StrAndUnicode):
     """
     
     def __init__(self, ajax_url, model, options):
-        self.ajax_url = ajax_url
+        self.url = ajax_url
         self.model = model
         self.options = options
         
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
-            'url': self.ajax_url,
+            'url': self.url,
             'column_info': self.get_column_info(),
         })
     
