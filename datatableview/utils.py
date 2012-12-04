@@ -220,14 +220,17 @@ class DatatableOptions(UserDict):
         
         return options
 
-# def build_datatable(options):
-#     """
-#     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
-#     
-#     """
-#     
-#     pass
-# 
+def get_datatable_structure(ajax_url, model, options):
+    """
+    Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
+    
+    """
+    
+    if not isinstance(options, DatatableOptions):
+        options = DatatableOptions(model, {}, **options)
+    
+    return DatatableStructure(ajax_url, model, options)
+
 def split_real_fields(model, field_list, key=None):
     """
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This

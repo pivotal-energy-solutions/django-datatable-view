@@ -11,7 +11,7 @@ from django.utils.cache import add_never_cache_headers
 import dateutil.parser
 
 from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
-        filter_real_fields
+        filter_real_fields, get_datatable_structure
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -272,7 +272,7 @@ class DatatableMixin(MultipleObjectMixin):
         """
         
         options = self._get_datatable_options()
-        return DatatableStructure(self.request.path, self.model, options)
+        return get_datatable_structure(self.request.path, self.model, options)
     
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
