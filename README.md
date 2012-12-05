@@ -86,7 +86,7 @@ Using the example of a compound address table column:
         ],
     }
     
-This configuration will produce a column titled "Address", whose contents is all of the database field values joined with a space.  That format might not be good enough for something as punctuated as an address should be, so you should consult the [Customizing column output]() section below to understand how to manually format the table cell contents beyond this default.  This configuration, however, is fully capable of providing database-backed searching features for the listed columns.
+This configuration will produce a column titled "Address", whose contents is all of the database field values joined with a space.  That format might not be good enough for something as punctuated as an address should be, so you should consult the [Customizing column output](#customizing-column-output) section below to understand how to manually format the table cell contents beyond this default.  This configuration, however, is fully capable of providing database-backed searching features for the listed columns.
 
 #### Pure virtual columns
 
@@ -101,7 +101,7 @@ If you need a table column that has no specific database-backed field, whether b
 
 In this example the column called "Fictitious" is capitalized to help keep clear its virtual nature.  When the view logic goes to interpret the column options, it will find that "Fictitious" is not a valid field name, given the model defined by the view (or taken from the view's queryset).  The column has no database fields to back it, which means this column currently has no way to provide its value.
 
-Continue to the next section [Customizing column output]() to create a mechanism for providing arbitrary column data.
+Continue to the next section [Customizing column output](#customizing-column-output) to create a mechanism for providing arbitrary column data.
 
 #### Customizing column output
 
@@ -133,7 +133,7 @@ IMPORTANT: In the case of these two sample fields, both are concrete, being back
 
 As demonstrated in the example, it is the actual column name that is used for the callback method naming style, where case is unmodified and non-alphanumeric characters are collapsed to underscores.  If a friendly name is "Completion: Percentage", the mangled name used for method lookup would be "Completion_Percentage", ultimately pointing to a method called `get_column_Completion_Percentage_data_()`.
 
-NOTE: These methods should take the `*args` and `**kwargs` argument names for good practice.  Their use is described in the following section [Handling expensive data generation]().
+NOTE: These methods should take the `*args` and `**kwargs` argument names for good practice.  Their use is described in the following section [Handling expensive data generation](#handling-expensive-data-generation).
 
 If ever the name mangling is unintuitive or unnecessarily complex, callback names can also be given via the column's 0-based index.  In the example above, the method names could could instead be given as `get_column_0_data()` and `get_column_1_data()` respectively.
 
@@ -173,7 +173,7 @@ Note that because the column is completely virtual and has no model fields backi
 
 #### Handling expensive data generation
 
-The callback methods described in [Customizing column output]() are very helpful for generating interactive data columns, such as links to deeper views, cross links to other sections of the site, or just computed mashups of data not strictly represented in any set of columns.
+The callback methods described in [Customizing column output](#customizing-column-output) are very helpful for generating interactive data columns, such as links to deeper views, cross links to other sections of the site, or just computed mashups of data not strictly represented in any set of columns.
 
 If multiple of the callback methods needs to do some expensive computation, each model instance (or record, in the terminology of the frontend datatable) can preload arbitrary values that will be sent to all of the view's data-supplying callback methods, either as `*args` or `**kwargs`, depending on how you prefer your implementation.
 
