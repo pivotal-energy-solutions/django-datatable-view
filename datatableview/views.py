@@ -431,6 +431,9 @@ class DatatableMixin(MultipleObjectMixin):
                 # Method name is explicitly given
                 method_name = name[2]
                 if callable(method_name):
+                    if hasattr(method_name, '_is_wrapped'):
+                        # Wrapped by keyed_helper, but hasn't received a key argument
+                        return True, method_name(key=operator.attrgetter(name[1]))
                     return True, method_name
                 return True, getattr(self, method_name)
             
