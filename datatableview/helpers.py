@@ -57,7 +57,9 @@ def keyed_helper(helper):
     return wrapper
 
 def link_to_model(instance, text=None, *args, **kwargs):
-    return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text or unicode(instance))
+    if not text:
+        text = kwargs['default_value'] or unicode(instance)
+    return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
 
 @keyed_helper
 def make_boolean_checkmark(value, false_value=""):
