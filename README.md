@@ -131,7 +131,7 @@ As shown, methods in the form `get_column_FIELD_NAME_data()` can be defined on t
 
 IMPORTANT: In the case of these two sample fields, both are concrete, being backed by real database fields.  The data returned by these methods are consequently for display purposes.  Any time that concrete model fields back a column, those fields are used for sorting and searching, not the output of the callback methods.
 
-As demonstrated in the example, it is the actual column name that is used for the callback method naming style, where case is unmodified and non-alphanumeric characters are collapsed to underscores.  If a friendly name is "Completion: Percentage", the mangled name used for method lookup would be "Completion_Percentage", ultimately pointing to a method called `get_column_Completion_Percentage_data_()`.
+As demonstrated in the example, it is the actual column name that is used for the callback method naming style, where case is unmodified and non-alphanumeric characters are collapsed to underscores.  If a friendly name is "Completion: Percentage", the mangled name used for method lookup would be "Completion_Percentage", ultimately pointing to a method called `get_column_Completion_Percentage_data()`.
 
 NOTE: These methods should take the `*args` and `**kwargs` argument names for good practice.  Their use is described in the following section [Handling expensive data generation](#handling-expensive-data-generation).
 
