@@ -37,6 +37,8 @@ for dirpath, dirnames, filenames in os.walk(_dir):
     elif filenames:
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
+print data_files
+print packages
 
 setup(name='django-datatable-view',
       version='1.0',
