@@ -62,7 +62,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
 
 @keyed_helper
-def make_boolean_checkmark(value, false_value=""):
+def make_boolean_checkmark(value, false_value="", *args, **kwargs):
     if value:
         return "&#10004;"
     return false_value
