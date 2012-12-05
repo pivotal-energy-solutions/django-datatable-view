@@ -77,3 +77,12 @@ def attrgetter(attr):
     
     return helper
 
+def format_date(format, key=None):
+    def helper(value, *args, **kwargs):
+        if key:
+            value = key(value)
+        return value.strftime(format)
+    
+    if key:
+        return helper
+    return keyed_helper(helper)
