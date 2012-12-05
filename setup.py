@@ -21,7 +21,7 @@ for dirpath, dirnames, filenames in os.walk('datatableview'):
             pkg = pkg.replace(os.path.altsep, '.')
         packages.append(pkg)
     elif filenames:
-        # strip 'simple_history/' or 'simple_history\'
+        # strip 'datatableview/' or 'datatableview\'
         prefix = dirpath[15:]
         for f in filenames:
             data_files.append(os.path.join(prefix, f))
