@@ -25,7 +25,7 @@ setup(name='django-datatable-view',
            'Topic :: Software Development',
       ],
       packages=find_packages(exclude=['tests', 'tests.*']),
-      package_data={'': ['license.txt']},
+      package_data={'datatableview': ['static/js/*.js', 'templates/datatableview/*.html']},
       include_package_data=True,
       requires=['django (>=1.2)',],
 )
