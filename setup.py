@@ -35,6 +35,11 @@ for dirpath, dirnames, filenames in os.walk(_dir):
     if '__init__.py' in filenames:
         packages.append('.'.join(fullsplit(dirpath)))
     elif filenames:
+        # strip 'simple_history/' or 'simple_history\'
+        prefix = dirpath[len(_dir) + 1:]
+        for f in filenames:
+            data_files.append(os.path.join(prefix, f))
+
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 print data_files
