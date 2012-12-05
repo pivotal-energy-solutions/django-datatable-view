@@ -357,6 +357,10 @@ class DatatableMixin(MultipleObjectMixin):
         is_custom, f = self._get_resolver_method(i, name)
         if is_custom:
             args, kwargs = self._get_preloaded_data(instance)
+            try:
+                kwargs['default_value'] = self._get_column_data_default(instance, name)[0]
+            except AttributeError:
+                kwargs['default_value'] = None
             values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
