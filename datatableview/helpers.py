@@ -66,3 +66,14 @@ def make_boolean_checkmark(value, false_value="", *args, **kwargs):
     if value:
         return "&#10004;"
     return false_value
+
+def attrgetter(attr):
+    def helper(instance, *args, **kwargs):
+        value = getattr(instance, attr)
+        
+        if callable(value):
+            return value()
+        return value
+    
+    return helper
+
