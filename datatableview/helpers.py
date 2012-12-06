@@ -11,28 +11,28 @@ in any way.
 def keyed_helper(helper):
     """
     Decorator for helper functions that operate on direct values instead of model instances.
-    
+
     A keyed helper is one that can be used normally in the view's own custom callbacks, but also
     supports direct access in the column declaration, such as in the example:
-    
+
         datatable_options = {
             'columns': [
                 ('Field Name', 'fieldname', make_boolean_checkmark(key=attrgetter('fieldname'))),
             ],
         }
-    
+
     With the help of a ``sort``-style ``key`` argument, the helper can receive all the information
     it requires in advance, so that the view doesn't have to go through the trouble of declaring
     a custom callback method that simply returns the value of the ``make_boolean_checkmark()``
     helper.
-    
+
     If the attribute being fetched is identical to the one pointed to in the column declaration,
     even the ``key`` argument can be omitted:
-    
+
         ('Field Name', 'fieldname', make_boolean_checkmark)),
-    
+
     """
-    
+
     def wrapper(instance=None, key=None, *args, **kwargs):
         if instance and not key:
             # if key:
@@ -58,7 +58,7 @@ def keyed_helper(helper):
 
 def link_to_model(instance, text=None, *args, **kwargs):
     if not text:
-        text = kwargs['default_value'] or unicode(instance)
+        text = kwargs.get('default_value') or unicode(instance)
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
 
 @keyed_helper
@@ -69,17 +69,17 @@ def make_boolean_checkmark(value, false_value="", *args, **kwargs):
 
 def itemgetter(k):
     def helper(instance, *args, **kwargs):
-        return (kwargs['default_value'] or instance)[k]
+        return (kwargs.get('default_value') or instance)[k]
     return helper
 
 def attrgetter(attr):
     def helper(instance, *args, **kwargs):
         value = getattr(instance, attr)
-        
+
         if callable(value):
             return value()
         return value
-    
+
     return helper
 
 def format_date(format_string, key=None):
@@ -87,7 +87,7 @@ def format_date(format_string, key=None):
         if key:
             value = key(value)
         return value.strftime(format_string)
-    
+
     if key:
         return helper
     return keyed_helper(helper)
