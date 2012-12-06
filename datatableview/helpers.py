@@ -81,7 +81,7 @@ def format_date(format_string, key=None):
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
-        return value.strftime(format)
+        return value.strftime(format_string)
     
     if key:
         return helper
