@@ -67,6 +67,11 @@ def make_boolean_checkmark(value, false_value="", *args, **kwargs):
         return "&#10004;"
     return false_value
 
+def itemgetter(k):
+    def helper(instance, *args, **kwargs):
+        return (kwargs['default_value'] or instance)[k]
+    return helper
+
 def attrgetter(attr):
     def helper(instance, *args, **kwargs):
         value = getattr(instance, attr)
