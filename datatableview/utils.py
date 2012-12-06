@@ -252,12 +252,13 @@ def split_real_fields(model, field_list, key=None):
     i = 0
     
     for i, field_name in enumerate(field_list):
+        if field_name[0] in '-+':
+            field_name = field_name[1:]
         if field_name not in concrete_names:
             break
     else:
         i = len(field_list)
             
-    
     return field_list[:i], field_list[i:]
 
 def filter_real_fields(model, field_list, key=None):
