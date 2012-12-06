@@ -193,11 +193,12 @@ class DatatableMixin(MultipleObjectMixin):
                             except ValueError:
                                 pass
                             else:
-                                field_queries.extend([
-                                    {component_name + '__year': numerical_value},
-                                    {component_name + '__month': numerical_value},
-                                    {component_name + '__day': numerical_value},
-                                ])
+                                if 0 < numerical_value < 3000:
+                                    field_queries.append({component_name + '__year': numerical_value})
+                                if 0 < numerical_value <= 12:
+                                    field_queries.append({component_name + '__month': numerical_value})
+                                if 0 < numerical_value <= 31:
+                                    field_queries.append({component_name + '__day': numerical_value})
                         elif isinstance(field, models.BooleanField):
                             if term.lower() in ('true', 'yes'):
                                 term = True
