@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 A collection of small helper functions for generating small pieces of datatable output in custom
 methods on a view.
@@ -7,6 +8,7 @@ functions allows for generic ``*args`` to pass through to the function, even tho
 in any way.
 
 """
+
 
 def keyed_helper(helper):
     """
@@ -56,10 +58,12 @@ def keyed_helper(helper):
     wrapper._is_wrapped = True
     return wrapper
 
+
 def link_to_model(instance, text=None, *args, **kwargs):
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
+
 
 @keyed_helper
 def make_boolean_checkmark(value, false_value="", *args, **kwargs):
@@ -67,10 +71,12 @@ def make_boolean_checkmark(value, false_value="", *args, **kwargs):
         return "&#10004;"
     return false_value
 
+
 def itemgetter(k):
     def helper(instance, *args, **kwargs):
         return (kwargs.get('default_value') or instance)[k]
     return helper
+
 
 def attrgetter(attr):
     def helper(instance, *args, **kwargs):
@@ -82,6 +88,7 @@ def attrgetter(attr):
 
     return helper
 
+
 def format_date(format_string, key=None):
     def helper(value, *args, **kwargs):
         if key:
@@ -91,6 +98,7 @@ def format_date(format_string, key=None):
     if key:
         return helper
     return keyed_helper(helper)
+
 
 def format(format_string, cast=lambda x:x):
     def helper(instance, *args, **kwargs):
