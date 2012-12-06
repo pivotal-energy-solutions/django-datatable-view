@@ -226,62 +226,66 @@ class DatatableMixin(MultipleObjectMixin):
             # Apply the logical AND of all term inspections
             queryset = queryset.filter(reduce(operator.and_, queries))
 
-        # Get ready to turn the results into a normal iterable, which might happen during any of the
-        # following operations.
-        object_list = list(queryset)
+        
+        if not sort_fields and not searches:
+            # We can shortcut and speed up the process if all operations are database-backed.
+            object_list = queryset
+            unpaged_total = queryset.count()
+        else:
+            object_list = list(queryset)
 
-        # Sort the results manually for whatever remaining sort options are left over
-        def data_getter_orm(field_name):
-            def key(obj):
-                try:
-                    return reduce(getattr, [obj] + field_name.split('__'))
-                except (AttributeError, ObjectDoesNotExist):
-                    return None
-            return key
-        def data_getter_custom(i):
-            def key(obj):
-                rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
-                return plain_value
-            return key
+            # Sort the results manually for whatever remaining sort options are left over
+            def data_getter_orm(field_name):
+                def key(obj):
+                    try:
+                        return reduce(getattr, [obj] + field_name.split('__'))
+                    except (AttributeError, ObjectDoesNotExist):
+                        return None
+                return key
+            def data_getter_custom(i):
+                def key(obj):
+                    rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
+                    return plain_value
+                return key
 
-        for sort_field in sort_fields:
-            if sort_field.startswith('-'):
-                reverse = True
-                sort_field = sort_field[1:]
-            else:
-                reverse = False
+            for sort_field in sort_fields:
+                if sort_field.startswith('-'):
+                    reverse = True
+                    sort_field = sort_field[1:]
+                else:
+                    reverse = False
 
-            if sort_field.startswith('!'):
-                key_function = data_getter_custom
-                sort_field = int(sort_field[1:])
-            else:
-                key_function = data_getter_orm
+                if sort_field.startswith('!'):
+                    key_function = data_getter_custom
+                    sort_field = int(sort_field[1:])
+                else:
+                    key_function = data_getter_orm
 
-            object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
+                object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
 
-        # This is broken until it searches all items in object_list previous to the database sort.
-        # That represents a runtime load that hits every row in code, rather than in the database.
-        # If enabled, this would cripple performance on large datasets.
-        # # Manual searches
-        # for i, obj in enumerate(object_list[::]):
-        #     keep = False
-        #     for column_info in searches:
-        #         for term in search_terms:
-        #             column_index = options.columns.index(column_info)
-        #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
-        #             if term in plain_data:
-        #                 keep = True
-        #                 break
-        #         if keep:
-        #             break
-        #
-        #     if not keep:
-        #         object_list.pop(i)
-        #         # print column_info
-        #         # print data
-        #         # print '===='
+            # This is broken until it searches all items in object_list previous to the database sort.
+            # That represents a runtime load that hits every row in code, rather than in the database.
+            # If enabled, this would cripple performance on large datasets.
+            # # Manual searches
+            # for i, obj in enumerate(object_list[::]):
+            #     keep = False
+            #     for column_info in searches:
+            #         for term in search_terms:
+            #             column_index = options.columns.index(column_info)
+            #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
+            #             if term in plain_data:
+            #                 keep = True
+            #                 break
+            #         if keep:
+            #             break
+            #
+            #     if not keep:
+            #         object_list.pop(i)
+            #         # print column_info
+            #         # print data
+            #         # print '===='
 
-        unpaged_total = len(object_list)
+            unpaged_total = len(object_list)
 
         object_list = object_list[options.start_offset : options.start_offset+options.page_length]
 
