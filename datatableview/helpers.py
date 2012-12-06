@@ -36,7 +36,7 @@ def keyed_helper(helper):
     """
 
     def wrapper(instance=None, key=None, *args, **kwargs):
-        if instance and not key:
+        if instance is not None and not key:
             # if key:
             #     # Helper was provided in the column declaration without being instantiated and
             #     # given a "key" argument.  It received the "key" function implicitly.
@@ -45,13 +45,13 @@ def keyed_helper(helper):
             #     # Helper is only being used within in a custom callback
             value = instance
             return helper(value, *args, **kwargs)
-        elif key and not instance:
+        elif key and instance is None:
             # Helper is used directly in the columns declaration.  A new callable is
             # returned to take the place of a callback.
             def helper_wrapper(instance, *args, **kwargs):
                 return helper(key(instance), *args, **kwargs)
             return helper_wrapper
-        elif not key and not instance:
+        elif not key and instance is None:
             # Helper was provided in the column declaration and was called in place with no
             # arguments.  We return the helper back, negating the premature call.
             return wrapper
@@ -105,6 +105,6 @@ def format_date(format_string, key=None):
 
 def format(format_string, cast=lambda x:x):
     def helper(instance, *args, **kwargs):
-        value = cast(kwargs['default_value'] or instance)
+        value = cast(kwargs.get('default_value') or instance)
         return format_string.format(value, obj=instance)
     return helper
