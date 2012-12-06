@@ -16,56 +16,56 @@ from datatableview.utils import DatatableStructure, DatatableOptions, split_real
 class DatatableMixin(MultipleObjectMixin):
     """
     Converts a view into an AJAX interface for obtaining records.
-    
+
     The normal GET execution adds a ``DataTable`` object to the context which can be used to
     streamline the dumping of the HTML skeleton required for datatables.js to hook.  A ``DataTable``
     object doesn't hold any data, just a structure superficially generated from the options on the
     view.
-    
+
     The template is responsible for making the AJAX request back to this view to populate the table
     with data.
-    
+
     """
-    
+
     datatable_options = None
     datatable_context_name = 'datatable'
-    
+
     def get(self, request, *args, **kwargs):
         """
         Detects AJAX access and returns appropriate serialized data.  Normal access to the view is
         unmodified.
-        
+
         """
-        
+
         if request.is_ajax() or request.GET.get('ajax') == 'true':
             return self.get_ajax(request, *args, **kwargs)
         return super(DatatableMixin, self).get(request, *args, **kwargs)
-    
+
     def get_object_list(self):
         """ Gets the core queryset, but applies the datatable options to it. """
         return self.apply_queryset_options(self.get_queryset())
-        
+
     def get_datatable_options(self):
         """
         Returns the DatatableOptions object for this view's configuration.
-        
+
         This method is guaranteed to be called only once per request.
-        
+
         """
-        
+
         return self.datatable_options
-    
+
     def _get_datatable_options(self):
         """
         Internal safe access.  Guarantees that ``get_datatable_options()`` is called only once, so
         that subclasses can use that method to modify the class attribute ``datatable_options``.
-        
+
         """
-        
+
         if not hasattr(self, '_datatable_options'):
             if self.model is None:
                 self.model = self.get_queryset().model
-            
+
             options = self.get_datatable_options()
             if options:
                 # Options are defined, but probably in a raw dict format
@@ -73,58 +73,58 @@ class DatatableMixin(MultipleObjectMixin):
             else:
                 # No options defined on the view
                 options = DatatableOptions(self.model, self.request.GET)
-            
+
             self._datatable_options = options
         return self._datatable_options
-    
+
     def apply_queryset_options(self, queryset):
         """
         Interprets the datatable options.
-        
+
         Options requiring manual massaging of the queryset are handled here.  The output of this
         method should be treated as a list, since complex options might convert it out of the
         original queryset form.
-        
+
         """
-        
+
         options = self._get_datatable_options()
-        
+
         # These will hold residue queries that cannot be handled in at the database level.  Anything
         # in these variables by the end will be handled manually (read: less efficiently)
         sort_fields = []
         # filters = []
         searches = []
-        
+
         # This count is for the benefit of the frontend datatables.js
         total_initial_record_count = queryset.count()
-        
+
         if options.ordering:
             db_fields, sort_fields = split_real_fields(self.model, options.ordering)
             queryset = queryset.order_by(*db_fields)
-        
+
         # if options.filters:
         #     if isinstance(options.filters, dict):
         #         filters = options.filters.items()
         #     else:
         #         # sequence of 2-tuples
         #         filters = options.filters
-        #     
+        #
         #     # The first field in a string like "description__icontains" determines if the lookup
         #     # is concrete (can be handled by the database query) or virtual.  A query such as
         #     # "foreignkey__virtualfield__icontains" is not supported.  A query such as
         #     # "virtualfield__icontains" IS supported but will be handled manually.
         #     key_function = lambda item: item[0].split('__')[0]
-        #     
+        #
         #     db_filters, filters = filter_real_fields(self.model, filters, key=key_function)
-        #     
+        #
         #     queryset = queryset.filter(**dict(db_filters))
-        # 
+        #
         if options.search:
             def key_function(item):
                 """
                 Converts items in the 'columns' definition to field names for determining if it's
                 concrete or not.
-                
+
                 """
                 if isinstance(item, (tuple, list)):
                     item = item[1]
@@ -135,10 +135,10 @@ class DatatableMixin(MultipleObjectMixin):
                     return item[0].split('__')[0]
                 return item
             db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
-            
+
             queries = [] # Queries generated to search all fields for all terms
             search_terms = map(unicode.strip, options.search.split())
-            
+
             def field_getter(item, bit):
                 try:
                     item = item.related.model
@@ -148,7 +148,7 @@ class DatatableMixin(MultipleObjectMixin):
                     except AttributeError:
                         pass
                 return getattr(item, bit)
-            
+
             for term in search_terms:
                 term_queries = [] # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
@@ -157,26 +157,28 @@ class DatatableMixin(MultipleObjectMixin):
                         name = name[1]
                     if not isinstance(name, (tuple, list)):
                         name = (name,)
-                        
+
                     for component_name in name:
                         field_queries = [] # Queries generated to search this database field for the search term
                         bits = component_name.split('__')
                         obj = reduce(field_getter, [self.model] + bits[:-1])
-                        
+
                         if obj is not self.model:
                             if hasattr(obj, 'related'): # one of the object descriptors
                                 obj = obj.related.model
                             else: # one of the foreign key fields
                                 obj = obj.field.rel.to
-                            
+
                         # Get the Field type from the related model
                         try:
                             field, model, direct, m2m = obj._meta.get_field_by_name(bits[-1])
                         except models.fields.FieldDoesNotExist:
                             # Virtual columns won't be found on the model, so this is the escape hatch
                             continue
-                            
-                        if isinstance(field, models.CharField):
+
+                        if isinstance(field, (models.CharField, models.TextField, models.SlugField,
+                                              models.CommaSeparatedIntegerField, models.EmailField,
+                                              models.URLField)):
                             field_queries = [{component_name + '__icontains': term}]
                         elif isinstance(field, (models.DateTimeField, models.DateField)):
                             try:
@@ -203,24 +205,30 @@ class DatatableMixin(MultipleObjectMixin):
                                 term = False
                             else:
                                 continue
-                            
+
                             field_queries.append({component_name: term})
+                        elif isinstance(field, (models.IntegerField, models.FloatField,
+                                                models.DecimalField, models.PositiveIntegerField,
+                                                models.PositiveSmallIntegerField,
+                                                models.BigIntegerField)):
+                            field_queries = [{component_name: term}]
+
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
-                            
+
                         # print field_queries
-                        
+
                         # Append each field inspection for this term
                         term_queries.extend(map(lambda q: Q(**q), field_queries))
                 # Append the logical OR of all field inspections for this term
                 queries.append(reduce(operator.or_, term_queries))
             # Apply the logical AND of all term inspections
             queryset = queryset.filter(reduce(operator.and_, queries))
-        
+
         # Get ready to turn the results into a normal iterable, which might happen during any of the
         # following operations.
         object_list = list(queryset)
-        
+
         # Sort the results manually for whatever remaining sort options are left over
         def data_getter_orm(field_name):
             def key(obj):
@@ -241,15 +249,15 @@ class DatatableMixin(MultipleObjectMixin):
                 sort_field = sort_field[1:]
             else:
                 reverse = False
-            
+
             if sort_field.startswith('!'):
                 key_function = data_getter_custom
                 sort_field = int(sort_field[1:])
             else:
                 key_function = data_getter_orm
-            
+
             object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
-        
+
         # This is broken until it searches all items in object_list previous to the database sort.
         # That represents a runtime load that hits every row in code, rather than in the database.
         # If enabled, this would cripple performance on large datasets.
@@ -265,93 +273,93 @@ class DatatableMixin(MultipleObjectMixin):
         #                 break
         #         if keep:
         #             break
-        #     
+        #
         #     if not keep:
         #         object_list.pop(i)
         #         # print column_info
         #         # print data
         #         # print '===='
-        
+
         unpaged_total = len(object_list)
-        
+
         object_list = object_list[options.start_offset : options.start_offset+options.page_length]
-        
+
         return object_list, total_initial_record_count, unpaged_total
-    
+
     def get_datatable_context_name(self):
         return self.datatable_context_name
-            
+
     def get_datatable(self):
         """
         Returns the helper object that can be used in the template to render the datatable skeleton.
-        
+
         """
-        
+
         options = self._get_datatable_options()
         return get_datatable_structure(self.request.path, self.model, options)
-    
+
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
-        
+
         context[self.get_datatable_context_name()] = self.get_datatable()
-        
+
         return context
-    
-    
+
+
     # Ajax execution methods
     def get_ajax(self, request, *args, **kwargs):
         """
         Called in place of normal ``get()`` when accessed via AJAX.
-        
+
         """
-        
+
         object_list = self.get_object_list()
         response = HttpResponse(self.serialize_to_json(object_list), mimetype="application/json")
-        
+
         add_never_cache_headers(response)
-        
+
         return response
-    
+
     def serialize_to_json(self, object_list):
         """
         Returns the JSON string object required for dataTables.js to do its job.
-        
+
         The value names are in the form "s~" for strings, "i~" for integers, and "a~" for arrays,
         if you're unfamiliar with the old C-style jargon used in dataTables.js.  "aa~" means
         "array of arrays".  In some instances, the author uses "ao~" for "array of objects", an
         object being a javascript dictionary.
-        
+
         """
-        
+
         object_list, total_records, unpaged_total = object_list
-        
+
         response_obj = {
             'sEcho': self.request.GET.get('sEcho', None),
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': unpaged_total,
             'aaData': [self.get_record_data(obj) for obj in object_list],
         }
-        
+
         return json.dumps(response_obj, indent=4)
-    
+
     def get_record_data(self, obj):
         """
         Returns a list of column data intended to be passed directly back to dataTables.js.
-        
+
         Each column generates a 2-tuple of data. [0] is the data meant to be displayed to the client
         and [1] is the data in plain-text form, meant for manual searches.  One wouldn't want to
         include HTML in [1], for example.
-        
+
         """
-        
+
         options = self._get_datatable_options()
-        
+
         data = []
         for i, name in enumerate(options.columns):
             data.append(self.get_column_data(i, name, obj)[0])
-        
+
         return data
-    
+
     def get_column_data(self, i, name, instance):
         """ Finds the backing method for column ``name`` and returns the generated data. """
         is_custom, f = self._get_resolver_method(i, name)
@@ -364,35 +372,35 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
-        
+
         if not isinstance(values, (tuple, list)):
             values = (values, re.sub(r'<[^>]+>', '', values))
-        
+
         return values
-    
+
     def preload_record_data(self, instance):
         """
         An empty hook for letting the view do something with ``instance`` before column lookups are
         called against the object.  The tuple of items returned will be passed as positional
         arguments to any of the ``get_column_FIELD_NAME_data()`` methods.
-        
+
         """
-        
+
         return ()
-    
+
     def _get_preloaded_data(self, instance):
         """
         Fetches value from ``preload_record_data()``.
-        
+
         If a single value is returned and it is not a dict, list or tuple, it is made into a tuple.
         The tuple will be supplied to the resolved method as ``*args``.
-        
+
         If the returned value is already a list/tuple, it will also be sent as ``*args``.
-        
+
         If the returned value is a dict, it will be sent as ``**kwargs``.
-        
+
         The two types cannot be mixed.
-        
+
         """
         preloaded_data = self.preload_record_data(instance)
         if isinstance(preloaded_data, dict):
@@ -405,31 +413,31 @@ class DatatableMixin(MultipleObjectMixin):
             preloaded_args = (preloaded_data,)
             preloaded_kwargs = {}
         return preloaded_args, preloaded_kwargs
-        
+
     def _get_resolver_method(self, i, name):
         """
         Using a slightly mangled version of the column's name (explained below) each column's value
         is derived.
-        
+
         Each field can generate customized data by defining a method on the view called either
         "get_column_FIELD_NAME_data" or "get_column_INDEX_data".
-        
+
         If the FIELD_NAME approach is used, the name is the raw field name (e.g., "street_name") or
         else the friendly representation defined in a 2-tuple such as
         ("Street name", "subdivision__home__street_name"), where the name has non-alphanumeric
         characters stripped to single underscores.  For example, the friendly name
         "Region: Subdivision Type" would convert to "Region_Subdivision_Type", requiring the method
         name "get_column_Region_Subdivision_Type_data".
-        
+
         Alternatively, if the INDEX approach is used, a method will be fetched called
         "get_column_0_data", or otherwise using the 0-based index of the column's position as
         defined in the view's ``datatable_options['columns']`` setting.
-        
+
         Finally, if a third element is defined in the tuple, it will be treated as the function or
         name of a member attribute which will be used directly.
-        
+
         """
-        
+
         if isinstance(name, (tuple, list)):
             if len(name) == 3:
                 # Method name is explicitly given
@@ -440,25 +448,25 @@ class DatatableMixin(MultipleObjectMixin):
                         return True, method_name(key=operator.attrgetter(name[1]))
                     return True, method_name
                 return True, getattr(self, method_name)
-            
+
             # Treat the 'nice name' as the starting point for looking up a method
             name = name[0]
         mangled_name = re.sub(r'[\W_]+', '_', name)
-        
+
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
         if f:
             return True, f
-        
+
         f = getattr(self, 'get_column_%d_data' % i, None)
         if f:
             return True, f
-        
+
         return False, self._get_column_data_default
-        
-    
+
+
     def _get_column_data_default(self, instance, name):
         """ Default mechanism for resolving ``name`` through the model instance ``obj``. """
-        
+
         def chain_lookup(obj, bit):
             try:
                 value = getattr(obj, bit)
@@ -474,30 +482,30 @@ class DatatableMixin(MultipleObjectMixin):
                 if callable(value):
                     value = value()
             return value
-        
-        
+
+
         if isinstance(name, (tuple, list)):
             name, field_lookup = name[0], name[1]
         else:
             field_lookup = name
-        
+
         if not isinstance(field_lookup, (tuple, list)):
             field_lookup = (field_lookup,)
-        
+
         values = []
         for field_name in field_lookup:
             value = reduce(chain_lookup, [instance] + field_name.split('__'))
-            
+
             if isinstance(value, Model):
                 value = unicode(value)
-            
+
             if value is not None:
                 values.append(value)
-        
+
         value = ' '.join(map(unicode, values))
-        
+
         return value, value
-    
+
 
 class DatatableView(DatatableMixin, ListView):
     pass
