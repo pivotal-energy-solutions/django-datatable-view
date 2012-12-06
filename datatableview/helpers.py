@@ -37,12 +37,6 @@ def keyed_helper(helper):
 
     def wrapper(instance=None, key=None, *args, **kwargs):
         if instance is not None and not key:
-            # if key:
-            #     # Helper was provided in the column declaration without being instantiated and
-            #     # given a "key" argument.  It received the "key" function implicitly.
-            #     value = key(instance)
-            # else:
-            #     # Helper is only being used within in a custom callback
             value = instance
             return helper(value, *args, **kwargs)
         elif key and instance is None:
