@@ -39,30 +39,46 @@ def keyed_helper(helper):
         if instance is not None and not key:
             value = instance
             return helper(value, *args, **kwargs)
-        elif key and instance is None:
-            # Helper is used directly in the columns declaration.  A new callable is
-            # returned to take the place of a callback.
-            def helper_wrapper(instance, *args, **kwargs):
-                return helper(key(instance), *args, **kwargs)
-            return helper_wrapper
-        elif not key and instance is None:
-            # Helper was provided in the column declaration and was called in place with no
-            # arguments.  We return the helper back, negating the premature call.
-            return wrapper
+        elif instance is None:
+            if key:
+                # Helper is used directly in the columns declaration.  A new callable is
+                # returned to take the place of a callback.
+                def helper_wrapper(instance, *args, **kwargs):
+                    return helper(key(instance), *args, **kwargs)
+                return helper_wrapper
+            else:
+                # Helper was provided in the column declaration and was called in place with no
+                # arguments.  We return the helper back, negating the premature call.
+                def helper_wrapper(instance, *args, **kwargs):
+                    return helper(kwargs.get('default_value'), *args, **kwargs)
+                return helper_wrapper
     wrapper._is_wrapped = True
     return wrapper
 
 
 def link_to_model(instance, text=None, *args, **kwargs):
+    """
+    Returns HTML in the form
+    
+        <a href="{{ instance.get_absolute_url }}">{{ instance }}</a>
+        
+    If ``text`` is provided and is true-like, it will be used as the hyperlinked text.
+    
+    Else, if ``kwargs['default_value']`` is available, it will be consulted.
+    
+    Failing those checks, ``unicode(instance)`` will be inserted as the hyperlinked text.
+    
+    """
+    
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
 
 
 @keyed_helper
-def make_boolean_checkmark(value, false_value="", *args, **kwargs):
+def make_boolean_checkmark(value, true_value="&#10004;", false_value="", *args, **kwargs):
     if value:
-        return "&#10004;"
+        return true_value
     return false_value
 
 
