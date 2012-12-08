@@ -361,7 +361,7 @@ class DatatableMixin(MultipleObjectMixin):
 
         data = []
         for i, name in enumerate(options.columns):
-            data.append(self.get_column_data(i, name, obj)[0])
+            data.append(unicode(self.get_column_data(i, name, obj)[0]))
 
         return data
 
@@ -371,7 +371,7 @@ class DatatableMixin(MultipleObjectMixin):
         if is_custom:
             args, kwargs = self._get_preloaded_data(instance)
             try:
-                kwargs['default_value'] = self._get_column_data_default(instance, name)[0]
+                kwargs['default_value'] = self._get_column_data_default(instance, name)[1]
             except AttributeError:
                 kwargs['default_value'] = None
             values = f(instance, *args, **kwargs)
@@ -450,7 +450,7 @@ class DatatableMixin(MultipleObjectMixin):
                 if callable(method_name):
                     if hasattr(method_name, '_is_wrapped'):
                         # Wrapped by keyed_helper, but hasn't received a key argument
-                        return True, method_name(key=operator.attrgetter(name[1]))
+                        return True, method_name()
                     return True, method_name
                 return True, getattr(self, method_name)
 
@@ -506,8 +506,11 @@ class DatatableMixin(MultipleObjectMixin):
 
             if value is not None:
                 values.append(value)
-
-        value = ' '.join(map(unicode, values))
+        
+        if len(values) == 1:
+            value = values[0]
+        else:
+            value = ' '.join(map(unicode, values))
 
         return value, value
 
