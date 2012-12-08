@@ -129,11 +129,11 @@ A contrived example following from the original configuration sample:
 
 As shown, methods in the form `get_column_FIELD_NAME_data()` can be defined on the view to override the output of the column.
 
-IMPORTANT: In the case of these two sample fields, both are concrete, being backed by real database fields.  The data returned by these methods are consequently for display purposes.  Any time that concrete model fields back a column, those fields are used for sorting and searching, not the output of the callback methods.
+**IMPORTANT**: In the case of these two sample fields, both are concrete, being backed by real database fields.  The data returned by these methods are consequently for display purposes.  Any time that concrete model fields back a column, those fields are used for sorting and searching, not the output of the callback methods.
 
 As demonstrated in the example, it is the actual column name that is used for the callback method naming style, where case is unmodified and non-alphanumeric characters are collapsed to underscores.  If a friendly name is "Completion: Percentage", the mangled name used for method lookup would be "Completion_Percentage", ultimately pointing to a method called `get_column_Completion_Percentage_data()`.
 
-NOTE: These methods should take the `*args` and `**kwargs` argument names for good practice.  Their use is described in the following section [Handling expensive data generation](#handling-expensive-data-generation).
+**NOTE**: These methods should take the `*args` and `**kwargs` argument names for good practice.  Their use is described in the following section [Handling expensive data generation](#handling-expensive-data-generation).  By default the view will only send one keyword argument: `default_value` is the value fetched from the specified model field(s), if any.
 
 If ever the name mangling is unintuitive or unnecessarily complex, callback names can also be given via the column's 0-based index.  In the example above, the method names could could instead be given as `get_column_0_data()` and `get_column_1_data()` respectively.
 
@@ -241,3 +241,203 @@ The `table`'s "data-url" attribute is the url that dataTables.js will use to fet
 The `th` "data-name" attribute isn't required for any dataTables.js functionality, but it provides a useful CSS selector hook for styling column widths, etc.
 
 the `attributes` value is a pre-rendered HTML string of custom data-* attributes that provide configuration details to datatableview.js when it detects the datatable skeleton, such as sorting being enabled or disabled.
+
+## Advanced sorting of pure virtual columns
+
+When columns backed by concrete database fields are sorted, the sort behavior is straightforward: model field value is the data source, irrespective of presentation modifications made through the  functions described in [Customizing column output](#customizing-column-output).  But when the column has no direct correlation with a database field, what then?
+
+The obvious answer is that the custom-built return value from the column's callback is the value, but that value might contain HTML data that completely subverts intuitive sorting.  Instead, the sorting operation needs to work on what the end-user sees, excluding the fancy markup.
+
+To accomplish this, the callbacks are optionally capable of returning a 2-tuple of values, the first being the full HTML data to be dumped into the table, the second being the stripped version:
+
+    def get_column_fictitious_data(self, instance, *args, **kwargs):
+        rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
+        plain_data = unicode(instance)
+        return (rich_data, plain_data)
+
+Since stripping the HTML out of the return value is the most common requirement, `DatatableView` does this by default if you return a single value.  That makes the above example more verbose than it needs to be.
+
+This is equivalent, using the built-in default behavior just described:
+
+    def get_column_fictitious_data(self, instance, *args, **kwargs):
+        rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
+        return rich_data
+
+This mechanism empowers you to design a compound column that sorts intuitively for the data presented by the table.  For example, if a column displays a dynamic fraction for the number of questions on a survey answered out of the dynamic total, even sorting the raw text data in the column might produce table behavior that doesn't match expectations.  What one might realistically expect is that the column sorts based on the percentage completion, but that's not even a displayed value.
+
+To solve the problem, the callback can return a crunched percentage value as the second value:
+
+    def get_column_Questions_Answered_data(self, instance, *args, **kwargs):
+        num_answered = instance.get_answered_questions().count()
+        total = instance.get_total_questions().count()
+        
+        rich_data = "%s / %s" % (num_answered, total)
+        plain_data = 1. * num_answered / total
+        
+        return (rich_data, plain_data)
+
+This secondary value is only used in the server-side processing.  The JSON data returned to the client will be the first value.
+
+## Utility helper methods for custom callbacks
+
+There are several common processing types that get done on column data, so a `helpers` module is provided with a few functions that can be used inside of your callbacks, or directly supplied as the callback, saving you the trouble of even defining an extra method on the view.
+
+Consequent to the multiple possible usage styles, several of the helper functions can be called in different ways with different parameters, through the help of a wrapping decorator function.  Each helper describes how it can be used.
+
+#### `link_to_model()`
+_Description: Returns HTML in the pattern of `<a href="{{ instance.get_absolute_url }}">{{ instance }}</a>`_
+
+##### _As a function:_ `link_to_model(instance, text=None, *args, **kwargs)`
+If `text` is provided, it will be used as the displayed hyperlinked HTML.  If `text` is `None`, `""`, `False`, or some other empty value, the helper falls back to the `unicode(instance)` will be used.
+
+If you choose to send all of the same `**kwargs` that your custom callback initially received, the `default_value` option will be available to the helper.  Its priority as the selected value for `text` is between an explicitly supplied `text` argument and the fallback `unicode(instance)`.
+
+Examples:
+
+    def get_column_myfield_data(self, instance, *args, **kwargs):
+        # Simplest usage, text=unicode(instance)
+        return link_to_model(instance)
+        
+        # Overrides linked text, although the URL is still retrieved from
+        # instance.get_absolute_url()
+        return link_to_model(instance, text="Custom text")
+        
+        # Sends the `default_value` kwarg that contains the database field value from the original
+        # column declaration.  If it's available and coerces to something True-like, it will be
+        # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
+        return link_to_model(instance, **kwargs)
+        
+        # Explicitly ensures that the database field's value, regardless of it being `None` or
+        # `False`, is used as the link text.
+        return link_to_model(instance, text=unicode(kwargs['default_value']))
+
+##### _As a callback:_ `link_to_model`
+When the helper is supplied directly as the callback handler in the column declaration, it should not be called.  The reference to the helper can act as a fully working callback, meaning that it accepts the row's object `instance` and all `*args` and `**kwargs`, including the supplied `default_value` argument.
+
+For database-backed columns where a model field is given in the column declaration, `default_value` will be consulted for a True-like value.  Failing that, the text will be generated as `unicode(instance)`.
+
+For virtual or compound fields where the model field is `None`, `default_value` will always evaluate to `False` and will thereby defer the value to `unicode(instance)`.
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # text becomes `myfield`'s value, or unicode(instance) if None, False, etc
+            ('My Field', 'myfield', link_to_model),
+            
+            # text is always unicode(instance), since there is never a database field value
+            ('My Field', None, link_to_model),
+        ],
+    }
+    
+#### `itemgetter()`
+_Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
+
+##### _As a callback:_ `itemgetter(k)`
+By supplying an index or key name, this helper returns a callable that will stand in as the callback, which when called returns the index-notation `k` of the operating value.  If `default_value` is unavailable or is False-like, the instance itself is accessed for the index lookup.
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # Takes the slice `[:50]` of `full_description`.  This works because `slice(0, 50)` is
+            # a valid index access value: mylist[slice(0, 2)] is the same as mylist[0:2].
+            ('Description', 'full_description', helpers.itemgetter(slice(0, 50))),
+        ],
+    }
+
+#### `attrgetter()`
+_Description: Like the built-in `operator.attrgetter()`, but allows for `*args` and `**kwargs` in the workflow.  If the fetched attribute value is callable, this helper calls it, allowing for method names to be given._
+
+##### _As a callback:_ `attrgetter(attr)`
+Provided an attribute name, this helper returns a callable that will stand in as the callback, which when called fetches that attribute from the row's model `instance`.  If that fetched value is callable, the helper calls it with no arguments and uses that as the new value.  This allows the helper to be given a method name, which is a common way to access data for a virtual or compound table column.
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # On a purely virtual field, this helper bridges the gap to calling a method without
+            # having to declare a method on the view.
+            ('Ficticious', None, helpers.attrgetter('get_ficticious_data')),
+            
+            # On compound fields, the model may already define a method for returning the data
+            ('Address', ['street_name', 'city', 'state', 'zip'], helpers.attrgetter('get_address')),
+            
+            # Models might also provide data to a virtual column via a property on the model class
+            ('My Field', None, helpers.attrgetter('my_property')),
+        ],
+    }
+
+#### `make_boolean_checkmark()`
+_Description: Returns the unicode entity `&#10004;` ("&#10004;") if the supplied value is True-like._
+
+##### _As a function:_ `make_boolean_checkmark(value, true_value="#&10004;", false_value="", *args, **kwargs)`
+If the value is True-like, `true_value` is returned.  Otherwise, `false_value` is returned.
+
+Examples:
+
+    def get_column_myfield_data(self, instance, *args, **kwargs):
+        # Simplest usage
+        return make_boolean_checkmark(instance.is_verified)
+
+##### _As a callback:_ `make_boolean_checkmark(key=None)`
+If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.  The default `key` function reads the 
+
+If the helper is given as a bare reference or called without any arguments, then the default `key` function is the equivalent of fetching the `default_value`, allowing for extremely easy use:
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # Automatically reads the 'myfield' value and emits "#&10004;" for True and "" for False
+            ('My Field', 'myfield', make_boolean_checkmark),
+            
+            # If "Is Verified" is virtual, one could chain the helper "attrgetter" to access a
+            # property or method name to supply the boolean value.
+            ('Is Verified', None, make_boolean_checkmark(key=helpers.attrgetter('get_is_verified'))),
+            
+            # If the above case didn't need to access a method, but rather a normal attribute, like
+            # a property, one could use the built-in operator.attrgetter instead of the one in the
+            # `helpers` module.
+            ('Is Verified', None, make_boolean_checkmark(key=operator.attrgetter('is_verified'))),
+        ],
+    }
+
+#### `format_date()`
+_Description: Takes a `strftime`-style format specifier to apply to a datetime object._
+
+##### _As a callback:_ `format_date(format_string, key=None)`
+If `key` is provided, it will be given the row's model `instance` to fetch a datetime to work with.  Without a `key` function, this helper will operate on the database field provided in the column declaration.
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # Simplest use of the helper as a deferred formatter.
+            ('Date created', 'created_date', format_date('%m/%d/%Y')),
+            
+            # Using the `attrgetter` helper to fetch a dynamic datetime from the instance.
+            ('Last admin modification', None, format_date('%m/%d/%Y', \
+                    key=helpers.attrgetter('get_last_admin_modification'))),
+        ],
+    }
+
+#### `format()`
+_Description: Takes a new-style format string (of the "{}".format(value) variety) to apply to the column value.  See <http://docs.python.org/2/library/string.html#format-examples> for help with the syntax._
+
+##### _As a callback:_ `format(format_string, cast=None)`
+Applies the `format_string` to the column value, or else to the instance itself if no value is available, such as on a virtual column.  The formatting call is given the value as a positional argument, and the row's model `instance` as the keyword argument `"obj"`.
+
+`cast` should a mapping function that coerces the value to a type suitable for sending into the formatting process, if necessary.
+
+Examples:
+
+    datatable_options = {
+        'columns': [
+            # Simplest use of the helper as a deferred formatter, adding locale digit seperators.
+            ('Total cost', 'total_cost', helpers.format('{:,}')),
+            
+            # Use of the cast argument, where the model field value is a string
+            ('Total cost', 'total_cost', helpers.format('{:.2f}', cast=float)),
+        ],
+    }
