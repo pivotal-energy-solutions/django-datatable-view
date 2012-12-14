@@ -176,7 +176,9 @@ class DatatableMixin(MultipleObjectMixin):
                             # Virtual columns won't be found on the model, so this is the escape hatch
                             continue
 
-                        if isinstance(field, (models.CharField, models.TextField)):
+                        if isinstance(field, (models.CharField, models.TextField, models.SlugField,
+                                              models.CommaSeparatedIntegerField, models.EmailField,
+                                              models.URLField)):
                             field_queries = [{component_name + '__icontains': term}]
                         elif isinstance(field, (models.DateTimeField, models.DateField)):
                             try:
@@ -191,11 +193,12 @@ class DatatableMixin(MultipleObjectMixin):
                             except ValueError:
                                 pass
                             else:
-                                field_queries.extend([
-                                    {component_name + '__year': numerical_value},
-                                    {component_name + '__month': numerical_value},
-                                    {component_name + '__day': numerical_value},
-                                ])
+                                if 0 < numerical_value < 3000:
+                                    field_queries.append({component_name + '__year': numerical_value})
+                                if 0 < numerical_value <= 12:
+                                    field_queries.append({component_name + '__month': numerical_value})
+                                if 0 < numerical_value <= 31:
+                                    field_queries.append({component_name + '__day': numerical_value})
                         elif isinstance(field, models.BooleanField):
                             if term.lower() in ('true', 'yes'):
                                 term = True
@@ -205,6 +208,12 @@ class DatatableMixin(MultipleObjectMixin):
                                 continue
 
                             field_queries.append({component_name: term})
+                        elif isinstance(field, (models.IntegerField, models.FloatField,
+                                                models.DecimalField, models.PositiveIntegerField,
+                                                models.PositiveSmallIntegerField,
+                                                models.BigIntegerField)):
+                            field_queries = [{component_name: term}]
+
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
 
@@ -217,62 +226,66 @@ class DatatableMixin(MultipleObjectMixin):
             # Apply the logical AND of all term inspections
             queryset = queryset.filter(reduce(operator.and_, queries))
 
-        # Get ready to turn the results into a normal iterable, which might happen during any of the
-        # following operations.
-        object_list = list(queryset)
+        
+        if not sort_fields and not searches:
+            # We can shortcut and speed up the process if all operations are database-backed.
+            object_list = queryset
+            unpaged_total = queryset.count()
+        else:
+            object_list = list(queryset)
 
-        # Sort the results manually for whatever remaining sort options are left over
-        def data_getter_orm(field_name):
-            def key(obj):
-                try:
-                    return reduce(getattr, [obj] + field_name.split('__'))
-                except (AttributeError, ObjectDoesNotExist):
-                    return None
-            return key
-        def data_getter_custom(i):
-            def key(obj):
-                rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
-                return plain_value
-            return key
+            # Sort the results manually for whatever remaining sort options are left over
+            def data_getter_orm(field_name):
+                def key(obj):
+                    try:
+                        return reduce(getattr, [obj] + field_name.split('__'))
+                    except (AttributeError, ObjectDoesNotExist):
+                        return None
+                return key
+            def data_getter_custom(i):
+                def key(obj):
+                    rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
+                    return plain_value
+                return key
 
-        for sort_field in sort_fields:
-            if sort_field.startswith('-'):
-                reverse = True
-                sort_field = sort_field[1:]
-            else:
-                reverse = False
+            for sort_field in sort_fields:
+                if sort_field.startswith('-'):
+                    reverse = True
+                    sort_field = sort_field[1:]
+                else:
+                    reverse = False
 
-            if sort_field.startswith('!'):
-                key_function = data_getter_custom
-                sort_field = int(sort_field[1:])
-            else:
-                key_function = data_getter_orm
+                if sort_field.startswith('!'):
+                    key_function = data_getter_custom
+                    sort_field = int(sort_field[1:])
+                else:
+                    key_function = data_getter_orm
 
-            object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
+                object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
 
-        # This is broken until it searches all items in object_list previous to the database sort.
-        # That represents a runtime load that hits every row in code, rather than in the database.
-        # If enabled, this would cripple performance on large datasets.
-        # # Manual searches
-        # for i, obj in enumerate(object_list[::]):
-        #     keep = False
-        #     for column_info in searches:
-        #         for term in search_terms:
-        #             column_index = options.columns.index(column_info)
-        #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
-        #             if term in plain_data:
-        #                 keep = True
-        #                 break
-        #         if keep:
-        #             break
-        #
-        #     if not keep:
-        #         object_list.pop(i)
-        #         # print column_info
-        #         # print data
-        #         # print '===='
+            # This is broken until it searches all items in object_list previous to the database sort.
+            # That represents a runtime load that hits every row in code, rather than in the database.
+            # If enabled, this would cripple performance on large datasets.
+            # # Manual searches
+            # for i, obj in enumerate(object_list[::]):
+            #     keep = False
+            #     for column_info in searches:
+            #         for term in search_terms:
+            #             column_index = options.columns.index(column_info)
+            #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
+            #             if term in plain_data:
+            #                 keep = True
+            #                 break
+            #         if keep:
+            #             break
+            #
+            #     if not keep:
+            #         object_list.pop(i)
+            #         # print column_info
+            #         # print data
+            #         # print '===='
 
-        unpaged_total = len(object_list)
+            unpaged_total = len(object_list)
 
         object_list = object_list[options.start_offset : options.start_offset+options.page_length]
 
@@ -348,7 +361,7 @@ class DatatableMixin(MultipleObjectMixin):
 
         data = []
         for i, name in enumerate(options.columns):
-            data.append(self.get_column_data(i, name, obj)[0])
+            data.append(unicode(self.get_column_data(i, name, obj)[0]))
 
         return data
 
@@ -357,6 +370,10 @@ class DatatableMixin(MultipleObjectMixin):
         is_custom, f = self._get_resolver_method(i, name)
         if is_custom:
             args, kwargs = self._get_preloaded_data(instance)
+            try:
+                kwargs['default_value'] = self._get_column_data_default(instance, name)[1]
+            except AttributeError:
+                kwargs['default_value'] = None
             values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
@@ -431,6 +448,9 @@ class DatatableMixin(MultipleObjectMixin):
                 # Method name is explicitly given
                 method_name = name[2]
                 if callable(method_name):
+                    if hasattr(method_name, '_is_wrapped'):
+                        # Wrapped by keyed_helper, but hasn't received a key argument
+                        return True, method_name()
                     return True, method_name
                 return True, getattr(self, method_name)
 
@@ -486,8 +506,11 @@ class DatatableMixin(MultipleObjectMixin):
 
             if value is not None:
                 values.append(value)
-
-        value = ' '.join(map(unicode, values))
+        
+        if len(values) == 1:
+            value = values[0]
+        else:
+            value = ' '.join(map(unicode, values))
 
         return value, value
 
