@@ -247,14 +247,29 @@ def split_real_fields(model, field_list, key=None):
     
     if key:
         field_list = map(key, field_list)
-    concrete_names = model._meta.get_all_field_names()
     
     i = 0
+    
+    def _getattr(model, attr):
+        descriptor = getattr(model, attr)
+        try:
+            return descriptor.related.model
+        except:
+            try:
+                return descriptor.field.rel.to
+            except:
+                return descriptor
     
     for i, field_name in enumerate(field_list):
         if field_name[0] in '-+':
             field_name = field_name[1:]
-        if field_name not in concrete_names:
+        
+        bits = field_name.split('__')
+        related_model = reduce(_getattr, [model] + bits[:-1])
+        
+        try:
+            _ = related_model._meta.get_field_by_name(bits[-1])
+        except:
             break
     else:
         i = len(field_list)
