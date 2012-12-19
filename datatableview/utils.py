@@ -51,10 +51,6 @@ class DatatableStructure(StrAndUnicode):
             sort_direction = 'desc' if name[0] == '-' else 'asc'
             self.ordering[plain_name] = (i, index, sort_direction)
         
-        print options.ordering
-        print model._meta.ordering
-        print self.ordering
-        
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
             'url': self.url,
