@@ -248,6 +248,8 @@ class DatatableOptions(UserDict):
 
     
     def get_column_index(self, name):
+        if name.startswith('!'):
+            return int(name[1:])
         return self._flat_column_names.index(name)
         
     
