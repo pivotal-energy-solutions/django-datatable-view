@@ -43,6 +43,18 @@ class DatatableStructure(StrAndUnicode):
         self.model = model
         self.options = options
         
+        ordering = options.ordering or model._meta.ordering
+        self.ordering = {}
+        for i, name in enumerate(ordering):
+            plain_name = name.lstrip('-+')
+            index = options.get_column_index(plain_name)
+            sort_direction = 'desc' if name[0] == '-' else 'asc'
+            self.ordering[plain_name] = (i, index, sort_direction)
+        
+        print options.ordering
+        print model._meta.ordering
+        print self.ordering
+        
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
             'url': self.url,
@@ -73,20 +85,19 @@ class DatatableStructure(StrAndUnicode):
         for name in self.options.columns:
             if isinstance(name, (tuple, list)):
                 # Take the friendly representation
-                name = name[0]
+                name = pretty_name = name[0]
             elif name in model_fields:
                 # Get the raw field name's verbose_name attribute.
                 field, model, direct, m2m = self.model._meta.get_field_by_name(name)
-                name = field.verbose_name.capitalize()
+                pretty_name = field.verbose_name.capitalize()
             # else:
             #     # Purely virtual column name
-            #     name = name.capitalize()
+            #     pretty_name = name.capitalize()
             
             attributes = self.get_column_attributes(name)
             
-            
             attributes_string = ' '.join('{}="{}"'.format(*item) for item in attributes.items())
-            column_info.append((name, attributes_string))
+            column_info.append((pretty_name, attributes_string))
         
         return column_info
     
@@ -94,6 +105,9 @@ class DatatableStructure(StrAndUnicode):
         attributes = {
             'data-sortable': 'true' if name not in self.options.unsortable_columns else 'false',
         }
+        
+        if name in self.ordering:
+            attributes['data-sorting'] = ','.join(map(unicode, self.ordering[name]))
         
         return attributes
 
@@ -125,6 +139,16 @@ class DatatableOptions(UserDict):
         kwargs = self._normalize_options(query_parameters, kwargs)
         
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
+        
+        self._flat_column_names = []
+        for field_name in self.columns:
+            if isinstance(field_name, (tuple, list)):
+                pretty_name, field_name = field_name[:2]
+            
+            if not field_name or isinstance(field_name, (tuple, list)):
+                field_name = pretty_name
+            
+            self._flat_column_names.append(field_name)
     
     def __getattr__(self, k):
         try:
@@ -166,11 +190,16 @@ class DatatableOptions(UserDict):
         # Ordering
         # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
         # column indices to check the values of sSortDir_X and bSortable_X
+        default_ordering = options['ordering']
         options['ordering'] = []
         try:
             num_sorting_columns = int(query.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
         except ValueError:
             num_sorting_columns = 0
+        
+        # Default sorting from view or model definition
+        if not num_sorting_columns:
+            options['ordering'] = default_ordering
         else:
             for sort_queue_i in range(num_sorting_columns):
                 try:
@@ -184,10 +213,7 @@ class DatatableOptions(UserDict):
                     
                     field_name = options['columns'][column_index]
                     if isinstance(field_name, (tuple, list)):
-                        if len(field_name) == 2:
-                            name, field_name = field_name
-                        else:
-                            name, field_name, data_f = field_name
+                        name, field_name = field_name[:2]
                         
                         # If the database source for the field is None, then this column will be
                         # forcefully sorted in code.  If the field_name is an iterable of compound
@@ -220,6 +246,11 @@ class DatatableOptions(UserDict):
         
         return options
 
+    
+    def get_column_index(self, name):
+        return self._flat_column_names.index(name)
+        
+    
 def get_datatable_structure(ajax_url, model, options):
     """
     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
