@@ -1,6 +1,7 @@
 import json
 import re
 import operator
+import logging
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse
@@ -12,6 +13,8 @@ import dateutil.parser
 
 from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
         filter_real_fields, get_datatable_structure
+
+log = logging.getLogger(__name__)
 
 class DatatableMixin(MultipleObjectMixin):
     """
