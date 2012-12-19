@@ -263,9 +263,9 @@ class DatatableMixin(MultipleObjectMixin):
 
                 object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
 
-            # This is broken until it searches all items in object_list previous to the database sort.
-            # That represents a runtime load that hits every row in code, rather than in the database.
-            # If enabled, this would cripple performance on large datasets.
+            # This is broken until it searches all items in object_list previous to the database
+            # sort. That represents a runtime load that hits every row in code, rather than in the
+            # database. If enabled, this would cripple performance on large datasets.
             # # Manual searches
             # for i, obj in enumerate(object_list[::]):
             #     keep = False
