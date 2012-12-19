@@ -251,7 +251,11 @@ class DatatableMixin(MultipleObjectMixin):
                     return plain_value
                 return key
 
-            for sort_field in sort_fields:
+            # Sort the list using the manual sort fields, back-to-front.  `sort` is a stable
+            # operation, meaning that multiple passes can be made on the list using different
+            # criteria.  The only catch is that the passes must be made in reverse order so that
+            # the "first" sort field with the most priority ends up getting applied last. 
+            for sort_field in sort_fields[::-1]:
                 if sort_field.startswith('-'):
                     reverse = True
                     sort_field = sort_field[1:]
@@ -264,7 +268,7 @@ class DatatableMixin(MultipleObjectMixin):
                 else:
                     key_function = data_getter_orm
 
-                object_list = sorted(object_list, key=key_function(sort_field), reverse=reverse)
+                object_list.sort(key=key_function(sort_field), reverse=reverse)
 
             # This is broken until it searches all items in object_list previous to the database
             # sort. That represents a runtime load that hits every row in code, rather than in the
