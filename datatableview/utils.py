@@ -15,7 +15,7 @@ DEFAULT_OPTIONS = {
     'search': None, # client search string
     'unsortable_columns': [], # table headers not allowed to be sorted
     'structure_template': "datatableview/default_structure.html",
-    
+
     # TODO: Support additional field options:
     # 'exclude': [],
 }
@@ -35,22 +35,24 @@ class DatatableStructure(StrAndUnicode):
     """
     A class designed to be echoed directly to into template HTML to represent a skeleton table
     structure that datatables.js can use.
-    
+
     """
-    
+
     def __init__(self, ajax_url, model, options):
         self.url = ajax_url
         self.model = model
         self.options = options
-        
+
         ordering = options.ordering or model._meta.ordering
         self.ordering = {}
         for i, name in enumerate(ordering):
             plain_name = name.lstrip('-+')
             index = options.get_column_index(plain_name)
+            if index == -1:
+                continue
             sort_direction = 'desc' if name[0] == '-' else 'asc'
             self.ordering[plain_name] = (i, index, sort_direction)
-        
+
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
             'url': self.url,
@@ -59,25 +61,25 @@ class DatatableStructure(StrAndUnicode):
     def __iter__(self):
         """
         Yields the column information suitable for rendering HTML.
-        
+
         Each time is returned as a 2-tuple in the form ("Column Name", "data-attribute='asdf'"),
-        
+
         """
-        
+
         for column_info in self.get_column_info():
             yield column_info
-    
+
     def get_column_info(self):
         """
         Returns an iterable of 2-tuples in the form
-        
+
             ("column_name", ' data-bSortable="true"',)
-        
+
         """
-        
+
         column_info = []
         model_fields = self.model._meta.get_all_field_names()
-        
+
         for name in self.options.columns:
             if isinstance(name, (tuple, list)):
                 # Take the friendly representation
@@ -89,22 +91,22 @@ class DatatableStructure(StrAndUnicode):
             # else:
             #     # Purely virtual column name
             #     pretty_name = name.capitalize()
-            
+
             attributes = self.get_column_attributes(name)
-            
+
             attributes_string = ' '.join('{}="{}"'.format(*item) for item in attributes.items())
             column_info.append((pretty_name, attributes_string))
-        
+
         return column_info
-    
+
     def get_column_attributes(self, name):
         attributes = {
             'data-sortable': 'true' if name not in self.options.unsortable_columns else 'false',
         }
-        
+
         if name in self.ordering:
             attributes['data-sorting'] = ','.join(map(unicode, self.ordering[name]))
-        
+
         return attributes
 
 class DatatableOptions(UserDict):
@@ -113,54 +115,54 @@ class DatatableOptions(UserDict):
     description in the form of ('Display Name', 'attribute_name'), where 'attribute_name' will be
     looked up in the following order: instance.attribute_name(), instance.attribute_name,
     view.attribute_name(instance)
-    
+
     ``ordering``: A list or tuple of column names to sort by.  If empty or ``None``, the model's
     default Meta.ordering option is respected.  Names corresponding to a database-backed field can
     be dealt with in the database, but virtual columns that exist as compound data cells need to be
     handled in code, which has a hard efficiency limit.  Mixing real and virtual columns tries to
     be as efficient as possible by letting the database do the sorting first, but ultimately
     triggers the code-driven ordering.
-    
+
     """
-    
+
     def __init__(self, model, query_parameters, *args, **kwargs):
         self._model = model
-        
+
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
             kwargs['columns'] = map(lambda f: f.verbose_name.capitalize(), model_fields)
-        
+
         # Absorb query GET params
         kwargs = self._normalize_options(query_parameters, kwargs)
-        
+
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
-        
+
         self._flat_column_names = []
         for field_name in self.columns:
             if isinstance(field_name, (tuple, list)):
                 pretty_name, field_name = field_name[:2]
-            
+
             if not field_name or isinstance(field_name, (tuple, list)):
                 field_name = pretty_name
-            
+
             self._flat_column_names.append(field_name)
-    
+
     def __getattr__(self, k):
         try:
             return self.data[k]
         except KeyError:
             raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
-    
+
     def _normalize_options(self, query, options):
         """
         Validates incoming options in the request query parameters.
-        
+
         """
-        
+
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
-        
+
         # Page start offset
         try:
             start_offset = query.get(OPTION_NAME_MAP['start_offset'], DEFAULT_OPTIONS['start_offset'])
@@ -171,7 +173,7 @@ class DatatableOptions(UserDict):
             if start_offset < 0:
                 start_offset = 0
         options['start_offset'] = start_offset
-        
+
         # Page length
         try:
             page_length = query.get(OPTION_NAME_MAP['page_length'], DEFAULT_OPTIONS['page_length'])
@@ -182,17 +184,17 @@ class DatatableOptions(UserDict):
             if page_length < MINIMUM_PAGE_LENGTH:
                 page_length = MINIMUM_PAGE_LENGTH
         options['page_length'] = page_length
-        
+
         # Ordering
         # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
         # column indices to check the values of sSortDir_X and bSortable_X
-        default_ordering = options['ordering']
+        default_ordering = options.get('ordering')
         options['ordering'] = []
         try:
             num_sorting_columns = int(query.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
         except ValueError:
             num_sorting_columns = 0
-        
+
         # Default sorting from view or model definition
         if not num_sorting_columns:
             options['ordering'] = default_ordering
@@ -206,11 +208,11 @@ class DatatableOptions(UserDict):
                     # Reject out-of-range sort requests
                     if column_index >= len(options['columns']):
                         continue
-                    
+
                     field_name = options['columns'][column_index]
                     if isinstance(field_name, (tuple, list)):
                         name, field_name = field_name[:2]
-                        
+
                         # If the database source for the field is None, then this column will be
                         # forcefully sorted in code.  If the field_name is an iterable of compound
                         # sources, the final output from the data method should also be used.
@@ -218,7 +220,7 @@ class DatatableOptions(UserDict):
                             field_name = '!{}'.format(column_index)
                     else:
                         name = field_name
-                        
+
                         # If the singular column name isn't a model field, mark it for manual handling
                         if field_name not in self._model._meta.get_all_field_names():
                             field_name = '!{}'.format(column_index)
@@ -226,10 +228,10 @@ class DatatableOptions(UserDict):
                     # Reject requests for unsortable columns
                     if name in options.get('unsortable_columns', []):
                         continue
-                    
+
                     # Get the client's requested sort direction
                     sort_direction = query.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
-                    
+
                     sort_modifier = None
                     if sort_direction == 'asc':
                         sort_modifier = ''
@@ -237,27 +239,30 @@ class DatatableOptions(UserDict):
                         sort_modifier = '-'
                     else:
                         continue
-                        
+
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
-        
+
         return options
 
-    
+
     def get_column_index(self, name):
         if name.startswith('!'):
             return int(name[1:])
-        return self._flat_column_names.index(name)
-        
-    
+        try:
+            return self._flat_column_names.index(name)
+        except ValueError:
+            return -1
+
+
 def get_datatable_structure(ajax_url, model, options):
     """
     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
-    
+
     """
-    
+
     if not isinstance(options, DatatableOptions):
         options = DatatableOptions(model, {}, **options)
-    
+
     return DatatableStructure(ajax_url, model, options)
 
 def split_real_fields(model, field_list, key=None):
@@ -265,20 +270,20 @@ def split_real_fields(model, field_list, key=None):
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This
     is used repeatedly for allowing a client to request sorting or filtering on virtual or compound
     columns in the display.
-    
+
     If ``key`` is specified, it is used to access items in ``field_list`` for the comparison, in
     the same fashion as the built-in ``sort`` function.
-    
+
     Returns a 2-tuple, where the database can safely handle the first item, and the second must be
     handled in code.
-    
+
     """
-    
+
     if key:
         field_list = map(key, field_list)
-    
+
     i = 0
-    
+
     def _getattr(model, attr):
         descriptor = getattr(model, attr)
         try:
@@ -288,41 +293,41 @@ def split_real_fields(model, field_list, key=None):
                 return descriptor.field.rel.to
             except:
                 return descriptor
-    
+
     for i, field_name in enumerate(field_list):
         if field_name[0] in '-+':
             field_name = field_name[1:]
-        
+
         bits = field_name.split('__')
         related_model = reduce(_getattr, [model] + bits[:-1])
-        
+
         try:
             _ = related_model._meta.get_field_by_name(bits[-1])
         except:
             break
     else:
         i = len(field_list)
-            
+
     return field_list[:i], field_list[i:]
 
 def filter_real_fields(model, field_list, key=None):
     """
     Like ``split_real_fields``, except that the returned 2-tuple is [0] the set of concrete field
     names that can be queried in the ORM, and [1] the set of virtual names that can't be handled.
-    
+
     """
-    
+
     if key:
         field_map = dict(zip(map(key, field_list), field_list))
     else:
         field_map = dict(zip(field_list, field_list))
-    
+
     field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())
-    
+
     # Do some math with sets
     concrete_fields = concrete_names.intersection(field_list)
     virtual_fields = field_list.difference(concrete_names)
-    
+
     # Get back the original data items that correspond to the found data
     return map(field_map.get, concrete_fields), map(field_map.get, virtual_fields)
