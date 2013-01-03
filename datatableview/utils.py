@@ -88,9 +88,9 @@ class DatatableStructure(StrAndUnicode):
                 # Get the raw field name's verbose_name attribute.
                 field, model, direct, m2m = self.model._meta.get_field_by_name(name)
                 pretty_name = field.verbose_name.capitalize()
-            # else:
-            #     # Purely virtual column name
-            #     pretty_name = name.capitalize()
+            else:
+                # Purely virtual column name
+                pretty_name = name.capitalize()
 
             attributes = self.get_column_attributes(name)
 
