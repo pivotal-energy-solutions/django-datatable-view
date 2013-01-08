@@ -210,13 +210,17 @@ class DatatableMixin(MultipleObjectMixin):
                             else:
                                 continue
 
-                            field_queries.append({component_name: term})
-                        elif isinstance(field, (models.IntegerField, models.FloatField,
-                                                models.DecimalField, models.PositiveIntegerField,
-                                                models.PositiveSmallIntegerField,
-                                                models.BigIntegerField)):
                             field_queries = [{component_name: term}]
-
+                        elif isinstance(field, models.IntegerField):
+                            try:
+                                field_queries = [{component_name: int(term)}]
+                            except ValueError:
+                                pass
+                        elif isinstance(field, (models.FloatField, models.DecimalField)):
+                            try:
+                                field_queries = [{component_name: float(term)}]
+                            except ValueError:
+                                pass
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
 
