@@ -7,18 +7,18 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://h
 The basic template for usage in a view is shown below.
 
     # views.py
-    
+
     from datatableview.views import DatatableView
     from myapp.models import MyModel
-    
+
     class MyListView(DatatableView):
         datatable_options = {
             'columns': ['field_name1', 'field_name2'],
         }
-        
+
         def get_queryset(self):
             return MyModel.objects.filter(user=self.request.user)
-    
+
 `DatatableView` inherits from the generic `ListView` built-in view.  This means that as a foundation, a datatable-enhanced view requires very little extra configuration to get off the ground.  Methods such as `get_queryset()` function normally.
 
 The simplest way to output this simple table as HTML in a template is to use the `datatable` context variable, which `DatatableView` makes available via `get_context_data()`.  (So if you override `get_context_data()`, be sure to call `super()`!).
@@ -26,21 +26,21 @@ The simplest way to output this simple table as HTML in a template is to use the
 Thus, in your template ("mymodel_list.html" if we're following the standard ListView template naming scheme), you would echo the value where you want the table to appear:
 
     {# mymodel_list.html #}
-    
+
     {% block media %}
         <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dataTable.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}js/datatableview.js"></script>
     {% endblock %}
-    
+
     {% block content %}
         {{ datatable }}
     {% endblock %}
-    
+
 The `datatable` context variable is a basic object that has a unicode representation matching the configuration options specified in the originating view.  The output is a table skeleton of just table headers, annotated with information that the provided `datatableview.js` file will use to
 detect and bootstrap the table's interactive features, including fetching the first batch of AJAX data.
 
 Each of the generated datatable `<th>` elements have a custom attribute "data-name", whose values are just the header name put through the `slugify` template filter.  This provides a simple way for CSS to be provided on the page to specify style attributes such as column width:
-    
+
     .datatable th[data-name="slugified-field-name"] {
         width: 20%;
     }
@@ -59,7 +59,7 @@ The column header's displayed title is by default a mangling of the field name g
             'field_name2',
         ],
     }
-    
+
 `field_name2` is left to behave normally, while `field_name1` will display on the table as "Friendly Name".
 
 Django's relationship-spanning lookups can be used here as well:
@@ -85,7 +85,7 @@ Using the example of a compound address table column:
             'field_name2',
         ],
     }
-    
+
 This configuration will produce a column titled "Address", whose contents is all of the database field values joined with a space.  That format might not be good enough for something as punctuated as an address should be, so you should consult the [Customizing column output](#customizing-column-output) section below to understand how to manually format the table cell contents beyond this default.  This configuration, however, is fully capable of providing database-backed searching features for the listed columns.
 
 #### Pure virtual columns
@@ -118,12 +118,12 @@ A contrived example following from the original configuration sample:
                 'field_name2',
             ],
         }
-        
+
         # ... get_queryset() or model should be defined
-        
+
         def get_column_Friendly_Name_data(self, instance, *args, **kwargs):
             return "{:.2f}".format(instance.field_name1)
-        
+
         def get_column_field_name2_data(self, instance, *args, **kwargs):
             return "<em>{}</em>".format(self.field_name2)
 
@@ -146,11 +146,11 @@ Alternatively, columns can explicitly declare a method name as part of the colum
                 'field_name2',
             ],
         }
-        
+
         # ...
-        
+
         def get_friendly_data(self, instance, *args, **kwargs):
-            return "{:.2f}".format(instance.field_name1) 
+            return "{:.2f}".format(instance.field_name1)
 
 If the callback name in the configuration (e.g., `"get_friendly_data"`) were a full callable function instead of a string, the function would be used directly, as opposed to looking up any method on the view itself.
 
@@ -163,9 +163,9 @@ Finally, a purely virtual table column can also declare an explicit callback nam
                 'field_name2',
             ],
         }
-        
+
         # ...
-        
+
         def get_fictitious_data(self, instance, *args, **kwargs):
             return instance.get_generated_data()
 
@@ -186,14 +186,14 @@ The special method `preload_record_data()` can return these values, computed onc
                 'field_name2',
             ],
         }
-        
+
         # ...
-        
+
         def preload_record_data(self, instance):
             users = instance.get_authorized_users()
-            
+
             return (users,)
-        
+
         def get_fictitious_data(self, instance, users, *args, **kwargs):
             return instance.get_generated_data(users)
 
@@ -205,9 +205,9 @@ Alternatively, a tuple with more elements can be returned with whatever data is 
     def preload_record_data(self, instance):
         users = instance.get_authorized_users()
         groups = instance.get_authorized_groups()
-        
+
         return (users, groups)
-    
+
     def get_fictitious_data(self, instance, users, groups, *args, **kwargs):
         return instance.get_generated_data(users)
 
@@ -224,7 +224,7 @@ By default, a DatatableView includes an object in the context called `datatable`
 If the table needs custom rendering, you can instead iterate over the `datatable` object in the template.  An equivalent to the default skeleton can be rendered in this style by using the following template HTML:
 
     # object_list.html
-    
+
     {# ... #}
     <table class="datatable" data-url="{{ datatable.url }}">
         <tr>
@@ -270,10 +270,10 @@ To solve the problem, the callback can return a crunched percentage value as the
     def get_column_Questions_Answered_data(self, instance, *args, **kwargs):
         num_answered = instance.get_answered_questions().count()
         total = instance.get_total_questions().count()
-        
+
         rich_data = "%s / %s" % (num_answered, total)
         plain_data = 1. * num_answered / total
-        
+
         return (rich_data, plain_data)
 
 This secondary value is only used in the server-side processing.  The JSON data returned to the client will be the first value.
@@ -297,16 +297,16 @@ Examples:
     def get_column_myfield_data(self, instance, *args, **kwargs):
         # Simplest usage, text=unicode(instance)
         return link_to_model(instance)
-        
+
         # Overrides linked text, although the URL is still retrieved from
         # instance.get_absolute_url()
         return link_to_model(instance, text="Custom text")
-        
+
         # Sends the `default_value` kwarg that contains the database field value from the original
         # column declaration.  If it's available and coerces to something True-like, it will be
         # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
         return link_to_model(instance, **kwargs)
-        
+
         # Explicitly ensures that the database field's value, regardless of it being `None` or
         # `False`, is used as the link text.
         return link_to_model(instance, text=unicode(kwargs['default_value']))
@@ -324,12 +324,12 @@ Examples:
         'columns': [
             # text becomes `myfield`'s value, or unicode(instance) if None, False, etc
             ('My Field', 'myfield', link_to_model),
-            
+
             # text is always unicode(instance), since there is never a database field value
             ('My Field', None, link_to_model),
         ],
     }
-    
+
 #### `itemgetter()`
 _Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
 
@@ -359,10 +359,10 @@ Examples:
             # On a purely virtual field, this helper bridges the gap to calling a method without
             # having to declare a method on the view.
             ('Ficticious', None, helpers.attrgetter('get_ficticious_data')),
-            
+
             # On compound fields, the model may already define a method for returning the data
             ('Address', ['street_name', 'city', 'state', 'zip'], helpers.attrgetter('get_address')),
-            
+
             # Models might also provide data to a virtual column via a property on the model class
             ('My Field', None, helpers.attrgetter('my_property')),
         ],
@@ -381,7 +381,7 @@ Examples:
         return make_boolean_checkmark(instance.is_verified)
 
 ##### _As a callback:_ `make_boolean_checkmark(key=None)`
-If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.  The default `key` function reads the 
+If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.  The default `key` function reads the
 
 If the helper is given as a bare reference or called without any arguments, then the default `key` function is the equivalent of fetching the `default_value`, allowing for extremely easy use:
 
@@ -391,11 +391,11 @@ Examples:
         'columns': [
             # Automatically reads the 'myfield' value and emits "#&10004;" for True and "" for False
             ('My Field', 'myfield', make_boolean_checkmark),
-            
+
             # If "Is Verified" is virtual, one could chain the helper "attrgetter" to access a
             # property or method name to supply the boolean value.
             ('Is Verified', None, make_boolean_checkmark(key=helpers.attrgetter('get_is_verified'))),
-            
+
             # If the above case didn't need to access a method, but rather a normal attribute, like
             # a property, one could use the built-in operator.attrgetter instead of the one in the
             # `helpers` module.
@@ -415,7 +415,7 @@ Examples:
         'columns': [
             # Simplest use of the helper as a deferred formatter.
             ('Date created', 'created_date', format_date('%m/%d/%Y')),
-            
+
             # Using the `attrgetter` helper to fetch a dynamic datetime from the instance.
             ('Last admin modification', None, format_date('%m/%d/%Y', \
                     key=helpers.attrgetter('get_last_admin_modification'))),
@@ -436,8 +436,31 @@ Examples:
         'columns': [
             # Simplest use of the helper as a deferred formatter, adding locale digit seperators.
             ('Total cost', 'total_cost', helpers.format('{:,}')),
-            
+
             # Use of the cast argument, where the model field value is a string
             ('Total cost', 'total_cost', helpers.format('{:.2f}', cast=float)),
         ],
     }
+
+
+## Authors
+
+* Tim Valenta
+* Steven Klass
+
+
+## Copyright and license
+
+Copyright (c) 2012-2013 Pivotal Energy Solutions.  All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+You may obtain a copy of the License in the LICENSE file, or at:
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
