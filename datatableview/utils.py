@@ -316,11 +316,8 @@ def filter_real_fields(model, field_list, key=None):
     names that can be queried in the ORM, and [1] the set of virtual names that can't be handled.
 
     """
-
-    if key:
-        field_map = dict(zip(map(key, field_list), field_list))
-    else:
-        field_map = dict(zip(field_list, field_list))
+    
+    field_map = dict(zip(map(key, fields), fields))
 
     field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())
