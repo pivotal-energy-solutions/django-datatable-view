@@ -310,7 +310,7 @@ def split_real_fields(model, field_list, key=None):
 
     return field_list[:i], field_list[i:]
 
-def filter_real_fields(model, field_list, key=None):
+def filter_real_fields(model, fields, key=None):
     """
     Like ``split_real_fields``, except that the returned 2-tuple is [0] the set of concrete field
     names that can be queried in the ORM, and [1] the set of virtual names that can't be handled.
@@ -327,4 +327,6 @@ def filter_real_fields(model, field_list, key=None):
     virtual_fields = field_list.difference(concrete_names)
 
     # Get back the original data items that correspond to the found data
-    return map(field_map.get, concrete_fields), map(field_map.get, virtual_fields)
+    db_fields = filter(lambda f: (key(f) if key else f) in concrete_fields, fields)
+    virtual_fields = map(field_map.get, virtual_fields)
+    return db_fields, virtual_fields
