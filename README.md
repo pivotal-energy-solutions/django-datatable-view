@@ -229,7 +229,7 @@ If the table needs custom rendering, you can instead iterate over the `datatable
     <table class="datatable" data-url="{{ datatable.url }}">
         <tr>
             {% for name, attributes in datatable %}
-            <th data-name="name|slugify" {{ attributes }}>{{ name }}</th>
+            <th data-name="{{ name|slugify }}" {{ attributes }}>{{ name }}</th>
             {% endfor %}
         </tr>
     </table>
