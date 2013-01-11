@@ -1,3 +1,7 @@
+function confirm_datatable_options(options, datatable) {
+    return options;
+}
+
 $(function(){
     var options_name_map = {
         'sortable': 'bSortable',
@@ -46,7 +50,7 @@ $(function(){
             sorting_options[i] = sorting_options[i].slice(1);
         }
         
-        var initialized_datatable = datatable.dataTable({
+        options = {
             "bServerSide": true,
             "bStateSave": true,
             "aaSorting": sorting_options,
@@ -60,7 +64,14 @@ $(function(){
                 }
                 return infoString;
             }
-        });
+        }
+        try {
+            options = confirm_datatable_options(options, datatable);
+        } catch (e) {
+            
+        }
+        
+        var initialized_datatable = datatable.dataTable(options);
         
         try {
             initialized_datatable.fnSetFilteringDelay();
