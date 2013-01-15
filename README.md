@@ -2,6 +2,8 @@
 
 This package is used in conjunction with the jQuery plugin [DataTables](http://http://datatables.net/), and supports state-saving detection with [fnSetFilteringDelay](http://datatables.net/plug-ins/api).  The package consists of a class-based view, and a small collection of utilities for internal and external use.
 
+Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
+
 ## Usage
 
 The basic template for usage in a view is shown below.
