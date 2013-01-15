@@ -1,7 +1,3 @@
-function confirm_datatable_options(options, datatable) {
-    return options;
-}
-
 $(function(){
     var options_name_map = {
         'sortable': 'bSortable',
