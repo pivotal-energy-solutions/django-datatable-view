@@ -244,6 +244,31 @@ The `th` "data-name" attribute isn't required for any dataTables.js functionalit
 
 the `attributes` value is a pre-rendered HTML string of custom data-* attributes that provide configuration details to datatableview.js when it detects the datatable skeleton, such as sorting being enabled or disabled.
 
+## Modifying dataTables JavaScript options
+
+The supplied datatableview.js will bootstrap any `".datatable"` elements on the page, but if the options need to be modified or supplemented before the datatable is created, you have a chance to do as you will before the datatable constructor is called.
+
+datatableview.js will attempt to call a global function `confirm_datatable_options()`, sending it two arguments: `options` and `datatable`.  This global function will be called for every datatable being generated on the page, so your function should be capable of handling multiple datatables if necessary.
+
+`confirm_datatable_options()` should return the options object, modified or not.
+
+In the most common case, where only one datatable exists on the page, or if all datatables are having the same modification made to their options, you can even omit the `datatable` parameter on the your function declaration.
+
+A good example of using this function is to supply extra non-standard callbacks to datatables.js, such as the one `fnServerParams` which enables the client to push extra arbitrary data into the server query.
+
+    // object_list.html
+    <script type="text/javascript"
+        function confirm_datatable_options(options) {
+            options.fnServerParams = function(aoData){
+                aoData.push({'name': "myvar", 'value': "myvalue"})
+            }
+            
+            return options;
+        }
+    </script>
+
+All of the datatables.js options can be specified here, including options enabled by the various datatables.js plugins.
+
 ## Advanced sorting of pure virtual columns
 
 When columns backed by concrete database fields are sorted, the sort behavior is straightforward: model field value is the data source, irrespective of presentation modifications made through the  functions described in [Customizing column output](#customizing-column-output).  But when the column has no direct correlation with a database field, what then?
