@@ -183,14 +183,19 @@ class DatatableMixin(MultipleObjectMixin):
                                               models.CommaSeparatedIntegerField, models.EmailField,
                                               models.URLField)):
                             field_queries = [{component_name + '__icontains': term}]
-                        elif isinstance(field, (models.DateTimeField, models.DateField)):
+                        elif isinstance(field, models.DateField):
                             try:
                                 date_obj = dateutil.parser.parse(term)
                             except ValueError:
                                 # This exception is theoretical, but it doesn't seem to raise.
                                 pass
+                            except TypeError:
+                                # Failed conversions can lead to the parser adding ints to None.
+                                pass
                             else:
                                 field_queries.append({component_name: date_obj})
+                            
+                            # Add queries for more granular date field lookups
                             try:
                                 numerical_value = int(term)
                             except ValueError:
