@@ -298,7 +298,10 @@ class DatatableMixin(MultipleObjectMixin):
 
             unpaged_total = len(object_list)
 
-        object_list = object_list[options.start_offset : options.start_offset+options.page_length]
+        if options.page_length != -1:
+            i_begin = options.start_offset
+            i_end = options.start_offset+options.page_length
+            object_list = object_list[i_begin:i_end]
 
         return object_list, total_initial_record_count, unpaged_total
 

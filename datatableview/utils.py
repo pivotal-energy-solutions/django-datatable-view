@@ -181,7 +181,9 @@ class DatatableOptions(UserDict):
         except ValueError:
             page_length = DEFAULT_OPTIONS['page_length']
         else:
-            if page_length < MINIMUM_PAGE_LENGTH:
+            if page_length == -1: # datatable's way of asking for all items, no pagination
+                pass
+            elif page_length < MINIMUM_PAGE_LENGTH:
                 page_length = MINIMUM_PAGE_LENGTH
         options['page_length'] = page_length
 
