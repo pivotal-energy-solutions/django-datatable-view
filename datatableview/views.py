@@ -364,7 +364,7 @@ class DatatableMixin(MultipleObjectMixin):
 
         data = []
         for i, name in enumerate(options.columns):
-            data.append(unicode(self.get_column_data(i, name, obj)[0]))
+            data.append(unicode(self.get_column_data(i, name, obj)[0].decode('utf-8')))
 
         return data
 
