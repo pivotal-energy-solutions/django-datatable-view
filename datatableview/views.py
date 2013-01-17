@@ -12,7 +12,7 @@ from django.utils.cache import add_never_cache_headers
 import dateutil.parser
 
 from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
-        filter_real_fields, get_datatable_structure
+        filter_real_fields, get_datatable_structure, resolve_orm_path
 
 log = logging.getLogger(__name__)
 
@@ -142,16 +142,6 @@ class DatatableMixin(MultipleObjectMixin):
             queries = [] # Queries generated to search all fields for all terms
             search_terms = map(unicode.strip, options.search.split())
 
-            def field_getter(item, bit):
-                try:
-                    item = item.related.model
-                except AttributeError:
-                    try:
-                        item = item.field.rel.to
-                    except AttributeError:
-                        pass
-                return getattr(item, bit)
-
             for term in search_terms:
                 term_queries = [] # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
@@ -163,20 +153,14 @@ class DatatableMixin(MultipleObjectMixin):
 
                     for component_name in name:
                         field_queries = [] # Queries generated to search this database field for the search term
-                        bits = component_name.split('__')
-                        obj = reduce(field_getter, [self.model] + bits[:-1])
 
-                        if obj is not self.model:
-                            if hasattr(obj, 'related'): # one of the object descriptors
-                                obj = obj.related.model
-                            else: # one of the foreign key fields
-                                obj = obj.field.rel.to
-
-                        # Get the Field type from the related model
                         try:
-                            field, model, direct, m2m = obj._meta.get_field_by_name(bits[-1])
+                            field = resolve_orm_path(self.model, component_name)
                         except models.fields.FieldDoesNotExist:
-                            # Virtual columns won't be found on the model, so this is the escape hatch
+                            # Virtual columns won't be found on the model, so this is the escape
+                            # hatch.
+                            # FIXME: Should this even happen if we can promise that this includes
+                            # only database fields?
                             continue
 
                         if isinstance(field, (models.CharField, models.TextField, models.SlugField,

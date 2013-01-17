@@ -321,26 +321,15 @@ def split_real_fields(model, field_list, key=None):
 
     i = 0
 
-    def _getattr(model, attr):
-        descriptor = getattr(model, attr)
-        try:
-            return descriptor.related.model
-        except:
-            try:
-                return descriptor.field.rel.to
-            except:
-                return descriptor
-
     for i, field_name in enumerate(field_list):
         if field_name[0] in '-+':
             field_name = field_name[1:]
 
-        bits = field_name.split('__')
-        related_model = reduce(_getattr, [model] + bits[:-1])
-
+        # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
+        # the search for the first non-database field should end.
         try:
-            _ = related_model._meta.get_field_by_name(bits[-1])
-        except:
+            resolve_orm_path(model, field_name)
+        except FieldDoesNotExist:
             break
     else:
         i = len(field_list)
@@ -353,7 +342,7 @@ def filter_real_fields(model, fields, key=None):
     names that can be queried in the ORM, and [1] the set of virtual names that can't be handled.
 
     """
-    
+
     field_map = dict(zip(map(key, fields), fields))
 
     field_list = set(field_map.keys())
