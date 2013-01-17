@@ -176,7 +176,7 @@ class DatatableMixin(MultipleObjectMixin):
                                 pass
                             else:
                                 field_queries.append({component_name: date_obj})
-                            
+
                             # Add queries for more granular date field lookups
                             try:
                                 numerical_value = int(term)
@@ -220,7 +220,7 @@ class DatatableMixin(MultipleObjectMixin):
             # Apply the logical AND of all term inspections
             queryset = queryset.filter(reduce(operator.and_, queries))
 
-        
+
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
@@ -245,7 +245,7 @@ class DatatableMixin(MultipleObjectMixin):
             # Sort the list using the manual sort fields, back-to-front.  `sort` is a stable
             # operation, meaning that multiple passes can be made on the list using different
             # criteria.  The only catch is that the passes must be made in reverse order so that
-            # the "first" sort field with the most priority ends up getting applied last. 
+            # the "first" sort field with the most priority ends up getting applied last.
             for sort_field in sort_fields[::-1]:
                 if sort_field.startswith('-'):
                     reverse = True
@@ -507,7 +507,7 @@ class DatatableMixin(MultipleObjectMixin):
 
             if value is not None:
                 values.append(value)
-        
+
         if len(values) == 1:
             value = values[0]
         else:
