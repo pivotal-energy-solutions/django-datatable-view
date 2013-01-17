@@ -163,9 +163,7 @@ class DatatableMixin(MultipleObjectMixin):
                             # only database fields?
                             continue
 
-                        if isinstance(field, (models.CharField, models.TextField, models.SlugField,
-                                              models.CommaSeparatedIntegerField, models.EmailField,
-                                              models.URLField)):
+                        if isinstance(field, (models.CharField, models.TextField)):
                             field_queries = [{component_name + '__icontains': term}]
                         elif isinstance(field, models.DateField):
                             try:
