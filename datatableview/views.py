@@ -365,12 +365,14 @@ class DatatableMixin(MultipleObjectMixin):
 
         options = self._get_datatable_options()
 
-        data = []
+        data = {
+            'DT_RowId': obj.id,
+        }
         for i, name in enumerate(options.columns):
-            try:
-                data.append(unicode(self.get_column_data(i, name, obj)[0].decode('utf-8')))
-            except AttributeError:
-                data.append(unicode(self.get_column_data(i, name, obj)[0]))
+            column_data = self.get_column_data(i, name, obj)[0]
+            if isinstance(column_data, str): # not unicode
+                column_data = column_data.decode('utf-8')
+            data[str(i)] = unicode(column_data)
         return data
 
     def get_column_data(self, i, name, instance):
