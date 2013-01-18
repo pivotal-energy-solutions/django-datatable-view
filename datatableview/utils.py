@@ -61,6 +61,8 @@ def get_model_at_related_field(model, attr):
         model = field.field.rel.to
     elif direct:
         model = field.related.model
+    elif model:
+        model = model
     else:
         raise ValueError("{}.{} ({}) is not a relationship field.".format(model.__name__, attr,
                 field.__class__.__name__))
