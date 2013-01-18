@@ -259,7 +259,10 @@ class DatatableMixin(MultipleObjectMixin):
                 else:
                     key_function = data_getter_orm
 
-                object_list.sort(key=key_function(sort_field), reverse=reverse)
+                try:
+                    object_list.sort(key=key_function(sort_field), reverse=reverse)
+                except TypeError as err:
+                    log.error("Unable to sort on {} - {}".format(sort_field, err))
 
             # This is broken until it searches all items in object_list previous to the database
             # sort. That represents a runtime load that hits every row in code, rather than in the
