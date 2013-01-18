@@ -216,9 +216,11 @@ class DatatableMixin(MultipleObjectMixin):
                         # Append each field inspection for this term
                         term_queries.extend(map(lambda q: Q(**q), field_queries))
                 # Append the logical OR of all field inspections for this term
-                queries.append(reduce(operator.or_, term_queries))
+                if len(term_queries):
+                    queries.append(reduce(operator.or_, term_queries))
             # Apply the logical AND of all term inspections
-            queryset = queryset.filter(reduce(operator.and_, queries))
+            if len(queries):
+                queryset = queryset.filter(reduce(operator.and_, queries))
 
 
         if not sort_fields and not searches:
