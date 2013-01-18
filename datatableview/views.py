@@ -362,8 +362,10 @@ class DatatableMixin(MultipleObjectMixin):
 
         data = []
         for i, name in enumerate(options.columns):
-            data.append(unicode(self.get_column_data(i, name, obj)[0].decode('utf-8')))
-
+            try:
+                data.append(unicode(self.get_column_data(i, name, obj)[0].decode('utf-8')))
+            except AttributeError:
+                data.append(unicode(self.get_column_data(i, name, obj)[0]))
         return data
 
     def get_column_data(self, i, name, instance):
