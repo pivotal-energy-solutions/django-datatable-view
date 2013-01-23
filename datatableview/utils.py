@@ -15,6 +15,7 @@ DEFAULT_OPTIONS = {
     'page_length': 25, # length of a single result page
     'search': None, # client search string
     'unsortable_columns': [], # table headers not allowed to be sorted
+    'hidden_columns': [], # table headers to be generated, but hidden by the client
     'structure_template': "datatableview/default_structure.html",
 
     # TODO: Support additional field options:
@@ -30,6 +31,12 @@ OPTION_NAME_MAP = {
     'num_sorting_columns': 'iSortingCols',
     'sort_column': 'iSortCol_%d',
     'sort_column_direction': 'sSortDir_%d',
+}
+
+# Private utilities
+_javascript_boolean = {
+    True: 'true',
+    False: 'false',
 }
 
 def resolve_orm_path(model, orm_path):
@@ -138,7 +145,8 @@ class DatatableStructure(StrAndUnicode):
 
     def get_column_attributes(self, name):
         attributes = {
-            'data-sortable': 'true' if name not in self.options.unsortable_columns else 'false',
+            'data-sortable': _javascript_boolean[name not in self.options.unsortable_columns],
+            'data-visible': _javascript_boolean[name not in self.options.hidden_columns],
         }
 
         if name in self.ordering:
@@ -170,6 +178,9 @@ class DatatableOptions(UserDict):
             model_fields = model._meta.local_fields
             kwargs['columns'] = map(lambda f: f.verbose_name.capitalize(), model_fields)
 
+        if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
+            kwargs['hidden_columns'] = []
+
         # Absorb query GET params
         kwargs = self._normalize_options(query_parameters, kwargs)
 
@@ -192,10 +203,7 @@ class DatatableOptions(UserDict):
             raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
 
     def _normalize_options(self, query, options):
-        """
-        Validates incoming options in the request query parameters.
-
-        """
+        """ Validates incoming options in the request query parameters. """
 
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
