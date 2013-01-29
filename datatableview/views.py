@@ -389,7 +389,11 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, name)
 
         if not isinstance(values, (tuple, list)):
-            values = (values, re.sub(r'<[^>]+>', '', values))
+            if isinstance(values, str): # not unicode
+                unicode_value = values.decode('utf-8')
+            else:
+                unicode_value = unicode(values)
+            values = (values, re.sub(r'<[^>]+>', '', unicode_value))
 
         return values
 
