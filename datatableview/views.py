@@ -484,7 +484,7 @@ class DatatableMixin(MultipleObjectMixin):
 
 
     def _get_column_data_default(self, instance, name):
-        """ Default mechanism for resolving ``name`` through the model instance ``obj``. """
+        """ Default mechanism for resolving ``name`` through the model instance ``instance``. """
 
         def chain_lookup(obj, bit):
             try:
