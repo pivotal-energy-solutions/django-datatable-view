@@ -14,6 +14,7 @@ DEFAULT_OPTIONS = {
     'start_offset': 0, # results to skip ahead
     'page_length': 25, # length of a single result page
     'search': None, # client search string
+    'search_fields': [], # extra ORM paths to search; not displayed
     'unsortable_columns': [], # table headers not allowed to be sorted
     'hidden_columns': [], # table headers to be generated, but hidden by the client
     'structure_template': "datatableview/default_structure.html",
@@ -180,6 +181,9 @@ class DatatableOptions(UserDict):
 
         if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
             kwargs['hidden_columns'] = []
+
+        if 'search_fields' not in kwargs or kwargs['search_fields'] is None:
+            kwargs['search_fields'] = []
 
         # Absorb query GET params
         kwargs = self._normalize_options(query_parameters, kwargs)

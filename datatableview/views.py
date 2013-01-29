@@ -138,6 +138,7 @@ class DatatableMixin(MultipleObjectMixin):
                     return item[0].split('__')[0]
                 return item
             db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
+            db_fields.extend(options.search_fields)
 
             queries = [] # Queries generated to search all fields for all terms
             search_terms = map(unicode.strip, options.search.split())
