@@ -116,6 +116,9 @@ def format_date(format_string, key=None):
 
 def format(format_string, cast=lambda x:x):
     def helper(instance, *args, **kwargs):
-        value = cast(kwargs.get('default_value') or instance)
+        value = kwargs.get('default_value')
+        if value is None:
+            value = instance
+        value = cast(value)
         return format_string.format(value, obj=instance)
     return helper
