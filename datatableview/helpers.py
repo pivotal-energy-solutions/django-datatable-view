@@ -90,10 +90,11 @@ def itemgetter(k):
 
 def attrgetter(attr):
     def helper(instance, *args, **kwargs):
-        value = getattr(instance, attr)
-
-        if callable(value):
-            return value()
+        value = instance
+        for bit in attr.split('.'):
+            value = getattr(value, bit)
+            if callable(value):
+                value = value()
         return value
 
     return helper
