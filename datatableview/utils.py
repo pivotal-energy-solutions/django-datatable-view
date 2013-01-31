@@ -65,12 +65,10 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if m2m:
-        model = field.field.rel.to
-    elif direct:
-        model = field.related.model
-    elif model:
-        model = model
+    if not direct and hasattr(field, 'model'): # Reverse relationship
+        model = field.model
+    elif hasattr(field, 'rel') and field.rel: # Forward/m2m relationship
+        model = field.rel.to
     else:
         raise ValueError("{}.{} ({}) is not a relationship field.".format(model.__name__, attr,
                 field.__class__.__name__))
