@@ -59,17 +59,18 @@ def keyed_helper(helper):
 def link_to_model(instance, text=None, *args, **kwargs):
     """
     Returns HTML in the form
-    
+
         <a href="{{ instance.get_absolute_url }}">{{ instance }}</a>
-        
+
     If ``text`` is provided and is true-like, it will be used as the hyperlinked text.
-    
+
     Else, if ``kwargs['default_value']`` is available, it will be consulted.
-    
+
     Failing those checks, ``unicode(instance)`` will be inserted as the hyperlinked text.
-    
+
     """
-    
+    print instance
+    print instance.get_absolute_url()
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
