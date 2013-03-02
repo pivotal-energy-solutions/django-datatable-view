@@ -69,8 +69,6 @@ def link_to_model(instance, text=None, *args, **kwargs):
     Failing those checks, ``unicode(instance)`` will be inserted as the hyperlinked text.
 
     """
-    print instance
-    print instance.get_absolute_url()
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
     return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
