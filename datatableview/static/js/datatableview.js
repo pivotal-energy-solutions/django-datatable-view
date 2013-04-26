@@ -1,3 +1,4 @@
+/* For datatable view */
 $(function(){
     var options_name_map = {
         'sortable': 'bSortable',
