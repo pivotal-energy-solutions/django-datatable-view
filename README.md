@@ -408,7 +408,7 @@ Examples:
         return make_boolean_checkmark(instance.is_verified)
 
 ##### _As a callback:_ `make_boolean_checkmark(key=None)`
-If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.  The default `key` function reads the
+If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.
 
 If the helper is given as a bare reference or called without any arguments, then the default `key` function is the equivalent of fetching the `default_value`, allowing for extremely easy use:
 
