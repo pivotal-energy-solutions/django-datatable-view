@@ -4,6 +4,17 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://h
 
 Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 
+## Table of Contents
+* [Usage](#usage)
+* [Column declaration](#column-declaration)
+* [Other view-level options](#other-view-level-options)
+* [Custom table rendering](#custom-table-rendering)
+* [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)
+* [Advanced sorting of pure virtual columns](#advanced-sorting-of-pure-virtual-columns)
+* [Utility helper methods for custom callbacks](#utility-helper-methods-for-custom-callbacks)
+* [Authors](#authors)
+* [Copyright and license](#copyright-and-license)
+
 ## Usage
 
 The basic template for usage in a view is shown below.
