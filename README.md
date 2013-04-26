@@ -219,6 +219,41 @@ If the object returned by `preload_record_data()` is a dictionary, not a tuple o
 
 Currently the two return types can not be mixed.
 
+## Other view-level options
+`'columns'` is just one of the top-level keys for the `datatable_options` structure.
+
+#### `ordering`
+_Default: `[]`_
+
+A list of field orderings.  Prefix `-` and `+` are valid, and field names should be the Django field name if the column is singular and concrete, or else the field name should be the column's "Pretty Name" if the field is compound or purely virtual.  Consequently, `['-Friendly Name', '+field2_name']` is a valid ordering definition
+
+#### `search_fields`
+_Default: `[]`_
+
+A list of filter-like ORM fields that are always appended to the list of search fields when a search is performed on the table.  `search_fields` should only contain ORM paths to fields that aren't already in the column definitions, since those are already searched by default.  Instead, this option allows the arbitrary addition of search channels, where the data may not be visible to the frontend, but known by the user.  For example, a datatable of user accounts may not show the geographic country associated with their profile, but the country can be made searchable by using something like `['profile__country__name']` as the `search_fields` value.
+
+#### `unsortable_columns`
+_Default: `[]`_
+
+A list of column names (the Django field name for simple single-field columns, or else the "Friendly Name" for compound or virtual ones) that should not render sorting arrows on the datatable headers.
+
+#### `hidden_columns`
+_Default: `[]`_
+
+A list of column names (the Django field name for simple single-field columns, or else the "Friendly Name" for compound or virtual ones) that should use the `bVisible=false` datatables option.  This allows the frontend to hide the data while keeping it available for searches and client-side export features.
+
+#### `structure_template`
+_Default: `"datatableview/default_structure.html"`_
+
+The default template name that a datatable structure will render when coerced to unicode.  This template is normally responsible for rendering a table with a `class="datatable"` attribute that will be detected by the packaged `datatableview.js` code.  The table's `th` header elements dump the configuration options given to them by the view's `datatable_options` so that the javascript can read them and configure the table correctly.
+
+#### `result_counter_id`
+_Default: `"id_count"`_
+
+Any time the table's contents changes, the javascript will look on the page for a DOM element with the ID given by this value.  The DOM node's contents will be replace with the `iTotal` javascript value, which is the number of visible results remaining after a search.
+
+This is slightly tied to the business logic of the origin project that generated this Django package.  This functionality might be more intuitively accessed for users of traditional `dataTables.js` by modifying the library's callbacks (see [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)).
+
 ## Custom table rendering
 
 By default, a DatatableView includes an object in the context called `datatable`, whose unicode rendering is the table skeleton.  Together with the supplied generic javascript file, the datatable is automatically brought to life according to the view's configuration.
