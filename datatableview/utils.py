@@ -18,6 +18,7 @@ DEFAULT_OPTIONS = {
     'unsortable_columns': [], # table headers not allowed to be sorted
     'hidden_columns': [], # table headers to be generated, but hidden by the client
     'structure_template': "datatableview/default_structure.html",
+    'result_counter_id': 'id_count', # HTML element ID to display the total results
 
     # TODO: Support additional field options:
     # 'exclude': [],
@@ -99,6 +100,7 @@ class DatatableStructure(StrAndUnicode):
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
             'url': self.url,
+            'result_counter_id': self.options['result_counter_id'],
             'column_info': self.get_column_info(),
         })
     def __iter__(self):

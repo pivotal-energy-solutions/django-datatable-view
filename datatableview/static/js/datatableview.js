@@ -55,7 +55,7 @@ $(function(){
             "aoColumns": column_options,
             "sAjaxSource": datatable.attr('data-source-url'),
             "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
-                $("#id_count").html(iTotal); // # TODO: Find this dynamically instead of by hard ID
+                $("#" + datatable.attr('data-result-counter-id')).html(iTotal);
                 var infoString = "Showing "+iStart +" to "+ iEnd+" of "+iTotal+" entries";
                 if (iMax != iTotal) {
                     infoString +=  " (filtered from "+iMax+" total entries)";
