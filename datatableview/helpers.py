@@ -71,7 +71,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
     """
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
-    return """<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
+    return u"""<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
 
 
 @keyed_helper
