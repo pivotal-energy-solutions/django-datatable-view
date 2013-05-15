@@ -58,6 +58,29 @@ Each of the generated datatable `<th>` elements have a custom attribute "data-na
         width: 20%;
     }
 
+#### Using a datatable inside of another view
+
+Using the above `MyListView` we can integrate this into another view (DetailView, EditView,
+TemplateView, etc.) as follows. The function `get_datatable_structure` is a wrapper to integrate
+datatables into your other views with little pain.
+
+    # views.py
+    from datatableview.utils import get_datatable_structure
+
+    class MyTemplateView(TemplateView):
+        template_name = "template.html"
+
+        def get_context_data(self, **kwargs):
+            context = super(MyTemplateView, self).get_context_data(**kwargs)
+
+            ajax_url = reverse('myapp:list')
+            options = MyListView.datatable_options.copy()
+            context['datatable'] = get_datatable_structure(ajax_url, MyModel, options)
+            return context
+
+Then use `{{ datatable }}` inside of your template as detailed above.
+
+
 ## Column declaration
 
 While the first natural step is to display columns backed by concrete fields on your model, it doesn't take long to find yourself requiring richer output information.
@@ -308,7 +331,7 @@ A good example of using this function is to supply extra non-standard callbacks 
             options.fnServerParams = function(aoData){
                 aoData.push({'name': "myvar", 'value': "myvalue"})
             }
-            
+
             return options;
         }
     </script>
