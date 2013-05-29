@@ -113,7 +113,7 @@ def format_date(format_string, key=None):
     return keyed_helper(helper)
 
 
-def format(format_string, cast=lambda x:x):
+def format(format_string, cast=lambda x: x):
     def helper(instance, *args, **kwargs):
         value = kwargs.get('default_value')
         if value is None:
