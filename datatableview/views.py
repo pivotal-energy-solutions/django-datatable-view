@@ -5,16 +5,17 @@ import logging
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 import dateutil.parser
 
-from datatableview.utils import DatatableStructure, DatatableOptions, split_real_fields, \
+from datatableview.utils import DatatableOptions, split_real_fields, \
         filter_real_fields, get_datatable_structure, resolve_orm_path
 
 log = logging.getLogger(__name__)
+
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -140,11 +141,11 @@ class DatatableMixin(MultipleObjectMixin):
             db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
             db_fields.extend(options.search_fields)
 
-            queries = [] # Queries generated to search all fields for all terms
+            queries = []  # Queries generated to search all fields for all terms
             search_terms = map(unicode.strip, options.search.split())
 
             for term in search_terms:
-                term_queries = [] # Queries generated to search all fields for this term
+                term_queries = []  # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
                 for name in db_fields:
                     if isinstance(name, (tuple, list)):
@@ -153,7 +154,7 @@ class DatatableMixin(MultipleObjectMixin):
                         name = (name,)
 
                     for component_name in name:
-                        field_queries = [] # Queries generated to search this database field for the search term
+                        field_queries = []  # Queries generated to search this database field for the search term
 
                         try:
                             field = resolve_orm_path(self.model, component_name)
@@ -223,7 +224,6 @@ class DatatableMixin(MultipleObjectMixin):
             if len(queries):
                 queryset = queryset.filter(reduce(operator.and_, queries))
 
-
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
@@ -239,6 +239,7 @@ class DatatableMixin(MultipleObjectMixin):
                     except (AttributeError, ObjectDoesNotExist):
                         return None
                 return key
+
             def data_getter_custom(i):
                 def key(obj):
                     rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
@@ -293,7 +294,7 @@ class DatatableMixin(MultipleObjectMixin):
 
         if options.page_length != -1:
             i_begin = options.start_offset
-            i_end = options.start_offset+options.page_length
+            i_end = options.start_offset + options.page_length
             object_list = object_list[i_begin:i_end]
 
         return object_list, total_initial_record_count, unpaged_total
@@ -316,7 +317,6 @@ class DatatableMixin(MultipleObjectMixin):
         context[self.get_datatable_context_name()] = self.get_datatable()
 
         return context
-
 
     # Ajax execution methods
     def get_ajax(self, request, *args, **kwargs):
@@ -371,7 +371,7 @@ class DatatableMixin(MultipleObjectMixin):
         }
         for i, name in enumerate(options.columns):
             column_data = self.get_column_data(i, name, obj)[0]
-            if isinstance(column_data, str): # not unicode
+            if isinstance(column_data, str):  # not unicode
                 column_data = column_data.decode('utf-8')
             data[str(i)] = unicode(column_data)
         return data
@@ -390,7 +390,7 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, name)
 
         if not isinstance(values, (tuple, list)):
-            if isinstance(values, str): # not unicode
+            if isinstance(values, str):  # not unicode
                 unicode_value = values.decode('utf-8')
             else:
                 unicode_value = unicode(values)
@@ -483,7 +483,6 @@ class DatatableMixin(MultipleObjectMixin):
 
         return False, self._get_column_data_default
 
-
     def _get_column_data_default(self, instance, name):
         """ Default mechanism for resolving ``name`` through the model instance ``instance``. """
 
@@ -502,7 +501,6 @@ class DatatableMixin(MultipleObjectMixin):
                 if callable(value):
                     value = value()
             return value
-
 
         if isinstance(name, (tuple, list)):
             name, field_lookup = name[0], name[1]
