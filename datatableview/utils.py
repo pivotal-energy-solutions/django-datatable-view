@@ -73,7 +73,7 @@ def get_model_at_related_field(model, attr):
     elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
         model = field.rel.to
     else:
-        raise ValueError("{}.{} ({}) is not a relationship field.".format(model.__name__, attr,
+        raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
                 field.__class__.__name__))
     return model
 
@@ -143,7 +143,7 @@ class DatatableStructure(StrAndUnicode):
 
             attributes = self.get_column_attributes(name)
 
-            attributes_string = ' '.join('{}="{}"'.format(*item) for item in attributes.items())
+            attributes_string = ' '.join('{0}="{1}"'.format(*item) for item in attributes.items())
             column_info.append((pretty_name, attributes_string))
 
         return column_info
@@ -273,13 +273,13 @@ class DatatableOptions(UserDict):
                         # forcefully sorted in code.  If the field_name is an iterable of compound
                         # sources, the final output from the data method should also be used.
                         if not field_name or isinstance(field_name, (tuple, list)):
-                            field_name = '!{}'.format(column_index)
+                            field_name = '!{0}'.format(column_index)
                     else:
                         name = field_name
 
                         # If the singular column name isn't a model field, mark it for manual handling
                         if field_name not in self._model._meta.get_all_field_names():
-                            field_name = '!{}'.format(column_index)
+                            field_name = '!{0}'.format(column_index)
 
                     # Reject requests for unsortable columns
                     if name in options.get('unsortable_columns', []):
