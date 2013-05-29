@@ -367,7 +367,7 @@ class DatatableMixin(MultipleObjectMixin):
         options = self._get_datatable_options()
 
         data = {
-            'DT_RowId': obj.id,
+            'DT_RowId': obj.pk,
         }
         for i, name in enumerate(options.columns):
             column_data = self.get_column_data(i, name, obj)[0]
