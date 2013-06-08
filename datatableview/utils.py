@@ -8,17 +8,17 @@ from django.db.models.fields import FieldDoesNotExist
 MINIMUM_PAGE_LENGTH = 5
 
 DEFAULT_OPTIONS = {
-    'columns': [], # table headers
-    'ordering': [], # override to Model._meta.ordering
-    'filters': {}, # field_name__lookuptype: value
-    'start_offset': 0, # results to skip ahead
-    'page_length': 25, # length of a single result page
-    'search': None, # client search string
-    'search_fields': [], # extra ORM paths to search; not displayed
-    'unsortable_columns': [], # table headers not allowed to be sorted
-    'hidden_columns': [], # table headers to be generated, but hidden by the client
+    'columns': [],  # table headers
+    'ordering': [],  # override to Model._meta.ordering
+    'filters': {},  # field_name__lookuptype: value
+    'start_offset': 0,  # results to skip ahead
+    'page_length': 25,  # length of a single result page
+    'search': None,  # client search string
+    'search_fields': [],  # extra ORM paths to search; not displayed
+    'unsortable_columns': [],  # table headers not allowed to be sorted
+    'hidden_columns': [],  # table headers to be generated, but hidden by the client
     'structure_template': "datatableview/default_structure.html",
-    'result_counter_id': 'id_count', # HTML element ID to display the total results
+    'result_counter_id': 'id_count',  # HTML element ID to display the total results
 
     # TODO: Support additional field options:
     # 'exclude': [],
@@ -41,6 +41,7 @@ _javascript_boolean = {
     False: 'false',
 }
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -54,6 +55,7 @@ def resolve_orm_path(model, orm_path):
     field, _, _, _ = endpoint_model._meta.get_field_by_name(bits[-1])
     return field
 
+
 def get_model_at_related_field(model, attr):
     """
     Looks up ``attr`` as a field of ``model`` and returns the related model class.  If ``attr`` is
@@ -66,14 +68,15 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if not direct and hasattr(field, 'model'): # Reverse relationship
+    if not direct and hasattr(field, 'model'):  # Reverse relationship
         model = field.model
-    elif hasattr(field, 'rel') and field.rel: # Forward/m2m relationship
+    elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
         model = field.rel.to
     else:
-        raise ValueError("{}.{} ({}) is not a relationship field.".format(model.__name__, attr,
+        raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
                 field.__class__.__name__))
     return model
+
 
 class DatatableStructure(StrAndUnicode):
     """
@@ -103,6 +106,7 @@ class DatatableStructure(StrAndUnicode):
             'result_counter_id': self.options['result_counter_id'],
             'column_info': self.get_column_info(),
         })
+
     def __iter__(self):
         """
         Yields the column information suitable for rendering HTML.
@@ -139,7 +143,7 @@ class DatatableStructure(StrAndUnicode):
 
             attributes = self.get_column_attributes(name)
 
-            attributes_string = ' '.join('{}="{}"'.format(*item) for item in attributes.items())
+            attributes_string = ' '.join('{0}="{1}"'.format(*item) for item in attributes.items())
             column_info.append((pretty_name, attributes_string))
 
         return column_info
@@ -154,6 +158,7 @@ class DatatableStructure(StrAndUnicode):
             attributes['data-sorting'] = ','.join(map(unicode, self.ordering[name]))
 
         return attributes
+
 
 class DatatableOptions(UserDict):
     """
@@ -230,7 +235,7 @@ class DatatableOptions(UserDict):
         except ValueError:
             page_length = DEFAULT_OPTIONS['page_length']
         else:
-            if page_length == -1: # datatable's way of asking for all items, no pagination
+            if page_length == -1:  # datatable's way of asking for all items, no pagination
                 pass
             elif page_length < MINIMUM_PAGE_LENGTH:
                 page_length = MINIMUM_PAGE_LENGTH
@@ -268,13 +273,13 @@ class DatatableOptions(UserDict):
                         # forcefully sorted in code.  If the field_name is an iterable of compound
                         # sources, the final output from the data method should also be used.
                         if not field_name or isinstance(field_name, (tuple, list)):
-                            field_name = '!{}'.format(column_index)
+                            field_name = '!{0}'.format(column_index)
                     else:
                         name = field_name
 
                         # If the singular column name isn't a model field, mark it for manual handling
                         if field_name not in self._model._meta.get_all_field_names():
-                            field_name = '!{}'.format(column_index)
+                            field_name = '!{0}'.format(column_index)
 
                     # Reject requests for unsortable columns
                     if name in options.get('unsortable_columns', []):
@@ -295,7 +300,6 @@ class DatatableOptions(UserDict):
 
         return options
 
-
     def get_column_index(self, name):
         if name.startswith('!'):
             return int(name[1:])
@@ -315,6 +319,7 @@ def get_datatable_structure(ajax_url, model, options):
         options = DatatableOptions(model, {}, **options)
 
     return DatatableStructure(ajax_url, model, options)
+
 
 def split_real_fields(model, field_list, key=None):
     """
@@ -349,6 +354,7 @@ def split_real_fields(model, field_list, key=None):
         i = len(field_list)
 
     return field_list[:i], field_list[i:]
+
 
 def filter_real_fields(model, fields, key=None):
     """
