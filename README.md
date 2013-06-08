@@ -326,7 +326,7 @@ In the most common case, where only one datatable exists on the page, or if all 
 A good example of using this function is to supply extra non-standard callbacks to datatables.js, such as the one `fnServerParams` which enables the client to push extra arbitrary data into the server query.
 
     // object_list.html
-    <script type="text/javascript"
+    <script type="text/javascript">
         function confirm_datatable_options(options) {
             options.fnServerParams = function(aoData){
                 aoData.push({'name': "myvar", 'value': "myvalue"})
