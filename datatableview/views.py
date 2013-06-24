@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
+from django.utils.text import smart_split
 import dateutil.parser
 
 from datatableview.utils import DatatableOptions, split_real_fields, \
@@ -142,7 +143,7 @@ class DatatableMixin(MultipleObjectMixin):
             db_fields.extend(options.search_fields)
 
             queries = []  # Queries generated to search all fields for all terms
-            search_terms = map(unicode.strip, options.search.split())
+            search_terms = map(lambda q: q.strip("'\" "), smart_split(options.search))
 
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
@@ -231,6 +232,30 @@ class DatatableMixin(MultipleObjectMixin):
         else:
             object_list = list(queryset)
 
+            # # Manual searches
+            # # This is broken until it searches all items in object_list previous to the database
+            # # sort. That represents a runtime load that hits every row in code, rather than in the
+            # # database. If enabled, this would cripple performance on large datasets.
+            # if options.i_walk_the_dangerous_line_between_genius_and_insanity:
+            #     length = len(object_list)
+            #     for i, obj in enumerate(reversed(object_list)):
+            #         keep = False
+            #         for column_info in searches:
+            #             column_index = options.columns.index(column_info)
+            #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
+            #             for term in search_terms:
+            #                 if term.lower() in plain_data.lower():
+            #                     keep = True
+            #                     break
+            #             if keep:
+            #                 break
+            # 
+            #         if not keep:
+            #             removed = object_list.pop(length - 1 - i)
+            #             # print column_info
+            #             # print data
+            #             # print '===='
+
             # Sort the results manually for whatever remaining sort options are left over
             def data_getter_orm(field_name):
                 def key(obj):
@@ -267,28 +292,6 @@ class DatatableMixin(MultipleObjectMixin):
                     object_list.sort(key=key_function(sort_field), reverse=reverse)
                 except TypeError as err:
                     log.error("Unable to sort on {} - {}".format(sort_field, err))
-
-            # This is broken until it searches all items in object_list previous to the database
-            # sort. That represents a runtime load that hits every row in code, rather than in the
-            # database. If enabled, this would cripple performance on large datasets.
-            # # Manual searches
-            # for i, obj in enumerate(object_list[::]):
-            #     keep = False
-            #     for column_info in searches:
-            #         for term in search_terms:
-            #             column_index = options.columns.index(column_info)
-            #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
-            #             if term in plain_data:
-            #                 keep = True
-            #                 break
-            #         if keep:
-            #             break
-            #
-            #     if not keep:
-            #         object_list.pop(i)
-            #         # print column_info
-            #         # print data
-            #         # print '===='
 
             unpaged_total = len(object_list)
 
