@@ -7,7 +7,8 @@ Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible,
 ## Table of Contents
 * [Usage](#usage)
 * [Column declaration](#column-declaration)
-* [Other view-level options](#other-view-level-options)
+* [Other datatable_options](#other-datatable_options)
+* [DatatableView attributes and methods](#datatableview-attributes-and-methods)
 * [Custom table rendering](#custom-table-rendering)
 * [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)
 * [Advanced sorting of pure virtual columns](#advanced-sorting-of-pure-virtual-columns)
@@ -254,7 +255,7 @@ If the object returned by `preload_record_data()` is a dictionary, not a tuple o
 
 Currently the two return types can not be mixed.
 
-## Other view-level options
+## Other datatable_options
 `'columns'` is just one of the top-level keys for the `datatable_options` structure.
 
 #### `ordering`
@@ -288,6 +289,19 @@ _Default: `"id_count"`_
 Any time the table's contents changes, the javascript will look on the page for a DOM element with the ID given by this value.  The DOM node's contents will be replace with the `iTotal` javascript value, which is the number of visible results remaining after a search.
 
 This is slightly tied to the business logic of the origin project that generated this Django package.  This functionality might be more intuitively accessed for users of traditional `dataTables.js` by modifying the library's callbacks (see [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)).
+
+## DatatableView attributes and methods
+#### ``datatable_options`` and ``get_datatable_options()``
+This is the central dict structure that contains all of the options discussed above.
+
+You can modify the options at runtime via the ``get_datatable_options()`` method, but be careful how you change mutable structures.  By default, adding or remove keys to the class-wide definition on ``self`` will yield strange duplication issues.
+
+If you are modifying the class-defined dict, **make a copy** of the dict and any column lists, or else the object will persist across connections and every time you reload the page, you'll find your dynamic modifications compounding and causing errors!
+
+#### ``datatable_context_name`` and ``get_datatable_context_name()``
+**Default**: ``"datatable"``
+
+Specifies the variable name to be used in the template context for the ``datatable`` structure object.  As with the built-in Django generic views, the method overrides the attribute.
 
 ## Custom table rendering
 
