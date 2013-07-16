@@ -79,8 +79,10 @@ $(function(){
 
         var search_input = initialized_datatable.closest('.dataTables_wrapper').find('.dataTables_filter input');
         var clear_button = template_clear_button.clone().click(function(){
-            search_input.val('').keyup();
+            $(this).trigger('clear.datatable', [initialized_datatable]);
             return false;
+        }).bind('clear.datatable', function(){
+            search_input.val('').keyup();
         });
         search_input.after(clear_button).after(' ');
     });

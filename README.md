@@ -12,6 +12,7 @@ Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible,
 * [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)
 * [Advanced sorting of pure virtual columns](#advanced-sorting-of-pure-virtual-columns)
 * [Utility helper methods for custom callbacks](#utility-helper-methods-for-custom-callbacks)
+* [Javascript "clear" event](#javascript-clear-event)
 * [Authors](#authors)
 * [Copyright and license](#copyright-and-license)
 
@@ -538,6 +539,18 @@ Examples:
         ],
     }
 
+
+## Javascript "clear" event
+The datatable code that instantiates your table takes a liberty to add a "clear" button next to the search field.  (This may change in the future, since it's not a vanilla dataTables.js behavior.)  When it is clicked, it emits a ``clear.datatable`` event.
+
+Internally this is used to trigger the clearing of the search field, but you can bind to this event from anywhere else in your project, as the event bubbles up the DOM tree:
+
+```javascript
+// For jQuery < 1.7, use .bind() instead of .on()
+$(document).on('clear.datatable', function(event, oTable){
+    // ...
+});
+```
 
 ## Authors
 
