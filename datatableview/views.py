@@ -249,7 +249,7 @@ class DatatableMixin(MultipleObjectMixin):
             #                     break
             #             if keep:
             #                 break
-            # 
+            #
             #         if not keep:
             #             removed = object_list.pop(length - 1 - i)
             #             # print column_info
