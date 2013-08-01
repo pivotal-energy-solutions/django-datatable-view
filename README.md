@@ -21,18 +21,20 @@ Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible,
 
 The basic template for usage in a view is shown below.
 
-    # views.py
+```python
+# views.py
 
-    from datatableview.views import DatatableView
-    from myapp.models import MyModel
+from datatableview.views import DatatableView
+from myapp.models import MyModel
 
-    class MyListView(DatatableView):
-        datatable_options = {
-            'columns': ['field_name1', 'field_name2'],
-        }
+class MyListView(DatatableView):
+    datatable_options = {
+        'columns': ['field_name1', 'field_name2'],
+    }
 
-        def get_queryset(self):
-            return MyModel.objects.filter(user=self.request.user)
+    def get_queryset(self):
+        return MyModel.objects.filter(user=self.request.user)
+```
 
 `DatatableView` inherits from the generic `ListView` built-in view.  This means that as a foundation, a datatable-enhanced view requires very little extra configuration to get off the ground.  Methods such as `get_queryset()` function normally.
 
@@ -40,25 +42,29 @@ The simplest way to output this simple table as HTML in a template is to use the
 
 Thus, in your template ("mymodel_list.html" if we're following the standard ListView template naming scheme), you would echo the value where you want the table to appear:
 
-    {# mymodel_list.html #}
+```html
+{# mymodel_list.html #}
 
-    {% block media %}
-        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dataTable.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}js/datatableview.js"></script>
-    {% endblock %}
+{% block media %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dataTable.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/datatableview.js"></script>
+{% endblock %}
 
-    {% block content %}
-        {{ datatable }}
-    {% endblock %}
+{% block content %}
+    {{ datatable }}
+{% endblock %}
+```
 
 The `datatable` context variable is a basic object that has a unicode representation matching the configuration options specified in the originating view.  The output is a table skeleton of just table headers, annotated with information that the provided `datatableview.js` file will use to
 detect and bootstrap the table's interactive features, including fetching the first batch of AJAX data.
 
 Each of the generated datatable `<th>` elements have a custom attribute "data-name", whose values are just the header name put through the `slugify` template filter.  This provides a simple way for CSS to be provided on the page to specify style attributes such as column width:
 
-    .datatable th[data-name="slugified-field-name"] {
-        width: 20%;
-    }
+```css
+.datatable th[data-name="slugified-field-name"] {
+    width: 20%;
+}
+```
 
 #### Using a datatable inside of another view
 
@@ -66,19 +72,21 @@ Using the above `MyListView` we can integrate this into another view (DetailView
 TemplateView, etc.) as follows. The function `get_datatable_structure` is a wrapper to integrate
 datatables into your other views with little pain.
 
-    # views.py
-    from datatableview.utils import get_datatable_structure
+```python
+# views.py
+from datatableview.utils import get_datatable_structure
 
-    class MyTemplateView(TemplateView):
-        template_name = "template.html"
+class MyTemplateView(TemplateView):
+    template_name = "template.html"
 
-        def get_context_data(self, **kwargs):
-            context = super(MyTemplateView, self).get_context_data(**kwargs)
+    def get_context_data(self, **kwargs):
+        context = super(MyTemplateView, self).get_context_data(**kwargs)
 
-            ajax_url = reverse('myapp:list')
-            options = MyListView.datatable_options.copy()
-            context['datatable'] = get_datatable_structure(ajax_url, MyModel, options)
-            return context
+        ajax_url = reverse('myapp:list')
+        options = MyListView.datatable_options.copy()
+        context['datatable'] = get_datatable_structure(ajax_url, MyModel, options)
+        return context
+```
 
 Then use `{{ datatable }}` inside of your template as detailed above.
 
@@ -91,23 +99,27 @@ While the first natural step is to display columns backed by concrete fields on 
 
 The column header's displayed title is by default a mangling of the field name given in the column options.  For example, "field_name1" turns into "Field name" if left alone.  To give it an arbitrary label better suited for the frontend, change the entry in the column options to a 2-tuple of the friendly name and the model field name:
 
-    datatable_options = {
-        'columns': [
-            ("Friendly Name", 'field_name1'),
-            'field_name2',
-        ],
-    }
+```python
+datatable_options = {
+    'columns': [
+        ("Friendly Name", 'field_name1'),
+        'field_name2',
+    ],
+}
+```
 
 `field_name2` is left to behave normally, while `field_name1` will display on the table as "Friendly Name".
 
 Django's relationship-spanning lookups can be used here as well:
 
-    datatable_options = {
-        'columns': [
-            ('Company Name', 'company__name'),
-            'field_name2',
-        ]
-    }
+```python
+datatable_options = {
+    'columns': [
+        ('Company Name', 'company__name'),
+        'field_name2',
+    ]
+}
+```
 
 #### Compound columns
 
@@ -117,12 +129,14 @@ Since multiple model fields together aren't likely to make a very good table hea
 
 Using the example of a compound address table column:
 
-    datatable_options = {
-        'columns': [
-            ('Address', ['street_line1', 'street_line2', 'city', 'state']),
-            'field_name2',
-        ],
-    }
+```python
+datatable_options = {
+    'columns': [
+        ('Address', ['street_line1', 'street_line2', 'city', 'state']),
+        'field_name2',
+    ],
+}
+```
 
 This configuration will produce a column titled "Address", whose contents is all of the database field values joined with a space.  That format might not be good enough for something as punctuated as an address should be, so you should consult the [Customizing column output](#customizing-column-output) section below to understand how to manually format the table cell contents beyond this default.  This configuration, however, is fully capable of providing database-backed searching features for the listed columns.
 
@@ -130,12 +144,14 @@ This configuration will produce a column titled "Address", whose contents is all
 
 If you need a table column that has no specific database-backed field, whether because it's a purely computed value from a model's method or for some other complex manipulation, a virtual column name can be used in the options:
 
-    datatable_options = {
-        'columns': [
-            'Fictitious',
-            'field_name2',
-        ],
-    }
+```
+datatable_options = {
+    'columns': [
+        'Fictitious',
+        'field_name2',
+    ],
+}
+```
 
 In this example the column called "Fictitious" is capitalized to help keep clear its virtual nature.  When the view logic goes to interpret the column options, it will find that "Fictitious" is not a valid field name, given the model defined by the view (or taken from the view's queryset).  The column has no database fields to back it, which means this column currently has no way to provide its value.
 
@@ -149,21 +165,23 @@ Each column name (whether concrete, compound, or virtual) will be used to check 
 
 A contrived example following from the original configuration sample:
 
-    class MyListView(DatatableView):
-        datatable_options = {
-            'columns': [
-                ('Friendly Name', 'field_name1'),
-                'field_name2',
-            ],
-        }
+```python
+class MyListView(DatatableView):
+    datatable_options = {
+        'columns': [
+            ('Friendly Name', 'field_name1'),
+            'field_name2',
+        ],
+    }
 
-        # ... get_queryset() or model should be defined
+    # ... get_queryset() or model should be defined
 
-        def get_column_Friendly_Name_data(self, instance, *args, **kwargs):
-            return "{:.2f}".format(instance.field_name1)
+    def get_column_Friendly_Name_data(self, instance, *args, **kwargs):
+        return "{:.2f}".format(instance.field_name1)
 
-        def get_column_field_name2_data(self, instance, *args, **kwargs):
-            return "<em>{}</em>".format(self.field_name2)
+    def get_column_field_name2_data(self, instance, *args, **kwargs):
+        return "<em>{}</em>".format(self.field_name2)
+```
 
 As shown, methods in the form `get_column_FIELD_NAME_data()` can be defined on the view to override the output of the column.
 
@@ -177,35 +195,39 @@ If ever the name mangling is unintuitive or unnecessarily complex, callback name
 
 Alternatively, columns can explicitly declare a method name as part of the column configuration, using a 3-tuple instead of a 2-tuple:
 
-    class MyListView(DatatableView):
-        datatable_options = {
-            'columns': [
-                ('Friendly Name', 'field_name1', 'get_friendly_data'),
-                'field_name2',
-            ],
-        }
+```python
+class MyListView(DatatableView):
+    datatable_options = {
+        'columns': [
+            ('Friendly Name', 'field_name1', 'get_friendly_data'),
+            'field_name2',
+        ],
+    }
 
-        # ...
+    # ...
 
-        def get_friendly_data(self, instance, *args, **kwargs):
-            return "{:.2f}".format(instance.field_name1)
+    def get_friendly_data(self, instance, *args, **kwargs):
+        return "{:.2f}".format(instance.field_name1)
+```
 
 If the callback name in the configuration (e.g., `"get_friendly_data"`) were a full callable function instead of a string, the function would be used directly, as opposed to looking up any method on the view itself.
 
 Finally, a purely virtual table column can also declare an explicit callback name using the 3-tuple pattern:
 
-    class MyListView(DatatableView):
-        datatable_options = {
-            'columns': [
-                ('Fictitious', None, 'get_fictitious_data'),
-                'field_name2',
-            ],
-        }
+```python
+class MyListView(DatatableView):
+    datatable_options = {
+        'columns': [
+            ('Fictitious', None, 'get_fictitious_data'),
+            'field_name2',
+        ],
+    }
 
-        # ...
+    # ...
 
-        def get_fictitious_data(self, instance, *args, **kwargs):
-            return instance.get_generated_data()
+    def get_fictitious_data(self, instance, *args, **kwargs):
+        return instance.get_generated_data()
+```
 
 Note that because the column is completely virtual and has no model fields backing it, `None` is provided in the place of a field name (or list of field names).
 
@@ -217,37 +239,40 @@ If multiple of the callback methods needs to do some expensive computation, each
 
 The special method `preload_record_data()` can return these values, computed once per record and passed to the various callbacks without slamming the database or CPU any heavier than expected:
 
-    class MyListView(DatatableView):
-        datatable_options = {
-            'columns': [
-                ('Fictitious', None, 'get_fictitious_data'),
-                'field_name2',
-            ],
-        }
+```python
+class MyListView(DatatableView):
+    datatable_options = {
+        'columns': [
+            ('Fictitious', None, 'get_fictitious_data'),
+            'field_name2',
+        ],
+    }
 
-        # ...
+    # ...
 
-        def preload_record_data(self, instance):
-            users = instance.get_authorized_users()
+    def preload_record_data(self, instance):
+        users = instance.get_authorized_users()
 
-            return (users,)
+        return (users,)
 
-        def get_fictitious_data(self, instance, users, *args, **kwargs):
-            return instance.get_generated_data(users)
+    def get_fictitious_data(self, instance, users, *args, **kwargs):
+        return instance.get_generated_data(users)
+```
 
 In this example, `preload_record_data()` creates a value, presumably some kind of iterable of User objects, and returns it as a 1-tuple.  This 1-tuple will be expanded and sent to all callbacks, which led us to change our callback signature to include a `users` argument.
 
 Alternatively, a tuple with more elements can be returned with whatever data is crunched:
 
-    # ...
-    def preload_record_data(self, instance):
-        users = instance.get_authorized_users()
-        groups = instance.get_authorized_groups()
+```
+def preload_record_data(self, instance):
+    users = instance.get_authorized_users()
+    groups = instance.get_authorized_groups()
 
-        return (users, groups)
+    return (users, groups)
 
-    def get_fictitious_data(self, instance, users, groups, *args, **kwargs):
-        return instance.get_generated_data(users)
+def get_fictitious_data(self, instance, users, groups, *args, **kwargs):
+    return instance.get_generated_data(users)
+```
 
 A callback is of course not required to use the data sent to it, since pre-crunched data might only be relevant to a handful of the callbacks.
 
@@ -309,16 +334,18 @@ By default, a DatatableView includes an object in the context called `datatable`
 
 If the table needs custom rendering, you can instead iterate over the `datatable` object in the template.  An equivalent to the default skeleton can be rendered in this style by using the following template HTML:
 
-    # object_list.html
+```html
+# object_list.html
 
-    {# ... #}
-    <table class="datatable" data-url="{{ datatable.url }}">
-        <tr>
-            {% for name, attributes in datatable %}
-            <th data-name="{{ name|slugify }}" {{ attributes }}>{{ name }}</th>
-            {% endfor %}
-        </tr>
-    </table>
+{# ... #}
+<table class="datatable" data-url="{{ datatable.url }}">
+    <tr>
+        {% for name, attributes in datatable %}
+        <th data-name="{{ name|slugify }}" {{ attributes }}>{{ name }}</th>
+        {% endfor %}
+    </tr>
+</table>
+```
 
 The table should provide the class "datatable" for the provided datatableview.js code to pick up on it.  If desired, you can omit the classname and bootstrap the datatable yourself with the skeleton provided.  More Javascript methods will be made available in the future to accommodate that strategy.
 
@@ -340,16 +367,18 @@ In the most common case, where only one datatable exists on the page, or if all 
 
 A good example of using this function is to supply extra non-standard callbacks to datatables.js, such as the one `fnServerParams` which enables the client to push extra arbitrary data into the server query.
 
-    // object_list.html
-    <script type="text/javascript">
-        function confirm_datatable_options(options) {
-            options.fnServerParams = function(aoData){
-                aoData.push({'name': "myvar", 'value': "myvalue"})
-            }
-
-            return options;
+```javascript
+// object_list.html
+<script type="text/javascript">
+    function confirm_datatable_options(options) {
+        options.fnServerParams = function(aoData){
+            aoData.push({'name': "myvar", 'value': "myvalue"})
         }
-    </script>
+
+        return options;
+    }
+</script>
+```
 
 All of the datatables.js options can be specified here, including options enabled by the various datatables.js plugins.
 
@@ -361,31 +390,37 @@ The obvious answer is that the custom-built return value from the column's callb
 
 To accomplish this, the callbacks are optionally capable of returning a 2-tuple of values, the first being the full HTML data to be dumped into the table, the second being the stripped version:
 
-    def get_column_fictitious_data(self, instance, *args, **kwargs):
-        rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
-        plain_data = unicode(instance)
-        return (rich_data, plain_data)
+```python
+def get_column_fictitious_data(self, instance, *args, **kwargs):
+    rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
+    plain_data = unicode(instance)
+    return (rich_data, plain_data)
+```
 
 Since stripping the HTML out of the return value is the most common requirement, `DatatableView` does this by default if you return a single value.  That makes the above example more verbose than it needs to be.
 
 This is equivalent, using the built-in default behavior just described:
 
-    def get_column_fictitious_data(self, instance, *args, **kwargs):
-        rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
-        return rich_data
+```python
+def get_column_fictitious_data(self, instance, *args, **kwargs):
+    rich_data = """<a href="%s">%s</a>""" % (instance.get_absolute_url(), instance)
+    return rich_data
+```
 
 This mechanism empowers you to design a compound column that sorts intuitively for the data presented by the table.  For example, if a column displays a dynamic fraction for the number of questions on a survey answered out of the dynamic total, even sorting the raw text data in the column might produce table behavior that doesn't match expectations.  What one might realistically expect is that the column sorts based on the percentage completion, but that's not even a displayed value.
 
 To solve the problem, the callback can return a crunched percentage value as the second value:
 
-    def get_column_Questions_Answered_data(self, instance, *args, **kwargs):
-        num_answered = instance.get_answered_questions().count()
-        total = instance.get_total_questions().count()
+```python
+def get_column_Questions_Answered_data(self, instance, *args, **kwargs):
+    num_answered = instance.get_answered_questions().count()
+    total = instance.get_total_questions().count()
 
-        rich_data = "%s / %s" % (num_answered, total)
-        plain_data = 1. * num_answered / total
+    rich_data = "%s / %s" % (num_answered, total)
+    plain_data = 1. * num_answered / total
 
-        return (rich_data, plain_data)
+    return (rich_data, plain_data)
+```
 
 This secondary value is only used in the server-side processing.  The JSON data returned to the client will be the first value.
 
@@ -405,22 +440,24 @@ If you choose to send all of the same `**kwargs` that your custom callback initi
 
 Examples:
 
-    def get_column_myfield_data(self, instance, *args, **kwargs):
-        # Simplest usage, text=unicode(instance)
-        return link_to_model(instance)
+```python
+def get_column_myfield_data(self, instance, *args, **kwargs):
+    # Simplest usage, text=unicode(instance)
+    return link_to_model(instance)
 
-        # Overrides linked text, although the URL is still retrieved from
-        # instance.get_absolute_url()
-        return link_to_model(instance, text="Custom text")
+    # Overrides linked text, although the URL is still retrieved from
+    # instance.get_absolute_url()
+    return link_to_model(instance, text="Custom text")
 
-        # Sends the `default_value` kwarg that contains the database field value from the original
-        # column declaration.  If it's available and coerces to something True-like, it will be
-        # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
-        return link_to_model(instance, **kwargs)
+    # Sends the `default_value` kwarg that contains the database field value from the original
+    # column declaration.  If it's available and coerces to something True-like, it will be
+    # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
+    return link_to_model(instance, **kwargs)
 
-        # Explicitly ensures that the database field's value, regardless of it being `None` or
-        # `False`, is used as the link text.
-        return link_to_model(instance, text=unicode(kwargs['default_value']))
+    # Explicitly ensures that the database field's value, regardless of it being `None` or
+    # `False`, is used as the link text.
+    return link_to_model(instance, text=unicode(kwargs['default_value']))
+```
 
 ##### _As a callback:_ `link_to_model`
 When the helper is supplied directly as the callback handler in the column declaration, it should not be called.  The reference to the helper can act as a fully working callback, meaning that it accepts the row's object `instance` and all `*args` and `**kwargs`, including the supplied `default_value` argument.
@@ -431,15 +468,17 @@ For virtual or compound fields where the model field is `None`, `default_value` 
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # text becomes `myfield`'s value, or unicode(instance) if None, False, etc
-            ('My Field', 'myfield', link_to_model),
+```python
+datatable_options = {
+    'columns': [
+        # text becomes `myfield`'s value, or unicode(instance) if None, False, etc
+        ('My Field', 'myfield', link_to_model),
 
-            # text is always unicode(instance), since there is never a database field value
-            ('My Field', None, link_to_model),
-        ],
-    }
+        # text is always unicode(instance), since there is never a database field value
+        ('My Field', None, link_to_model),
+    ],
+}
+```
 
 #### `itemgetter()`
 _Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
@@ -449,13 +488,15 @@ By supplying an index or key name, this helper returns a callable that will stan
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # Takes the slice `[:50]` of `full_description`.  This works because `slice(0, 50)` is
-            # a valid index access value: mylist[slice(0, 2)] is the same as mylist[0:2].
-            ('Description', 'full_description', helpers.itemgetter(slice(0, 50))),
-        ],
-    }
+```python
+datatable_options = {
+    'columns': [
+        # Takes the slice `[:50]` of `full_description`.  This works because `slice(0, 50)` is
+        # a valid index access value: mylist[slice(0, 2)] is the same as mylist[0:2].
+        ('Description', 'full_description', helpers.itemgetter(slice(0, 50))),
+    ],
+}
+```
 
 #### `attrgetter()`
 _Description: Like the built-in `operator.attrgetter()`, but allows for `*args` and `**kwargs` in the workflow.  If the fetched attribute value is callable, this helper calls it, allowing for method names to be given._
@@ -465,19 +506,21 @@ Provided an attribute name, this helper returns a callable that will stand in as
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # On a purely virtual field, this helper bridges the gap to calling a method without
-            # having to declare a method on the view.
-            ('Ficticious', None, helpers.attrgetter('get_ficticious_data')),
+```python
+datatable_options = {
+    'columns': [
+        # On a purely virtual field, this helper bridges the gap to calling a method without
+        # having to declare a method on the view.
+        ('Ficticious', None, helpers.attrgetter('get_ficticious_data')),
 
-            # On compound fields, the model may already define a method for returning the data
-            ('Address', ['street_name', 'city', 'state', 'zip'], helpers.attrgetter('get_address')),
+        # On compound fields, the model may already define a method for returning the data
+        ('Address', ['street_name', 'city', 'state', 'zip'], helpers.attrgetter('get_address')),
 
-            # Models might also provide data to a virtual column via a property on the model class
-            ('My Field', None, helpers.attrgetter('my_property')),
-        ],
-    }
+        # Models might also provide data to a virtual column via a property on the model class
+        ('My Field', None, helpers.attrgetter('my_property')),
+    ],
+}
+```
 
 #### `make_boolean_checkmark()`
 _Description: Returns the unicode entity `&#10004;` ("&#10004;") if the supplied value is True-like._
@@ -487,9 +530,11 @@ If the value is True-like, `true_value` is returned.  Otherwise, `false_value` i
 
 Examples:
 
-    def get_column_myfield_data(self, instance, *args, **kwargs):
-        # Simplest usage
-        return make_boolean_checkmark(instance.is_verified)
+```python
+def get_column_myfield_data(self, instance, *args, **kwargs):
+    # Simplest usage
+    return make_boolean_checkmark(instance.is_verified)
+```
 
 ##### _As a callback:_ `make_boolean_checkmark(key=None)`
 If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.
@@ -498,21 +543,23 @@ If the helper is given as a bare reference or called without any arguments, then
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # Automatically reads the 'myfield' value and emits "#&10004;" for True and "" for False
-            ('My Field', 'myfield', make_boolean_checkmark),
+```python
+datatable_options = {
+    'columns': [
+        # Automatically reads the 'myfield' value and emits "#&10004;" for True and "" for False
+        ('My Field', 'myfield', make_boolean_checkmark),
 
-            # If "Is Verified" is virtual, one could chain the helper "attrgetter" to access a
-            # property or method name to supply the boolean value.
-            ('Is Verified', None, make_boolean_checkmark(key=helpers.attrgetter('get_is_verified'))),
+        # If "Is Verified" is virtual, one could chain the helper "attrgetter" to access a
+        # property or method name to supply the boolean value.
+        ('Is Verified', None, make_boolean_checkmark(key=helpers.attrgetter('get_is_verified'))),
 
-            # If the above case didn't need to access a method, but rather a normal attribute, like
-            # a property, one could use the built-in operator.attrgetter instead of the one in the
-            # `helpers` module.
-            ('Is Verified', None, make_boolean_checkmark(key=operator.attrgetter('is_verified'))),
-        ],
-    }
+        # If the above case didn't need to access a method, but rather a normal attribute, like
+        # a property, one could use the built-in operator.attrgetter instead of the one in the
+        # `helpers` module.
+        ('Is Verified', None, make_boolean_checkmark(key=operator.attrgetter('is_verified'))),
+    ],
+}
+```
 
 #### `format_date()`
 _Description: Takes a `strftime`-style format specifier to apply to a datetime object._
@@ -522,16 +569,18 @@ If `key` is provided, it will be given the row's model `instance` to fetch a dat
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # Simplest use of the helper as a deferred formatter.
-            ('Date created', 'created_date', format_date('%m/%d/%Y')),
+```python
+datatable_options = {
+    'columns': [
+        # Simplest use of the helper as a deferred formatter.
+        ('Date created', 'created_date', format_date('%m/%d/%Y')),
 
-            # Using the `attrgetter` helper to fetch a dynamic datetime from the instance.
-            ('Last admin modification', None, format_date('%m/%d/%Y', \
-                    key=helpers.attrgetter('get_last_admin_modification'))),
-        ],
-    }
+        # Using the `attrgetter` helper to fetch a dynamic datetime from the instance.
+        ('Last admin modification', None, format_date('%m/%d/%Y', \
+                key=helpers.attrgetter('get_last_admin_modification'))),
+    ],
+}
+```
 
 #### `format()`
 _Description: Takes a new-style format string (of the "{}".format(value) variety) to apply to the column value.  See <http://docs.python.org/2/library/string.html#format-examples> for help with the syntax._
@@ -543,15 +592,17 @@ Applies the `format_string` to the column value, or else to the instance itself 
 
 Examples:
 
-    datatable_options = {
-        'columns': [
-            # Simplest use of the helper as a deferred formatter, adding locale digit seperators.
-            ('Total cost', 'total_cost', helpers.format('{:,}')),
+```python
+datatable_options = {
+    'columns': [
+        # Simplest use of the helper as a deferred formatter, adding locale digit seperators.
+        ('Total cost', 'total_cost', helpers.format('{:,}')),
 
-            # Use of the cast argument, where the model field value is a string
-            ('Total cost', 'total_cost', helpers.format('{:.2f}', cast=float)),
-        ],
-    }
+        # Use of the cast argument, where the model field value is a string
+        ('Total cost', 'total_cost', helpers.format('{:.2f}', cast=float)),
+    ],
+}
+```
 
 
 ## Javascript "clear" event
