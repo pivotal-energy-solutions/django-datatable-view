@@ -483,8 +483,10 @@ datatable_options = {
 #### `itemgetter()`
 _Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
 
-##### _As a callback:_ `itemgetter(k)`
+##### _As a callback:_ `itemgetter(k, ellipsis=False)`
 By supplying an index or key name, this helper returns a callable that will stand in as the callback, which when called returns the index-notation `k` of the operating value.  If `default_value` is unavailable or is False-like, the instance itself is accessed for the index lookup.
+
+If ``k`` is a ``slice``-type object and ``ellipsis`` is True, the string ``"..."`` will be appended to the resulting sliced string.  If ``ellipsis`` is itself a string, it will be used as the appended text, allowing you to supply something like ``&hellip;``.
 
 Examples:
 
@@ -493,7 +495,7 @@ datatable_options = {
     'columns': [
         # Takes the slice `[:50]` of `full_description`.  This works because `slice(0, 50)` is
         # a valid index access value: mylist[slice(0, 2)] is the same as mylist[0:2].
-        ('Description', 'full_description', helpers.itemgetter(slice(0, 50))),
+        ('Description', 'full_description', helpers.itemgetter(slice(0, 50), ellipsis=True)),
     ],
 }
 ```
