@@ -81,9 +81,14 @@ def make_boolean_checkmark(value, true_value="&#10004;", false_value="", *args, 
     return false_value
 
 
-def itemgetter(k):
+def itemgetter(k, ellipsis=False):
     def helper(instance, *args, **kwargs):
-        return (kwargs.get('default_value') or instance)[k]
+        value = (kwargs.get('default_value') or instance)[k]
+        if ellipsis and isinstance(k, slice) and isinstance(value, basestring):
+            if ellipsis is True:
+                value += "..."
+            else:
+                value += ellipsis
     return helper
 
 
