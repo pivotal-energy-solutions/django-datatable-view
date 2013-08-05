@@ -502,7 +502,8 @@ class DatatableMixin(MultipleObjectMixin):
                 if not isinstance(value, Model) and isinstance(value, Manager):
                     value = value.all()
                 if callable(value):
-                    value = value()
+                    if not hasattr(value, 'alters_data') or value.alters_data is not True:
+                        value = value()
             return value
 
         if isinstance(name, (tuple, list)):
