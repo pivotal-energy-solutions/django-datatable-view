@@ -13,7 +13,7 @@ $(function(){
         var column_options = [];
         var sorting_options = [];
 
-        datatable.find('th').each(function(){
+        datatable.find('thead th').each(function(){
             var header = $(this);
             var options = {};
             for (var i = 0; i < header[0].attributes.length; i++) {
