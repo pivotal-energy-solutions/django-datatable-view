@@ -9,6 +9,8 @@ in any way.
 
 """
 
+from django.utils.timezone import localtime
+
 
 def keyed_helper(helper):
     """
@@ -109,10 +111,13 @@ def attrgetter(attr):
     return helper
 
 
-def format_date(format_string, key=None):
+
+def format_date(format_string, key=None, localize = False):
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
+        if localize:
+            value = localtime(value)
         try:
             return value.strftime(format_string)
         except AttributeError:
