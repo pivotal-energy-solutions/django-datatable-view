@@ -9,7 +9,12 @@ in any way.
 
 """
 
-from django.utils.timezone import localtime
+from django import get_version
+
+if get_version().split('.') >= ['1', '5']:
+    from django.utils.timezone import localtime
+else:
+    localtime = None
 
 
 def keyed_helper(helper):
@@ -112,7 +117,9 @@ def attrgetter(attr):
 
 
 
-def format_date(format_string, key=None, localize = False):
+def format_date(format_string, key=None, localize=False):
+    if localize is not False and localtime is None:
+        raise Exception("Cannot use format_date argument 'localized' with Django < 1.5")
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
