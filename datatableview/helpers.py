@@ -54,15 +54,14 @@ def keyed_helper(helper):
                     return helper(key(instance), *args, **kwargs)
                 return helper_wrapper
             else:
-                # Helper was provided in the column declaration and was called in place with no
-                # arguments.  We return the helper back, negating the premature call.
-                def helper_wrapper(instance, *args, **kwargs):
-                    return helper(kwargs.get('default_value'), *args, **kwargs)
-                return helper_wrapper
+                # helper was called in place with neither important arg
+                raise ValueError("If called directly, helper function '%s' requires either a model"
+                                 " instance or a 'key' keyword argument." % helper.__name__)
     wrapper._is_wrapped = True
     return wrapper
 
 
+@keyed_helper
 def link_to_model(instance, text=None, *args, **kwargs):
     """
     Returns HTML in the form
