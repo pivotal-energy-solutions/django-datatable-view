@@ -459,7 +459,7 @@ def get_column_myfield_data(self, instance, *args, **kwargs):
     return link_to_model(instance, text=unicode(kwargs['default_value']))
 ```
 
-##### _As a callback:_ `link_to_model`
+##### _As a callback:_ `link_to_model` or `link_to_model(key=None)`
 When the helper is supplied directly as the callback handler in the column declaration, it should not be called.  The reference to the helper can act as a fully working callback, meaning that it accepts the row's object `instance` and all `*args` and `**kwargs`, including the supplied `default_value` argument.
 
 For database-backed columns where a model field is given in the column declaration, `default_value` will be consulted for a True-like value.  Failing that, the text will be generated as `unicode(instance)`.
@@ -479,6 +479,22 @@ datatable_options = {
     ],
 }
 ```
+
+To specify a custom attribute on the instance that should be the target for ``link_to_model``, call the helper with a ``key`` argument, where ``key`` is a mapping function that will take the instance and return a different model instance.  Likely this will simply look up a ForeignKey field value:
+
+```python
+datatable_options = {
+    'columns': [
+        # Wrong!  This would end up passing the instance into the helper, which would only
+        # link to the main instance with the misleading text of "owner__name"'s value.
+        ('Owner', 'owner__name', link_to_model),
+        
+        # Right!  Defers the lookup of the helper's target object via a key-mapping function
+        ('Owner', 'owner__name', link_to_model(key='owner')),
+    ],
+}
+```
+
 
 #### `itemgetter()`
 _Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
