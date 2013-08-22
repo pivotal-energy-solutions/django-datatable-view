@@ -490,7 +490,7 @@ datatable_options = {
         ('Owner', 'owner__name', link_to_model),
         
         # Right!  Defers the lookup of the helper's target object via a key-mapping function
-        ('Owner', 'owner__name', link_to_model(key='owner')),
+        ('Owner', 'owner__name', link_to_model(key=operator.attrgetter('owner'))),
     ],
 }
 ```
