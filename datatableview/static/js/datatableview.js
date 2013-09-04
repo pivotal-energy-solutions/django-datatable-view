@@ -50,7 +50,6 @@ $(function(){
 
         options = {
             "bServerSide": true,
-            "bStateSave": true,
             "aaSorting": sorting_options,
             "aoColumns": column_options,
             "sAjaxSource": datatable.attr('data-source-url'),
