@@ -229,10 +229,9 @@ class DatatableMixin(MultipleObjectMixin):
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
             unpaged_total = queryset.count()
-            print "A", unpaged_total
         else:
             object_list = list(queryset)
-            print "B", len(object_list)
+
             # # Manual searches
             # # This is broken until it searches all items in object_list previous to the database
             # # sort. That represents a runtime load that hits every row in code, rather than in the
