@@ -512,11 +512,9 @@ class DatatableMixin(MultipleObjectMixin):
             field_lookup = (field_lookup,)
 
         values = []
-        print field_lookup
         for field_name in field_lookup:
-            print field_name
             value = reduce(chain_lookup, [instance] + field_name.split('__'))
-            print value
+
             if isinstance(value, Model):
                 value = unicode(value)
 
