@@ -87,7 +87,13 @@ def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;",
     return false_value
 
 
-def itemgetter(k, ellipsis=False):
+def itemgetter(k, ellipsis=False, key=None):
+    """
+    Looks up ``k`` as an index to the target value.  If ``ellipsis`` is given and k is a ``slice``
+    type object, then ``ellipsis`` can be a string to use to indicate a truncation, or simply
+    ``True`` to use a default ``"..."``.  If a ``key`` is given, it may be a function which maps the
+    target value to something else before the item lookup takes place.
+    """
     def helper(instance, *args, **kwargs):
         default_value = kwargs.get('default_value')
         if default_value is None:
@@ -100,10 +106,18 @@ def itemgetter(k, ellipsis=False):
             else:
                 value += ellipsis
         return value
+
+    if key:
+        helper = keyed_helper(helper)(key=key)
     return helper
 
 
-def attrgetter(attr):
+def attrgetter(attr, key=None):
+    """
+    Looks up ``attr`` on the target value, and tries to call it if the value is callable.  If a
+    ``key`` is given, it may be a function which maps the target value to something else before the
+    attribute lookup takes place.
+    """
     def helper(instance, *args, **kwargs):
         value = instance
         for bit in attr.split('.'):
@@ -112,6 +126,8 @@ def attrgetter(attr):
                 value = value()
         return value
 
+    if key:
+        helper = keyed_helper(helper)(key=key)
     return helper
 
 

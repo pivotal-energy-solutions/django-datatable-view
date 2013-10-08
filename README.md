@@ -499,10 +499,12 @@ datatable_options = {
 #### `itemgetter()`
 _Description: Like the built-in `operator.itemgetter()`, but allows for `*args` and `**kwargs` in the workflow._
 
-##### _As a callback:_ `itemgetter(k, ellipsis=False)`
+##### _As a callback:_ `itemgetter(k, ellipsis=False, key=None)`
 By supplying an index or key name, this helper returns a callable that will stand in as the callback, which when called returns the index-notation `k` of the operating value.  If `default_value` is unavailable or is False-like, the instance itself is accessed for the index lookup.
 
 If ``k`` is a ``slice``-type object and ``ellipsis`` is True, the string ``"..."`` will be appended to the resulting sliced string.  If ``ellipsis`` is itself a string, it will be used as the appended text, allowing you to supply something like ``&hellip;``.
+
+If provided, ``key`` should be a mapping function that takes the row's model ``instance`` and returns the value to use in place of the ``instance``, prior to using ``k`` as a lookup.
 
 Examples:
 
@@ -512,6 +514,9 @@ datatable_options = {
         # Takes the slice `[:50]` of `full_description`.  This works because `slice(0, 50)` is
         # a valid index access value: mylist[slice(0, 2)] is the same as mylist[0:2].
         ('Description', 'full_description', helpers.itemgetter(slice(0, 50), ellipsis=True)),
+        
+        # Condense the "description" text of a related model, via "self.book.full_description"
+        ('Description', 'book__full_description', helpers.itemgetter(slice(0, 50), key=helpers.attrgetter('book')))
     ],
 }
 ```
@@ -519,8 +524,10 @@ datatable_options = {
 #### `attrgetter()`
 _Description: Like the built-in `operator.attrgetter()`, but allows for `*args` and `**kwargs` in the workflow.  If the fetched attribute value is callable, this helper calls it, allowing for method names to be given._
 
-##### _As a callback:_ `attrgetter(attr)`
+##### _As a callback:_ `attrgetter(attr, key=None)`
 Provided an attribute name, this helper returns a callable that will stand in as the callback, which when called fetches that attribute from the row's model `instance`.  If that fetched value is callable, the helper calls it with no arguments and uses that as the new value.  This allows the helper to be given a method name, which is a common way to access data for a virtual or compound table column.
+
+If provided, ``key`` should be a mapping function that takes the row's model ``instance`` and returns the value to use in place of the ``instance``, prior to looking up ``attr``.
 
 Examples:
 
@@ -536,6 +543,15 @@ datatable_options = {
 
         # Models might also provide data to a virtual column via a property on the model class
         ('My Field', None, helpers.attrgetter('my_property')),
+        
+        # Call a method on an attribute (attribute of attribute), such as self.home.get_address()
+        # This gets wordy and hard to follow, but is a useful strategy nonetheless.
+        # The outer user of attrgetter is applied last, so instance gets mapped to "instance.home"
+        # prior to the "get_address" lookup.
+        ('Address', ['home__street_name',
+                     'home__city',
+                     'home__state',
+                     'home__zip'], helpers.attrgetter('get_address', key=helpers.attrgetter('home'))),
     ],
 }
 ```
