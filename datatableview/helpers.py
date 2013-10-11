@@ -146,8 +146,8 @@ def format_date(format_string, key=None, localize=False):
             return ""
 
     if key:
-        return helper
-    return keyed_helper(helper)
+        return keyed_helper(helper)(key=key)
+    return helper
 
 
 def format(format_string, cast=lambda x: x):
