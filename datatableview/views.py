@@ -388,6 +388,7 @@ class DatatableMixin(MultipleObjectMixin):
                 kwargs['default_value'] = self._get_column_data_default(instance, name)[1]
             except AttributeError:
                 kwargs['default_value'] = None
+            kwargs['field_name'] = name
             values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
