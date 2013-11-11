@@ -389,6 +389,7 @@ class DatatableMixin(MultipleObjectMixin):
             except AttributeError:
                 kwargs['default_value'] = None
             kwargs['field_name'] = name
+            kwargs['view'] = self
             values = f(instance, *args, **kwargs)
         else:
             values = f(instance, name)
