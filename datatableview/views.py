@@ -329,7 +329,8 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         object_list = self.get_object_list()
-        response = HttpResponse(self.serialize_to_json(object_list), mimetype="application/json")
+        response = HttpResponse(self.serialize_to_json(object_list),
+                                content_type="application/json")
 
         add_never_cache_headers(response)
 
