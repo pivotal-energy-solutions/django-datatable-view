@@ -12,8 +12,8 @@ from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
 import dateutil.parser
 
-from datatableview.utils import DatatableOptions, split_real_fields, \
-        filter_real_fields, get_datatable_structure, resolve_orm_path
+from .utils import (DatatableOptions, split_real_fields, filter_real_fields,
+                    get_datatable_structure, resolve_orm_path)
 
 log = logging.getLogger(__name__)
 
