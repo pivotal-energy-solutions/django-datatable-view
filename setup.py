@@ -4,13 +4,13 @@
 from setuptools import setup, find_packages
 
 setup(name='django-datatable-view',
-      version='1.0',
+      version='0.5.0',
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
-                  'a class-based view, and a small collection of utilities for '
-                  'internal and external use.',
-      author='Tim Vallenta',
+                  'a class-based view, and a small collection of utilities for rendering'
+                  ' table data from models.',
+      author='Tim Valenta',
       author_email='tvalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
       license='Apache License (2.0)',
