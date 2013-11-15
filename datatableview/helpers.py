@@ -9,7 +9,10 @@ in any way.
 
 """
 
+from functools import partial
+
 from django import get_version
+from django.forms.util import flatatt
 
 if get_version().split('.') >= ['1', '5']:
     from django.utils.timezone import localtime
@@ -158,3 +161,60 @@ def format(format_string, cast=lambda x: x):
         value = cast(value)
         return format_string.format(value, obj=instance)
     return helper
+
+def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
+    print '---', instance, extra_attrs, args, kwargs
+    if instance is None:
+        # Preloading kwargs into the helper for deferred execution
+        helper = partial(make_xeditable, *args, **kwargs)
+        return helper
+    else:
+        # Immediate finalization, return the xeditable structure
+        data = kwargs.get('default_value', instance)
+
+        # Compile values to appear as "data-*" attributes on the anchor tag
+        default_attr_names = ['type', 'url', 'title', 'placeholder']
+        valid_attr_names = set(default_attr_names + list(extra_attrs))
+        attrs = {}
+        for k, v in kwargs.items():
+            if k.startswith('data_'):
+                k = k[5:]
+            if k in valid_attr_names:
+                attrs['data-{}'.format(k)] = v
+
+        # # Assign default values where they are not provided
+        # data_id = kwargs.get('id', kwargs.get('data_id'))
+        # if not data_id:
+        #     if get_version().split('.') >= ['1', '6']:
+        #         model = instance._meta.model_name
+        #     else:
+        #         model = instance._meta.module_name
+        #     field = kwargs['field_name']
+        #     pk = instance.pk
+        #     data_id = '{model}-{field}-{pk}'.format(model=model, field=field, pk=pk)
+        # attrs['id'] = data_id
+
+        field_name = kwargs['field_data']
+        if isinstance(field_name, (tuple, list)):
+            field_name = field_name[1]
+        attrs['data-name'] = field_name
+
+        attrs['data-pk'] = instance.pk
+        attrs['data-value'] = kwargs['default_value']
+
+        if 'data-url' not in attrs:
+            # Look for a backup source
+            provider_name = 'get_update_url'
+            url_provider = getattr(kwargs['view'], provider_name, None)
+            if not url_provider:
+                url_provider = getattr(instance, provider_name, None)
+                if not url_provider:
+                    url_provider = lambda field_name: kwargs['view'].request.path
+            if url_provider:
+                attrs['data-url'] = url_provider(field_name=field_name)
+
+        if 'data-placeholder' not in attrs:
+            attrs['data-placeholder'] = attrs.get('data-title', "")
+
+        data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
+        return data

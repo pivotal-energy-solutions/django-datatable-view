@@ -10,8 +10,10 @@ from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
+from django.views.decorators.csrf import ensure_csrf_cookie
 import dateutil.parser
 
+from .forms import XEditableUpdateForm
 from .utils import (DatatableOptions, split_real_fields, filter_real_fields,
                     get_datatable_structure, resolve_orm_path)
 
@@ -532,5 +534,80 @@ class DatatableMixin(MultipleObjectMixin):
         return value, value
 
 
+class XEditableMixin(object):
+    xeditable_form_class = XEditableUpdateForm
+
+    def get(self, request, *args, **kwargs):
+        """ Introduces the ``ensure_csrf_cookie`` decorator. """
+        # Doing this in the method body at runtime instead of at declaration-time helps prevent
+        # collisions of other subclasses also trying to decorate their own get() methods.
+        method = super(XEditableMixin, self).get
+        method = ensure_csrf_cookie(method)
+        return method(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object_list = None
+        form = self.get_xeditable_form(self.get_xeditable_form_class())
+        if form.is_valid():
+            obj = self.get_update_object(form)
+            if obj is None:
+                data = json.dumps({
+                    'status': 'error',
+                    'message': "Object does not exist."
+                })
+                return HttpResponse(data, content_type="application/json", status_code=404)
+            return self.update_object(form, obj)
+        else:
+            data = json.dumps({
+                'status': 'error',
+                'message': "Invalid request",
+                'form_errors': form.errors,
+            })
+            return HttpResponse(data, content_type="application/json", status_code=400)
+
+    def get_xeditable_form_class(self):
+        return self.xeditable_form_class
+
+    def get_xeditable_form_kwargs(self):
+        kwargs = {
+            'model': self.get_queryset().model,
+        }
+        if self.request.method in ('POST', 'PUT'):
+            kwargs.update({
+                'data': self.request.POST,
+            })
+        return kwargs
+
+    def get_xeditable_form(self, form_class):
+        return form_class(**self.get_xeditable_form_kwargs())
+
+    def get_update_object(self, form):
+        """
+        Retrieves the target object based on the update form's ``pk`` and the table's queryset.
+        """
+        pk = form.cleaned_data['pk']
+        queryset = self.get_queryset()
+        try:
+            obj = queryset.get(pk=pk)
+        except queryset.model.DoesNotExist:
+            obj = None
+
+        return obj
+
+    def update_object(self, form, obj):
+        """ Saves the new value to the target object. """
+        field_name = form.cleaned_data['name']
+        value = form.cleaned_data['value']
+        setattr(obj, field_name, value)
+        obj.save(update_fields=[field_name])
+
+        data = json.dumps({
+            'status': 'success',
+        })
+        return HttpResponse(data, content_type="application/json")
+
 class DatatableView(DatatableMixin, ListView):
+    pass
+
+class XEditableDatatableView(XEditableMixin, DatatableView):
     pass
