@@ -1,1 +1,1 @@
-include static/js/*.js templates/datatableview/*.html
+recursive-include *.js *.html
