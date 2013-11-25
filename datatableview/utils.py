@@ -1,4 +1,7 @@
-from UserDict import UserDict
+try:
+    from collections import UserDict
+except ImportError:
+    from UserDict import UserDict
 
 from django.utils.encoding import StrAndUnicode
 from django.template.loader import render_to_string
