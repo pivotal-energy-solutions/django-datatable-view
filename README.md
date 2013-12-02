@@ -329,7 +329,7 @@ If you are modifying the class-defined dict, **make a copy** of the dict and any
 Specifies the variable name to be used in the template context for the ``datatable`` structure object.  As with the built-in Django generic views, the method overrides the attribute.
 
 #### ``get_json_response_object(object_list, total, filtered_total)``
-This is the method responsible for building the response dictionary that will be the JSON response to the AJAX query.  The default implementation runs each item in ``object_list`` through the column data lookups, and adds the statistics into the object.
+This is the method responsible for building the response dictionary that will be the JSON response to the AJAX query.  If any paging is required, ``object_list`` is shortened to match the correct offset and length.  The default implementation then runs each item in ``object_list`` through the column data callbacks, and adds the ``total`` and ``filtered_total`` statistics into the response object.
 
 ``total`` is the number of records on the base queryset _before_ any searches were applied, while ``filtered_total`` is the number of records _after_ the searches were applied.  Note that ``filtered_total`` is not the length of the page, as the page length is likely a static number such as 25, and a search might yield more results than that, presented on multiple pages.
 

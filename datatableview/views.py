@@ -350,13 +350,32 @@ class DatatableMixin(MultipleObjectMixin):
         "array of arrays".  In some instances, the author uses "ao~" for "array of objects", an
         object being a javascript dictionary.
         """
+
+        object_list_page = self.paginate_object_list(object_list)
+
         response_obj = {
             'sEcho': self.request.GET.get('sEcho', None),
             'iTotalRecords': total,
             'iTotalDisplayRecords': filtered_total,
-            'aaData': [self.get_record_data(obj) for obj in object_list],
+            'aaData': [self.get_record_data(obj) for obj in object_list_page],
         }
         return response_obj
+
+    def paginate_object_list(self, object_list):
+        """
+        If page_length is specified in the options or AJAX request, the result list is shortened to
+        the correct offset and length.  Paged or not, the finalized object_list is then returned.
+        """
+
+        options = self._get_datatable_options()
+
+        # Narrow the results to the appropriate page length for serialization
+        if options.page_length != -1:
+            i_begin = options.start_offset
+            i_end = options.start_offset + options.page_length
+            object_list = object_list[i_begin:i_end]
+
+        return object_list
 
     def serialize_to_json(self, response_data):
         """ Returns the JSON string for the compiled data object. """
