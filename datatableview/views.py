@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
+from django.conf import settings
 
 import dateutil.parser
 
@@ -360,7 +361,11 @@ class DatatableMixin(MultipleObjectMixin):
     def serialize_to_json(self, response_data):
         """ Returns the JSON string for the compiled data object. """
 
-        return json.dumps(response_data, indent=4)
+        indent = None
+        if settings.DEBUG:
+            indent = 4
+
+        return json.dumps(response_data, indent=indent)
 
     def get_record_data(self, obj):
         """
