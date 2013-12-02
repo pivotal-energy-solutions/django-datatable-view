@@ -229,8 +229,8 @@ class DatatableMixin(MultipleObjectMixin):
 
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
-            object_list = ObjectListResult(queryset)
-            object_list.unpaged_total = queryset.count()
+            object_list = queryset
+            object_list._dtv_unpaged_total = queryset.count()
         else:
             object_list = ObjectListResult(queryset)
 
@@ -295,14 +295,9 @@ class DatatableMixin(MultipleObjectMixin):
                 except TypeError as err:
                     log.error("Unable to sort on {} - {}".format(sort_field, err))
 
-            object_list.unpaged_total = len(object_list)
+            object_list._unpaged_total = len(object_list)
 
-        if options.page_length != -1:
-            i_begin = options.start_offset
-            i_end = options.start_offset + options.page_length
-            object_list = object_list[i_begin:i_end]
-
-        object_list.total_initial_record_count = total_initial_record_count
+        object_list._dtv_total_initial_record_count = total_initial_record_count
         return object_list
 
     def get_datatable_context_name(self):
@@ -332,8 +327,8 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         object_list = self.get_object_list()
-        total = object_list.total_initial_record_count
-        filtered_total = object_list.unpaged_total
+        total = object_list._dtv_total_initial_record_count
+        filtered_total = object_list._dtv_unpaged_total
         response_data = self.get_json_response_object(object_list, total, filtered_total)
         response = HttpResponse(self.serialize_to_json(response_data), mimetype="application/json")
 

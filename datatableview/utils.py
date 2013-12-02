@@ -313,21 +313,8 @@ class DatatableOptions(UserDict):
 
 
 class ObjectListResult(list):
-    total_initial_record_count = None
-    unpaged_total = None
-
-    def __getslice__(self, i, j):
-        # Python 2 support for native slicing
-        return self.__getitem__(slice(i, j))
-
-    def __getitem__(self, k):
-        if isinstance(k, slice):
-            # Preserve the class type identity of a sliced version, copy attributes
-            result = self.__class__(super(ObjectListResult, self).__getitem__(k))
-            result.total_initial_record_count = self.total_initial_record_count
-            result.unpaged_total = self.unpaged_total
-            return result
-        return super(ObjectListResult, self).__getitem__(k)
+    _dtv_total_initial_record_count = None
+    _dtv_unpaged_total = None
 
 
 def get_datatable_structure(ajax_url, model, options):
