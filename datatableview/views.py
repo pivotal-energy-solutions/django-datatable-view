@@ -13,8 +13,8 @@ from django.utils.text import smart_split
 
 import dateutil.parser
 
-from datatableview.utils import DatatableOptions, split_real_fields, \
-        filter_real_fields, get_datatable_structure, resolve_orm_path
+from datatableview.utils import (ObjectListResult, DatatableOptions, split_real_fields,
+        filter_real_fields, get_datatable_structure, resolve_orm_path)
 
 log = logging.getLogger(__name__)
 
@@ -228,10 +228,10 @@ class DatatableMixin(MultipleObjectMixin):
 
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
-            object_list = queryset
-            unpaged_total = queryset.count()
+            object_list = ObjectListResult(queryset)
+            object_list.unpaged_total = queryset.count()
         else:
-            object_list = list(queryset)
+            object_list = ObjectListResult(queryset)
 
             # # Manual searches
             # # This is broken until it searches all items in object_list previous to the database
@@ -294,14 +294,15 @@ class DatatableMixin(MultipleObjectMixin):
                 except TypeError as err:
                     log.error("Unable to sort on {} - {}".format(sort_field, err))
 
-            unpaged_total = len(object_list)
+            object_list.unpaged_total = len(object_list)
 
         if options.page_length != -1:
             i_begin = options.start_offset
             i_end = options.start_offset + options.page_length
             object_list = object_list[i_begin:i_end]
 
-        return object_list, total_initial_record_count, unpaged_total
+        object_list.total_initial_record_count = total_initial_record_count
+        return object_list
 
     def get_datatable_context_name(self):
         return self.datatable_context_name
@@ -347,12 +348,10 @@ class DatatableMixin(MultipleObjectMixin):
 
         """
 
-        object_list, total_records, unpaged_total = object_list
-
         response_obj = {
             'sEcho': self.request.GET.get('sEcho', None),
-            'iTotalRecords': total_records,
-            'iTotalDisplayRecords': unpaged_total,
+            'iTotalRecords': object_list.total_initial_record_count,
+            'iTotalDisplayRecords': object_list.unpaged_total,
             'aaData': [self.get_record_data(obj) for obj in object_list],
         }
 
