@@ -163,7 +163,6 @@ def format(format_string, cast=lambda x: x):
     return helper
 
 def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
-    print '---', instance, extra_attrs, args, kwargs
     if instance is None:
         # Preloading kwargs into the helper for deferred execution
         helper = partial(make_xeditable, *args, **kwargs)
