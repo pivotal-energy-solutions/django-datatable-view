@@ -1,4 +1,7 @@
-from UserDict import UserDict
+try:
+    from collections import UserDict
+except ImportError:
+    from UserDict import UserDict
 
 from django.utils.encoding import StrAndUnicode
 from django.template.loader import render_to_string
@@ -307,6 +310,11 @@ class DatatableOptions(UserDict):
             return self._flat_column_names.index(name)
         except ValueError:
             return -1
+
+
+class ObjectListResult(list):
+    _dtv_total_initial_record_count = None
+    _dtv_unpaged_total = None
 
 
 def get_datatable_structure(ajax_url, model, options):

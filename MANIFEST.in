@@ -1,0 +1,3 @@
+include README.md
+recursive-include datatableview static/*
+recursive-include datatableview templates/*
