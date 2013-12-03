@@ -1,7 +1,10 @@
 /* For datatable view */
 $(function(){
 	if (!window.console) {
-		console = {log: function() {}};
+		console = {
+			log: function(){},
+			info: function(){}
+		};
 	}
     var options_name_map = {
         'sortable': 'bSortable',
