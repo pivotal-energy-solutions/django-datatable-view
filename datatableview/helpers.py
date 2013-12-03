@@ -183,16 +183,15 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                 attrs['data-{}'.format(k)] = v
 
         # Assign default values where they are not provided
-        field_name = kwargs['field_data']
+        field_name = kwargs['field_data']  # sent as a default kwarg to helpers
         if isinstance(field_name, (tuple, list)):
             field_name = field_name[1]
         attrs['data-name'] = field_name
-
         attrs['data-pk'] = instance.pk
         attrs['data-value'] = kwargs['default_value']
 
         if 'data-url' not in attrs:
-            # Look for a backup source
+            # Look for a backup data-url
             provider_name = 'get_update_url'
             url_provider = getattr(kwargs['view'], provider_name, None)
             if not url_provider:
