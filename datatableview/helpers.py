@@ -182,18 +182,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             if k in valid_attr_names:
                 attrs['data-{}'.format(k)] = v
 
-        # # Assign default values where they are not provided
-        # data_id = kwargs.get('id', kwargs.get('data_id'))
-        # if not data_id:
-        #     if get_version().split('.') >= ['1', '6']:
-        #         model = instance._meta.model_name
-        #     else:
-        #         model = instance._meta.module_name
-        #     field = kwargs['field_name']
-        #     pk = instance.pk
-        #     data_id = '{model}-{field}-{pk}'.format(model=model, field=field, pk=pk)
-        # attrs['id'] = data_id
-
+        # Assign default values where they are not provided
         field_name = kwargs['field_data']
         if isinstance(field_name, (tuple, list)):
             field_name = field_name[1]
