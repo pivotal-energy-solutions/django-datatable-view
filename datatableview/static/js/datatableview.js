@@ -1,18 +1,24 @@
 /* For datatable view */
 
 var datatableview = {
-	make_xeditable: function(nRow, mData, iDisplayIndex) {
-	    $('td a[data-xeditable]', nRow).editable({
-			ajaxOptions: {
-				headers: { 'X-CSRFToken': datatableview.getCookie('csrftoken') }
-			},
-	        success: function (response, newValue) {
-	            if (response.status == 'error') {
-					return response.msg;
-				}
-	        },
-	    });
-		return nRow;
+	make_xeditable: function(options) {
+        var options = $.extend({}, options);
+        if (!options.ajaxOptions) {
+            options.ajaxOptions = {}
+        }
+        if (!options.ajaxOptions.headers) {
+            options.ajaxOptions.headers = {}
+        }
+        options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
+        options.success = function (response, newValue) {
+            if (response.status == 'error') {
+				return response.msg;
+			}
+        }
+        return function(nRow, mData, iDisplayIndex) {
+    	    $('td a[data-xeditable]', nRow).editable(options);
+    		return nRow;
+        }
 	},
 
 	getCookie: function(name) {
