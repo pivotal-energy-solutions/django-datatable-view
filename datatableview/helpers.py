@@ -186,6 +186,9 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     field_name = kwargs['field_data']  # sent as a default kwarg to helpers
     if isinstance(field_name, (tuple, list)):
         field_name = field_name[1]
+        if isinstance(field_name, (tuple, list)):
+            raise ValueError("'make_xeditable' helper needs a single-field data column,"
+                             " not {0!r}".format(field_name))
     attrs['data-name'] = field_name
     attrs['data-pk'] = instance.pk
     attrs['data-value'] = kwargs['default_value']
