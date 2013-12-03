@@ -295,7 +295,7 @@ class DatatableMixin(MultipleObjectMixin):
                 except TypeError as err:
                     log.error("Unable to sort on {} - {}".format(sort_field, err))
 
-            object_list._unpaged_total = len(object_list)
+            object_list._dtv_unpaged_total = len(object_list)
 
         object_list._dtv_total_initial_record_count = total_initial_record_count
         return object_list
