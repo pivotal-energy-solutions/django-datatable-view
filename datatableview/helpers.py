@@ -178,9 +178,9 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     valid_attr_names = set(default_attr_names + list(extra_attrs))
     attrs = {}
     for k, v in kwargs.items():
-        if k.startswith('data_'):
-            k = k[5:]
         if k in valid_attr_names:
+            if k.startswith('data_')
+                k = k[5:]
             attrs['data-{}'.format(k)] = v
 
 
