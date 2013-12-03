@@ -146,6 +146,7 @@ class DatatableMixin(MultipleObjectMixin):
             search_terms = map(lambda q: q.strip("'\" "), smart_split(options.search))
 
             for term in search_terms:
+                print term
                 term_queries = []  # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
                 for name in db_fields:
@@ -331,7 +332,7 @@ class DatatableMixin(MultipleObjectMixin):
         object_list = self.get_object_list()
         response = HttpResponse(self.serialize_to_json(object_list), mimetype="application/json")
 
-        add_never_cache_headers(response)
+        #add_never_cache_headers(response)
 
         return response
 
