@@ -9,7 +9,12 @@ in any way.
 
 """
 
+from functools import partial
+
 from django import get_version
+from django.forms.util import flatatt
+
+from .utils import resolve_orm_path, FIELD_TYPES
 
 if get_version().split('.') >= ['1', '5']:
     from django.utils.timezone import localtime
@@ -158,3 +163,80 @@ def format(format_string, cast=lambda x: x):
         value = cast(value)
         return format_string.format(value, obj=instance)
     return helper
+
+def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
+    if instance is None:
+        # Preloading kwargs into the helper for deferred execution
+        helper = partial(make_xeditable, *args, **kwargs)
+        return helper
+
+    # Immediate finalization, return the xeditable structure
+    data = kwargs.get('default_value', instance)
+
+    # Compile values to appear as "data-*" attributes on the anchor tag
+    default_attr_names = ['type', 'url', 'title', 'placeholder']
+    valid_attr_names = set(default_attr_names + list(extra_attrs))
+    attrs = {}
+    for k, v in kwargs.items():
+        if k in valid_attr_names:
+            if k.startswith('data_')
+                k = k[5:]
+            attrs['data-{}'.format(k)] = v
+
+
+    # Assign default values where they are not provided
+
+    field_name = kwargs['field_data']  # sent as a default kwarg to helpers
+    if isinstance(field_name, (tuple, list)):
+        field_name = field_name[1]
+        if isinstance(field_name, (tuple, list)):
+            raise ValueError("'make_xeditable' helper needs a single-field data column,"
+                             " not {0!r}".format(field_name))
+    attrs['data-name'] = field_name
+    attrs['data-pk'] = instance.pk
+    attrs['data-value'] = kwargs['default_value']
+
+    if 'data-url' not in attrs:
+        # Look for a backup data-url
+        provider_name = 'get_update_url'
+        url_provider = getattr(kwargs['view'], provider_name, None)
+        if not url_provider:
+            url_provider = getattr(instance, provider_name, None)
+            if not url_provider:
+                url_provider = lambda field_name: kwargs['view'].request.path
+        if url_provider:
+            attrs['data-url'] = url_provider(field_name=field_name)
+
+    if 'data-placeholder' not in attrs:
+        attrs['data-placeholder'] = attrs.get('data-title', "")
+
+    if 'data-type' not in attrs:
+        # Try to fetch a reasonable type from the field's class
+        if field_name == 'pk':  # special field name not in Model._meta.fields
+            field = instance._meta.pk
+        else:
+            field = resolve_orm_path(instance, field_name)
+
+        if field.choices:
+            field_type = 'select'
+        else:
+            field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
+        attrs['data-type'] = field_type
+
+    # type=select elements need to fetch their valid choice options from an AJAX endpoint.
+    # Register the view for this lookup.
+    if attrs['data-type'] in ('select', 'select2'):
+        if 'data-source' not in attrs:
+            attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
+                'url': kwargs['view'].request.path,
+                'field_param': kwargs['view'].xeditable_fieldname_param,
+                'fieldname': field_name,
+            })
+            if attrs['data-type'] == 'select2':
+                attrs['data-source'] += '&select2=true'
+
+        # Choice fields will want to display their readable label instead of db data
+        data = getattr(instance, 'get_{0}_display'.format(field_name))()
+
+    data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
+    return data
