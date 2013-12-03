@@ -14,6 +14,8 @@ from functools import partial
 from django import get_version
 from django.forms.util import flatatt
 
+from .utils import resolve_orm_path, FIELD_TYPES
+
 if get_version().split('.') >= ['1', '5']:
     from django.utils.timezone import localtime
 else:
@@ -181,7 +183,9 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         if k in valid_attr_names:
             attrs['data-{}'.format(k)] = v
 
+
     # Assign default values where they are not provided
+
     field_name = kwargs['field_data']  # sent as a default kwarg to helpers
     if isinstance(field_name, (tuple, list)):
         field_name = field_name[1]
@@ -205,6 +209,32 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
     if 'data-placeholder' not in attrs:
         attrs['data-placeholder'] = attrs.get('data-title', "")
+
+    if 'data-type' not in attrs:
+        # Try to fetch a reasonable type from the field's class
+        if field_name == 'pk':  # special field name not in Model._meta.fields
+            field = instance._meta.pk
+        else:
+            field = resolve_orm_path(instance, field_name)
+
+        if field.choices:
+            field_type = 'select'
+        else:
+            field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
+        attrs['data-type'] = field_type
+
+    # type=select elements need to fetch their valid choice options from an AJAX endpoint.
+    # Register the view for this lookup.
+    if attrs['data-type'] == 'select':
+        if 'data-source' not in attrs:
+            attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
+                'url': kwargs['view'].request.path,
+                'field_param': kwargs['view'].xeditable_fieldname_param,
+                'fieldname': field_name,
+            })
+
+        # Choice fields will want to display their readable label instead of db data
+        data = getattr(instance, 'get_{0}_display'.format(field_name))()
 
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data

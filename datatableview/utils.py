@@ -38,6 +38,32 @@ OPTION_NAME_MAP = {
     'sort_column_direction': 'sSortDir_%d',
 }
 
+# Mapping of Django's supported field types to their more generic type names.
+# These values are primarily used for the xeditable field type lookups
+FIELD_TYPES = {
+    'AutoField': 'number',
+    'BooleanField': 'text',
+    'CharField': 'text',
+    'CommaSeparatedIntegerField': 'text',
+    'DateField': 'date',
+    'DateTimeField': 'datetime',
+    'DecimalField': 'text',
+    'FileField': 'text',
+    'FilePathField': 'text',
+    'FloatField': 'number',
+    'IntegerField': 'number',
+    'BigIntegerField': 'number',
+    'IPAddressField': 'text',
+    'GenericIPAddressField': 'text',
+    'NullBooleanField': 'text',
+    'PositiveIntegerField': 'number',
+    'PositiveSmallIntegerField': 'number',
+    'SlugField': 'text',
+    'SmallIntegerField': 'number',
+    'TextField': 'text',
+    'TimeField': 'text',
+}
+
 # Private utilities
 _javascript_boolean = {
     True: 'true',

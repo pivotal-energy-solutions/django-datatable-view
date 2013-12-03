@@ -4,7 +4,7 @@ import operator
 import logging
 
 from django.views.generic.list import ListView, MultipleObjectMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Model, Manager, Q
@@ -560,13 +560,40 @@ class DatatableMixin(MultipleObjectMixin):
 class XEditableMixin(object):
     xeditable_form_class = XEditableUpdateForm
 
+    xeditable_fieldname_param = 'xeditable_field'  # GET parameter name used for choices ajax
+
     def get(self, request, *args, **kwargs):
-        """ Introduces the ``ensure_csrf_cookie`` decorator. """
+        """ Introduces the ``ensure_csrf_cookie`` decorator and handles xeditable choices ajax. """
+        if request.GET.get(self.xeditable_fieldname_param):
+            return self.get_ajax_xeditable_choices(request, *args, **kwargs)
+
         # Doing this in the method body at runtime instead of at declaration-time helps prevent
         # collisions of other subclasses also trying to decorate their own get() methods.
         method = super(XEditableMixin, self).get
         method = ensure_csrf_cookie(method)
         return method(request, *args, **kwargs)
+
+    def get_ajax_xeditable_choices(self, request, *args, **kwargs):
+        """ AJAX GET handler for xeditable queries asking for field choice lists. """
+        field_name = request.GET[self.xeditable_fieldname_param]
+
+        if not self.model:
+            self.model = self.get_queryset().model
+
+        # Sanitize the requested field name by limiting valid names to the datatable_options columns
+        columns = self._get_datatable_options()['columns']
+        for name in columns:
+            if isinstance(name, (list, tuple)):
+                name = name[1]
+            if name == field_name:
+                break
+        else:
+            return HttpResponseBadRequest()
+
+        field = self.model._meta.get_field_by_name(field_name)[0]
+
+        choices = self.get_field_choices(field, field_name)
+        return HttpResponse(json.dumps(choices))
 
     def post(self, request, *args, **kwargs):
         self.object_list = None
@@ -628,6 +655,10 @@ class XEditableMixin(object):
             'status': 'success',
         })
         return HttpResponse(data, content_type="application/json")
+
+    def get_field_choices(self, field, field_name):
+        """ Returns the valid choices for ``field``.  ``field_name`` is given for convenience. """
+        return [dict(zip(['value', 'text'], choice)) for choice in field.choices]
 
 
 class DatatableView(DatatableMixin, ListView):
