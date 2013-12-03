@@ -225,13 +225,15 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
     # type=select elements need to fetch their valid choice options from an AJAX endpoint.
     # Register the view for this lookup.
-    if attrs['data-type'] == 'select':
+    if attrs['data-type'] in ('select', 'select2'):
         if 'data-source' not in attrs:
             attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
                 'url': kwargs['view'].request.path,
                 'field_param': kwargs['view'].xeditable_fieldname_param,
                 'fieldname': field_name,
             })
+            if attrs['data-type'] == 'select2':
+                attrs['data-source'] += '&select2=true'
 
         # Choice fields will want to display their readable label instead of db data
         data = getattr(instance, 'get_{0}_display'.format(field_name))()

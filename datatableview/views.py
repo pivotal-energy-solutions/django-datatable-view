@@ -658,7 +658,11 @@ class XEditableMixin(object):
 
     def get_field_choices(self, field, field_name):
         """ Returns the valid choices for ``field``.  ``field_name`` is given for convenience. """
-        return [dict(zip(['value', 'text'], choice)) for choice in field.choices]
+        if self.request.GET.get('select2'):
+            names = ['id', 'text']
+        else:
+            names = ['value', 'text']
+        return [dict(zip(names, choice)) for choice in field.choices]
 
 
 class DatatableView(DatatableMixin, ListView):
