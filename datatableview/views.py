@@ -629,8 +629,10 @@ class XEditableMixin(object):
         })
         return HttpResponse(data, content_type="application/json")
 
+
 class DatatableView(DatatableMixin, ListView):
     pass
+
 
 class XEditableDatatableView(XEditableMixin, DatatableView):
     pass
