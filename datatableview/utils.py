@@ -312,6 +312,11 @@ class DatatableOptions(UserDict):
             return -1
 
 
+class ObjectListResult(list):
+    _dtv_total_initial_record_count = None
+    _dtv_unpaged_total = None
+
+
 def get_datatable_structure(ajax_url, model, options):
     """
     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.

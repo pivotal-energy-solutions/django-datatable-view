@@ -10,10 +10,12 @@ from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
+from django.conf import settings
+
 import dateutil.parser
 
-from datatableview.utils import DatatableOptions, split_real_fields, \
-        filter_real_fields, get_datatable_structure, resolve_orm_path
+from datatableview.utils import (ObjectListResult, DatatableOptions, split_real_fields,
+        filter_real_fields, get_datatable_structure, resolve_orm_path)
 
 log = logging.getLogger(__name__)
 
@@ -228,9 +230,9 @@ class DatatableMixin(MultipleObjectMixin):
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
-            unpaged_total = queryset.count()
+            object_list._dtv_unpaged_total = queryset.count()
         else:
-            object_list = list(queryset)
+            object_list = ObjectListResult(queryset)
 
             # # Manual searches
             # # This is broken until it searches all items in object_list previous to the database
@@ -293,14 +295,10 @@ class DatatableMixin(MultipleObjectMixin):
                 except TypeError as err:
                     log.error("Unable to sort on {} - {}".format(sort_field, err))
 
-            unpaged_total = len(object_list)
+            object_list._dtv_unpaged_total = len(object_list)
 
-        if options.page_length != -1:
-            i_begin = options.start_offset
-            i_end = options.start_offset + options.page_length
-            object_list = object_list[i_begin:i_end]
-
-        return object_list, total_initial_record_count, unpaged_total
+        object_list._dtv_total_initial_record_count = total_initial_record_count
+        return object_list
 
     def get_datatable_context_name(self):
         return self.datatable_context_name
@@ -329,33 +327,59 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         object_list = self.get_object_list()
-        response = HttpResponse(self.serialize_to_json(object_list), mimetype="application/json")
+        total = object_list._dtv_total_initial_record_count
+        filtered_total = object_list._dtv_unpaged_total
+        response_data = self.get_json_response_object(object_list, total, filtered_total)
+        response = HttpResponse(self.serialize_to_json(response_data), mimetype="application/json")
 
         #add_never_cache_headers(response)
 
         return response
 
-    def serialize_to_json(self, object_list):
+    def get_json_response_object(self, object_list, total, filtered_total):
         """
-        Returns the JSON string object required for dataTables.js to do its job.
-
+        Returns the JSON-compatible dictionary that will be serialized for an AJAX response.
+        
         The value names are in the form "s~" for strings, "i~" for integers, and "a~" for arrays,
         if you're unfamiliar with the old C-style jargon used in dataTables.js.  "aa~" means
         "array of arrays".  In some instances, the author uses "ao~" for "array of objects", an
         object being a javascript dictionary.
-
         """
 
-        object_list, total_records, unpaged_total = object_list
+        object_list_page = self.paginate_object_list(object_list)
 
         response_obj = {
             'sEcho': self.request.GET.get('sEcho', None),
-            'iTotalRecords': total_records,
-            'iTotalDisplayRecords': unpaged_total,
-            'aaData': [self.get_record_data(obj) for obj in object_list],
+            'iTotalRecords': total,
+            'iTotalDisplayRecords': filtered_total,
+            'aaData': [self.get_record_data(obj) for obj in object_list_page],
         }
+        return response_obj
 
-        return json.dumps(response_obj, indent=4)
+    def paginate_object_list(self, object_list):
+        """
+        If page_length is specified in the options or AJAX request, the result list is shortened to
+        the correct offset and length.  Paged or not, the finalized object_list is then returned.
+        """
+
+        options = self._get_datatable_options()
+
+        # Narrow the results to the appropriate page length for serialization
+        if options.page_length != -1:
+            i_begin = options.start_offset
+            i_end = options.start_offset + options.page_length
+            object_list = object_list[i_begin:i_end]
+
+        return object_list
+
+    def serialize_to_json(self, response_data):
+        """ Returns the JSON string for the compiled data object. """
+
+        indent = None
+        if settings.DEBUG:
+            indent = 4
+
+        return json.dumps(response_data, indent=indent)
 
     def get_record_data(self, obj):
         """

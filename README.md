@@ -328,6 +328,32 @@ If you are modifying the class-defined dict, **make a copy** of the dict and any
 
 Specifies the variable name to be used in the template context for the ``datatable`` structure object.  As with the built-in Django generic views, the method overrides the attribute.
 
+#### ``get_json_response_object(object_list, total, filtered_total)``
+This is the method responsible for building the response dictionary that will be the JSON response to the AJAX query.  If any paging is required, ``object_list`` is shortened to match the correct offset and length.  The default implementation then runs each item in ``object_list`` through the column data callbacks, and adds the ``total`` and ``filtered_total`` statistics into the response object.
+
+``total`` is the number of records on the base queryset _before_ any searches were applied, while ``filtered_total`` is the number of records _after_ the searches were applied.  Note that ``filtered_total`` is not the length of the page, as the page length is likely a static number such as 25, and a search might yield more results than that, presented on multiple pages.
+
+The resulting object might look like this:
+
+```python
+{
+    "aaData": [
+        {
+            "1": "10",
+            "0": "<a href=\"/object/10/\">My Object</a>",
+            "DT_RowId": 10
+        }
+    ],
+    "iTotalRecords": 57,
+    "iTotalDisplayRecords": 1,
+    "sEcho": "48"
+}
+```
+
+Note that the keys in this object are now named as the dataTables.js system expects.
+
+This object will be serialized directly into JSON without any further modifications, so if the view needs to put additional items into the response for custom client-side operations, this is the correct place to do that.
+
 ## Custom table rendering
 
 By default, a DatatableView includes an object in the context called `datatable`, whose unicode rendering is the table skeleton.  Together with the supplied generic javascript file, the datatable is automatically brought to life according to the view's configuration.
