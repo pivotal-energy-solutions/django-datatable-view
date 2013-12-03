@@ -183,6 +183,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                 k = k[5:]
             attrs['data-{}'.format(k)] = v
 
+    attrs['data-xeditable'] = "xeditable"
 
     # Assign default values where they are not provided
 
