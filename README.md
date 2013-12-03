@@ -9,6 +9,7 @@ Dependencies: [dateutil](http://labix.org/python-dateutil) library for flexible,
 * [Column declaration](#column-declaration)
 * [Other datatable_options](#other-datatable_options)
 * [DatatableView attributes and methods](#datatableview-attributes-and-methods)
+* [x-editable datatables](#x-editable-datatables)
 * [Custom table rendering](#custom-table-rendering)
 * [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options)
 * [Advanced sorting of pure virtual columns](#advanced-sorting-of-pure-virtual-columns)
@@ -354,6 +355,31 @@ Note that the keys in this object are now named as the dataTables.js system expe
 
 This object will be serialized directly into JSON without any further modifications, so if the view needs to put additional items into the response for custom client-side operations, this is the correct place to do that.
 
+## x-editable datatables
+
+If you wish to create in-place editable tables over ajax, you can use the [x-editable](http://vitalets.github.io/x-editable/docs.html) Javascript tools.  This allows you an almost zero-configuration option for basic tables.
+
+The [``make_xeditable()``](#make_xeditable) helper function can be used as a column callback.  It can accept various options for customization, or given directly for default behavior.
+
+In order for the ajax updates to work, you will need to either supply a custom ``url`` paramater to the helper function which will fulfill the ajax requirements, or you can just change the parent class of your view from ``DatatableView`` to ``XEditableDatatableView``.
+
+For example, you can pick and choose which columns receive the special x-editable treatment by simply providing the helper as a callback for that column:
+
+```python
+from datatableview.views import XEditableDatatableView
+from datatableview.helpers import make_xeditable
+
+class EditableView(XEditableDatatableView):
+	datatable_options = {
+	    'columns': [
+	        ("Friendly Name", 'field_name1', make_xeditable),
+	        'field_name2',
+	    ],
+	}
+```
+
+See the [``make_xeditable()``](#make_xeditable) helper reference for the details of how to customize how it works.
+
 ## Custom table rendering
 
 By default, a DatatableView includes an object in the context called `datatable`, whose unicode rendering is the table skeleton.  Together with the supplied generic javascript file, the datatable is automatically brought to life according to the view's configuration.
@@ -664,6 +690,42 @@ datatable_options = {
 }
 ```
 
+#### `make_xeditable()`
+##### _As a callback:_ `make_xeditable([**kwargs])`
+All keyword arguments are optional, which allows you to supply the function as a direct callback, or call it with whichever keywords you want to provide for the x-editable `data-*` attribute API.
+
+All of the following keywords are officially recognized in the helper, but all of them are able to provide default values that work for the field type:
+
+* ``type``: Defaults to the basic type of the Django field
+* ``title``: Defaults to empty
+* ``placeholder``: Defaults to the value of ``title`` if not provided
+* ``url``: Defaults to ``request.path``, so that the ``XEditableDatatableView`` can service the ajax updates.
+
+If special ``data-*`` attributes need to be set on the resulting clickable HTML element for x-editable to work on, pass them in a list to the helper, and then specify them in the kwargs:
+
+```python
+make_xeditable(extra_attrs=['data_mystuff'], data_mystuff="somevalue")
+```
+
+Without the ``extra_attrs`` list, ``data_mystuff`` would ultimately be ignored.
+
+Note that kwarg prefixes of ``data_`` will get converted to ``data-`` for rendering into HTML attributes.  This allows you to easily specify them as Python kwargs.
+
+
+All calls to ``make_xeditable`` that don't include the final ``instance`` parameter (which will be given to it on a per-row basis) will create a ``functools.partial`` of the kwargs and return it as the new callback.  This means you can chain together calls to ``make_xeditable`` to specify options that might be common to several fields:
+
+```python
+my_xeditable = make_xeditable(type="textarea")
+datatable_options = {
+    'columns': [
+        ('Full Description', 'description', my_xeditable(title="Full text description")),
+    ],
+}
+```
+
+The above example creates a new callback called ``my_xeditable``, and then uses it in the column definition, but calls it again to add new kwargs.  These kwargs will accumulate and finally be compiled together when the callback is finally executed per row.
+
+Several x-editable field types may require additional configuration via Javascript.  Please see the x-edtiable documentation for adding options on a per-field basis, since not all options are available using the ``data-*`` attribute API.
 
 ## Javascript "clear" event
 The datatable code that instantiates your table takes a liberty to add a "clear" button next to the search field.  (This may change in the future, since it's not a vanilla dataTables.js behavior.)  When it is clicked, it emits a ``clear.datatable`` event.
