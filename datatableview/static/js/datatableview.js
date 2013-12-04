@@ -1,7 +1,7 @@
 /* For datatable view */
 
 var datatableview = {
-	make_xeditable: function(options) {
+    make_xeditable: function(options) {
         var options = $.extend({}, options);
         if (!options.ajaxOptions) {
             options.ajaxOptions = {}
@@ -12,39 +12,39 @@ var datatableview = {
         options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
         options.success = function (response, newValue) {
             if (response.status == 'error') {
-				return response.msg;
-			}
+                return response.msg;
+            }
         }
         return function(nRow, mData, iDisplayIndex) {
-    	    $('td a[data-xeditable]', nRow).editable(options);
-    		return nRow;
+            $('td a[data-xeditable]', nRow).editable(options);
+            return nRow;
         }
-	},
+    },
 
-	getCookie: function(name) {
-	    var cookieValue = null;
-	    if (document.cookie && document.cookie != '') {
-	        var cookies = document.cookie.split(';');
-	        for (var i = 0; i < cookies.length; i++) {
-	            var cookie = jQuery.trim(cookies[i]);
-	            // Does this cookie string begin with the name we want?
-	            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-	                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-	                break;
-	            }
-	        }
-	    }
-	    return cookieValue;
-	}
+    getCookie: function(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 }
 
 $(function(){
-	if (!window.console) {
-		console = {
-			log: function(){},
-			info: function(){}
-		};
-	}
+    if (!window.console) {
+        console = {
+            log: function(){},
+            info: function(){}
+        };
+    }
     var options_name_map = {
         'sortable': 'bSortable',
         'sorting': 'aaSorting',
