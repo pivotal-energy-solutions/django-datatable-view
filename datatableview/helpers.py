@@ -226,8 +226,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             else:
                 field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
         else:
-            raise ValueError("'make_xeditable' requires either a model instance as its first "
-                             "argument, or else a 'type' argument must be provided.")
+            field_type = 'text'
         attrs['data-type'] = field_type
 
     # type=select elements need to fetch their valid choice options from an AJAX endpoint.
