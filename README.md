@@ -361,7 +361,9 @@ If you wish to create in-place editable tables over ajax, you can use the [x-edi
 
 The [``make_xeditable()``](#make_xeditable) helper function can be used as a column callback.  It can accept various options for customization, or given directly for default behavior.
 
-In order for the ajax updates to work, you will need to either supply a custom ``url`` paramater to the helper function which will fulfill the ajax requirements, or you can just change the parent class of your view from ``DatatableView`` to ``XEditableDatatableView``.
+Note that the following strategy officially supports only fields found directly on the originating queryset model.
+
+In order for the xedtiable Javascript to succesfully POST ajax updates for client-side changes, you will need to either supply a custom ``url`` paramater to the helper function which will fulfill the ajax requirements, or you can just change the parent class of your view from ``DatatableView`` to ``XEditableDatatableView``.
 
 For example, you can pick and choose which columns receive the special x-editable treatment by simply providing the helper as a callback for that column:
 
