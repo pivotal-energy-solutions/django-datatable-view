@@ -712,41 +712,88 @@ datatable_options = {
 #### `make_xeditable()`
 _Description: Receives xeditable-supported keyword arguments to generate a clickable ``<a>`` tag that can be detected by client-side xeditable Javascript.  See [x-editable-datatables](#x-editable-datatables) for an example Javascript initialization._
 
-##### _As a callback:_ `make_xeditable([**kwargs])`
-All keyword arguments are optional, which allows you to supply the function as a direct callback, or call it with whichever keywords you want to provide for the x-editable `data-*` attribute API.
+The only difference between using this helper as a standalone function and as a direct column callback is when the ``instance`` argument is provided.  The helper can be called without the instance, and it will return a ``functools.partial`` function wrapping whatever keyword arguments you provided.  That returned ``partial`` can again be called with new arguments.  It will continue to return ``partial`` objects until finally the ``instance`` is provided.
 
-All of the following keywords are officially recognized in the helper, but all of them are able to provide default values that work for the field type:
+Before providing examples, following is a list of keyword arguments at are officially recognized by the helper function, none of which are required:
 
-* ``type``: Defaults to the basic type of the Django field
+* ``type``: Defaults to the basic type of the Django field (e.g., "text", "number", "datetime")
 * ``title``: Defaults to empty
 * ``placeholder``: Defaults to the value of ``title`` if not provided
 * ``url``: Defaults to ``request.path``, so that the ``XEditableDatatableView`` can service the ajax updates.
+* ``pk``: Defaults to the pk of the supplied instance.  The instance should be the first argument to ``make_xeditable`` for the default to work as intended.
+* ``source``: Defaults to ``request.path``, so that the ``XEditableDatatableView`` can service ajax queries for the ``choices`` data of the field.
 
-If special ``data-*`` attributes need to be set on the resulting clickable HTML element for x-editable to work on, pass them in a list to the helper, and then specify them in the kwargs:
+These arguments correspond to the ``data-*`` HTML attribute API supported by the x-editable library.  If other ``data-*`` attributes need to be set on the resulting clickable HTML element for x-editable to work on, pass them in a list to the helper, and then specify them in the kwargs:
 
 ```python
 make_xeditable(extra_attrs=['data_mystuff'], data_mystuff="somevalue")
 ```
 
-Without the ``extra_attrs`` list, ``data_mystuff`` would ultimately be ignored.
+Without the ``extra_attrs`` list, ``data_mystuff`` would not be treated as an attribute intended for the HTML output.  Note that kwarg prefixes of ``data_`` will get converted to ``data-`` for rendering into HTML attributes.  This allows you to easily specify them as Python kwargs.
 
-Note that kwarg prefixes of ``data_`` will get converted to ``data-`` for rendering into HTML attributes.  This allows you to easily specify them as Python kwargs.
+##### _As a callback:_ `make_xeditable([**kwargs])`
 
+The primary goal of this callback is to allow zero-configuration usage, where the helper is passed directly as the column's data supplier.  ``kwargs`` can be specified as required, or chained together as discussed above.
 
-All calls to ``make_xeditable`` that don't include the final ``instance`` parameter (which will be given to it on a per-row basis) will create a ``functools.partial`` of the kwargs and return it as the new callback.  This means you can chain together calls to ``make_xeditable`` to specify options that might be common to several fields:
+Examples:
 
 ```python
-my_xeditable = make_xeditable(type="textarea")
 datatable_options = {
     'columns': [
-        ('Full Description', 'description', my_xeditable(title="Full text description")),
+        # Simplest usage
+        ('Full Description', 'description', make_xeditable)),
+        
+        # Customized type
+        ('Full Description', 'description', make_xeditable(type="textarea"))),
+    ],
+}
+
+# Use as a factory to set options in advance
+textarea_xeditable = make_xeditable(type="textarea")
+datatable_options = {
+    'columns': [
+        # Returned factory can be used directly
+        ('Full Description', 'description', textarea_xeditable),
+
+        # The factory can also accept new kwargs
+        ('Full Description', 'description', textarea_xeditable(placeholder="15 words or more")),
     ],
 }
 ```
 
-The above example creates a new callback called ``my_xeditable``, and then uses it in the column definition, but calls it again to add new kwargs.  These kwargs will accumulate and finally be compiled together when the callback is finally executed per row.
+##### _As a function:_ `make_xeditable(instance, [**kwargs])`
+As a function, you will likely supply your ``instance`` and ``kwargs`` at the same time, but chaining together calls to the ``partial`` factories is still possible.
 
-Several x-editable field types may require additional configuration via Javascript.  Please see the x-edtiable documentation for adding options on a per-field basis, since not all options are available using the ``data-*`` attribute API.
+Examples:
+
+```python
+def get_column_myfield_data(self, instance, *args, **kwargs):
+    # Simplest usage
+    # Note that "default_value" and "field_name" are arguments that get sent to column callbacks,
+    # and this helper wants to make use of those for minimum-fuss configuration.
+    return make_xeditable(instance, **kwargs)
+
+    # With custom xeditable options
+    return make_xeditable(instance, type="textarea", **kwargs)
+
+    # With non-standard data-* attributes
+    special_value = instance.special_value
+    return make_xeditable(instance, extra_attrs=['data_special'], data_special=special_value, **kwargs)
+
+    # Chaining functools.partial factories
+    # Note: "select" and "select2" types will require that the model field as ``choices`` defined.
+    select2_xedtiable = make_xeditable(type="select2", **kwargs)
+    return select2_xedtiable(instance, title="")
+
+    # If you need to avoid sending a real instance for some reason, you should specify the pk
+    # separately.  "type" will default to "text", since it cannot be read from the model instance's
+    # Django field.  "field_name" is required for automatic update url generation, but can be
+    # omitted if you are going to supply the "url" kwarg.  If "field_name" is not provided and the
+    # field is a "select"/"select2", you'll need to also send the "source" kwarg for the choices
+    # url to be provided.
+    # Try to avoid this scenario.  It starts to make less sense the harder you try :)
+    return make_xeditable(some_primitive_value, pk=some_pk, field_name="myfield")
+```
 
 ## Javascript "clear" event
 The datatable code that instantiates your table takes a liberty to add a "clear" button next to the search field.  (This may change in the future, since it's not a vanilla dataTables.js behavior.)  When it is clicked, it emits a ``clear.datatable`` event.
