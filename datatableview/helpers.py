@@ -174,7 +174,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     data = kwargs.get('default_value', instance)
 
     # Compile values to appear as "data-*" attributes on the anchor tag
-    default_attr_names = ['type', 'url', 'title', 'placeholder']
+    default_attr_names = ['pk', 'type', 'url', 'title', 'placeholder']
     valid_attr_names = set(default_attr_names + list(extra_attrs))
     attrs = {}
     for k, v in kwargs.items():
@@ -194,8 +194,10 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             raise ValueError("'make_xeditable' helper needs a single-field data column,"
                              " not {0!r}".format(field_name))
     attrs['data-name'] = field_name
-    attrs['data-pk'] = instance.pk
-    attrs['data-value'] = kwargs['default_value']
+    attrs['data-value'] = data
+
+    if 'data-pk' not in attrs:
+        attrs['data-pk'] = instance.pk
 
     if 'data-url' not in attrs:
         # Look for a backup data-url
