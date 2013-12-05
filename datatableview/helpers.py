@@ -214,16 +214,20 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         attrs['data-placeholder'] = attrs.get('data-title', "")
 
     if 'data-type' not in attrs:
-        # Try to fetch a reasonable type from the field's class
-        if field_name == 'pk':  # special field name not in Model._meta.fields
-            field = instance._meta.pk
-        else:
-            field = resolve_orm_path(instance, field_name)
+        if hasattr(instance, '_meta'):
+            # Try to fetch a reasonable type from the field's class
+            if field_name == 'pk':  # special field name not in Model._meta.fields
+                field = instance._meta.pk
+            else:
+                field = resolve_orm_path(instance, field_name)
 
-        if field.choices:
-            field_type = 'select'
+            if field.choices:
+                field_type = 'select'
+            else:
+                field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
         else:
-            field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
+            raise ValueError("'make_xeditable' requires either a model instance as its first "
+                             "argument, or else a 'type' argument must be provided.")
         attrs['data-type'] = field_type
 
     # type=select elements need to fetch their valid choice options from an AJAX endpoint.
