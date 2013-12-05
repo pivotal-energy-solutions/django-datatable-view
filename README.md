@@ -504,32 +504,6 @@ Consequent to the multiple possible usage styles, several of the helper function
 #### `link_to_model()`
 _Description: Returns HTML in the pattern of `<a href="{{ instance.get_absolute_url }}">{{ instance }}</a>`_
 
-##### _As a function:_ `link_to_model(instance, text=None, *args, **kwargs)`
-If `text` is provided, it will be used as the displayed hyperlinked HTML.  If `text` is `None`, `""`, `False`, or some other empty value, the helper falls back to the `unicode(instance)` will be used.
-
-If you choose to send all of the same `**kwargs` that your custom callback initially received, the `default_value` option will be available to the helper.  Its priority as the selected value for `text` is between an explicitly supplied `text` argument and the fallback `unicode(instance)`.
-
-Examples:
-
-```python
-def get_column_myfield_data(self, instance, *args, **kwargs):
-    # Simplest usage, text=unicode(instance)
-    return link_to_model(instance)
-
-    # Overrides linked text, although the URL is still retrieved from
-    # instance.get_absolute_url()
-    return link_to_model(instance, text="Custom text")
-
-    # Sends the `default_value` kwarg that contains the database field value from the original
-    # column declaration.  If it's available and coerces to something True-like, it will be
-    # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
-    return link_to_model(instance, **kwargs)
-
-    # Explicitly ensures that the database field's value, regardless of it being `None` or
-    # `False`, is used as the link text.
-    return link_to_model(instance, text=unicode(kwargs['default_value']))
-```
-
 ##### _As a callback:_ `link_to_model` or `link_to_model(key=None)`
 When the helper is supplied directly as the callback handler in the column declaration, it should not be called.  The reference to the helper can act as a fully working callback, meaning that it accepts the row's object `instance` and all `*args` and `**kwargs`, including the supplied `default_value` argument.
 
@@ -564,6 +538,32 @@ datatable_options = {
         ('Owner', 'owner__name', link_to_model(key=operator.attrgetter('owner'))),
     ],
 }
+```
+
+##### _As a function:_ `link_to_model(instance, text=None, *args, **kwargs)`
+If `text` is provided, it will be used as the displayed hyperlinked HTML.  If `text` is `None`, `""`, `False`, or some other empty value, the helper falls back to the `unicode(instance)` will be used.
+
+If you choose to send all of the same `**kwargs` that your custom callback initially received, the `default_value` option will be available to the helper.  Its priority as the selected value for `text` is between an explicitly supplied `text` argument and the fallback `unicode(instance)`.
+
+Examples:
+
+```python
+def get_column_myfield_data(self, instance, *args, **kwargs):
+    # Simplest usage, text=unicode(instance)
+    return link_to_model(instance)
+
+    # Overrides linked text, although the URL is still retrieved from
+    # instance.get_absolute_url()
+    return link_to_model(instance, text="Custom text")
+
+    # Sends the `default_value` kwarg that contains the database field value from the original
+    # column declaration.  If it's available and coerces to something True-like, it will be
+    # used.  Otherwise, it will be passed up and unicode(instance) will be preferred.
+    return link_to_model(instance, **kwargs)
+
+    # Explicitly ensures that the database field's value, regardless of it being `None` or
+    # `False`, is used as the link text.
+    return link_to_model(instance, text=unicode(kwargs['default_value']))
 ```
 
 
@@ -630,17 +630,6 @@ datatable_options = {
 #### `make_boolean_checkmark()`
 _Description: Returns the unicode entity `&#10004;` ("&#10004;") if the supplied value is True-like._
 
-##### _As a function:_ `make_boolean_checkmark(value, true_value="#&10004;", false_value="", *args, **kwargs)`
-If the value is True-like, `true_value` is returned.  Otherwise, `false_value` is returned.
-
-Examples:
-
-```python
-def get_column_myfield_data(self, instance, *args, **kwargs):
-    # Simplest usage
-    return make_boolean_checkmark(instance.is_verified)
-```
-
 ##### _As a callback:_ `make_boolean_checkmark(key=None)`
 If provided, `key` should be a mapping function that takes the row's model `instance` and returns the value to be consulted for this function's check.
 
@@ -664,6 +653,17 @@ datatable_options = {
         ('Is Verified', None, make_boolean_checkmark(key=operator.attrgetter('is_verified'))),
     ],
 }
+```
+
+##### _As a function:_ `make_boolean_checkmark(value, true_value="#&10004;", false_value="", *args, **kwargs)`
+If the value is True-like, `true_value` is returned.  Otherwise, `false_value` is returned.
+
+Examples:
+
+```python
+def get_column_myfield_data(self, instance, *args, **kwargs):
+    # Simplest usage
+    return make_boolean_checkmark(instance.is_verified)
 ```
 
 #### `format_date()`
