@@ -380,6 +380,23 @@ class EditableView(XEditableDatatableView):
 
 See the [``make_xeditable()``](#make_xeditable) helper reference for the details of how to customize how it works.
 
+Finally, to get the client-side table rendering to activate the xeditable Javascript, add something such as this to your template:
+
+```javascript
+function confirm_datatable_options(options) {
+    var xeditable_options = {};
+    var xeditable_row_callback = datatableview.make_xeditable(xeditable_options);
+    options.fnRowCallback = xeditable_row_callback;
+    return options;
+}
+```
+
+This takes advantage of the global ``confirm_datatable_options()`` function hook that datatableview.js will consult when it automatically detects a rendered datatable.  (See [Modifying dataTables JavaScript options](#modifying-datatables-javascript-options) for more about this strategy.)
+
+In this example, we're using the global ``datatableview`` Javascript object to access a factory function named after the ``make_xeditable`` helper.  Provide it with options you wish to pass through to the initialization of the xeditable Javascript.  The options will have a CSRF token added to the ajax headers when POST updates occur (with the help of the Django-provided CSRF cookie).  The options will also be modified to include a simple xeditable ``success`` handler to raise any validation error messages raised during the POST.
+
+With this piece in place, the work done with the ``helpers.make_xeditable()`` will now be picked up and initialized correctly.
+
 ## Custom table rendering
 
 By default, a DatatableView includes an object in the context called `datatable`, whose unicode rendering is the table skeleton.  Together with the supplied generic javascript file, the datatable is automatically brought to life according to the view's configuration.
