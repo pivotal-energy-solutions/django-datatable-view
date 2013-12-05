@@ -710,6 +710,8 @@ datatable_options = {
 ```
 
 #### `make_xeditable()`
+_Description: Receives xeditable-supported keyword arguments to generate a clickable ``<a>`` tag that can be detected by client-side xeditable Javascript.  See [x-editable-datatables](#x-editable-datatables) for an example Javascript initialization._
+
 ##### _As a callback:_ `make_xeditable([**kwargs])`
 All keyword arguments are optional, which allows you to supply the function as a direct callback, or call it with whichever keywords you want to provide for the x-editable `data-*` attribute API.
 
