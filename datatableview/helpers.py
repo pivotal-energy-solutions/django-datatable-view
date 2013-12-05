@@ -174,7 +174,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     data = kwargs.get('default_value', instance)
 
     # Compile values to appear as "data-*" attributes on the anchor tag
-    default_attr_names = ['pk', 'type', 'url', 'title', 'placeholder']
+    default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
     valid_attr_names = set(default_attr_names + list(extra_attrs))
     attrs = {}
     for k, v in kwargs.items():
