@@ -769,7 +769,7 @@ Examples:
 ```python
 def get_column_myfield_data(self, instance, *args, **kwargs):
     # Simplest usage
-    # Note that "default_value" and "field_name" are arguments that get sent to column callbacks,
+    # Note that "default_value" and "field_data" are arguments that get sent to column callbacks,
     # and this helper wants to make use of those for minimum-fuss configuration.
     return make_xeditable(instance, **kwargs)
 
@@ -787,12 +787,12 @@ def get_column_myfield_data(self, instance, *args, **kwargs):
 
     # If you need to avoid sending a real instance for some reason, you should specify the pk
     # separately.  "type" will default to "text", since it cannot be read from the model instance's
-    # Django field.  "field_name" is required for automatic update url generation, but can be
-    # omitted if you are going to supply the "url" kwarg.  If "field_name" is not provided and the
+    # Django field.  "field_data" is required for automatic update url generation, but can be
+    # omitted if you are going to supply the "url" kwarg.  If "field_data" is not provided and the
     # field is a "select"/"select2", you'll need to also send the "source" kwarg for the choices
     # url to be provided.
     # Try to avoid this scenario.  It starts to make less sense the harder you try :)
-    return make_xeditable(some_primitive_value, pk=some_pk, field_name="myfield")
+    return make_xeditable(some_primitive_value, pk=some_pk, field_data=("myfield",))
 ```
 
 ## Javascript "clear" event
