@@ -202,11 +202,13 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     if 'data-url' not in attrs:
         # Look for a backup data-url
         provider_name = 'get_update_url'
-        url_provider = getattr(kwargs['view'], provider_name, None)
+        url_provider = getattr(kwargs.get('view'), provider_name, None)
         if not url_provider:
             url_provider = getattr(instance, provider_name, None)
-            if not url_provider:
+            if not url_provider and 'view' in kwargs:
                 url_provider = lambda field_name: kwargs['view'].request.path
+            else:
+                raise ValueError("'make_xeditable' cannot determine a value for 'url'.")
         if url_provider:
             attrs['data-url'] = url_provider(field_name=field_name)
 
@@ -233,16 +235,20 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     # Register the view for this lookup.
     if attrs['data-type'] in ('select', 'select2'):
         if 'data-source' not in attrs:
-            attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
-                'url': kwargs['view'].request.path,
-                'field_param': kwargs['view'].xeditable_fieldname_param,
-                'fieldname': field_name,
-            })
-            if attrs['data-type'] == 'select2':
-                attrs['data-source'] += '&select2=true'
+            if 'view' in kwargs:
+                attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
+                    'url': kwargs['view'].request.path,
+                    'field_param': kwargs['view'].xeditable_fieldname_param,
+                    'fieldname': field_name,
+                })
+                if attrs['data-type'] == 'select2':
+                    attrs['data-source'] += '&select2=true'
+            else:
+                raise ValueError("'make_xeditable' cannot determine a value for 'source'.")
+            
 
         # Choice fields will want to display their readable label instead of db data
-        data = getattr(instance, 'get_{0}_display'.format(field_name))()
+        data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
 
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
