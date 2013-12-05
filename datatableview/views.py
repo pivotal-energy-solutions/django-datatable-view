@@ -332,7 +332,8 @@ class DatatableMixin(MultipleObjectMixin):
         total = object_list._dtv_total_initial_record_count
         filtered_total = object_list._dtv_unpaged_total
         response_data = self.get_json_response_object(object_list, total, filtered_total)
-        response = HttpResponse(self.serialize_to_json(response_data), mimetype="application/json")
+        response = HttpResponse(self.serialize_to_json(response_data),
+                                content_type="application/json")
 
         #add_never_cache_headers(response)
 
@@ -341,7 +342,7 @@ class DatatableMixin(MultipleObjectMixin):
     def get_json_response_object(self, object_list, total, filtered_total):
         """
         Returns the JSON-compatible dictionary that will be serialized for an AJAX response.
-        
+
         The value names are in the form "s~" for strings, "i~" for integers, and "a~" for arrays,
         if you're unfamiliar with the old C-style jargon used in dataTables.js.  "aa~" means
         "array of arrays".  In some instances, the author uses "ao~" for "array of objects", an
