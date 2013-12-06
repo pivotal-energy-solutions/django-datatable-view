@@ -8,6 +8,7 @@ except ImportError:
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.encoding import StrAndUnicode
+from django.forms.util import flatatt
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
@@ -199,10 +200,8 @@ class DatatableStructure(StrAndUnicode):
             if not pretty_name:
                 pretty_name = column.fields[0].capitalize()
 
-            attributes = self.get_column_attributes(name)
-
-            attributes_string = ' '.join('{0}="{1}"'.format(*item) for item in attributes.items())
-            column_info.append((pretty_name, attributes_string))
+            attributes = self.get_column_attributes(column.pretty_name or column.fields[0])
+            column_info.append((pretty_name, flatatt(attributes)))
 
         return column_info
 
