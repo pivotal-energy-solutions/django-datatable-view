@@ -229,6 +229,7 @@ class DatatableMixin(MultipleObjectMixin):
             if len(queries):
                 queryset = queryset.filter(reduce(operator.and_, queries))
 
+        # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
