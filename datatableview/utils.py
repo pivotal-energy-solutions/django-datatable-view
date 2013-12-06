@@ -13,7 +13,7 @@ MINIMUM_PAGE_LENGTH = 5
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
     'ordering': [],  # override to Model._meta.ordering
-    'filters': {},  # field_name__lookuptype: value
+    # 'filters': {},  # field_name__lookuptype: value
     'start_offset': 0,  # results to skip ahead
     'page_length': 25,  # length of a single result page
     'search': None,  # client search string
