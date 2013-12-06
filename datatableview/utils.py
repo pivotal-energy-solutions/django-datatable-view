@@ -218,20 +218,7 @@ class DatatableStructure(StrAndUnicode):
 
 
 class DatatableOptions(UserDict):
-    """
-    ``columns``: An iterable of column names.  If any item is a 2-tuple, it is treated as a
-    description in the form of ('Display Name', 'attribute_name'), where 'attribute_name' will be
-    looked up in the following order: instance.attribute_name(), instance.attribute_name,
-    view.attribute_name(instance)
-
-    ``ordering``: A list or tuple of column names to sort by.  If empty or ``None``, the model's
-    default Meta.ordering option is respected.  Names corresponding to a database-backed field can
-    be dealt with in the database, but virtual columns that exist as compound data cells need to be
-    handled in code, which has a hard efficiency limit.  Mixing real and virtual columns tries to
-    be as efficient as possible by letting the database do the sorting first, but ultimately
-    triggers the code-driven ordering.
-
-    """
+    """ Normalizes all options to values that are guaranteed safe. """
 
     def __init__(self, model, query_parameters, *args, **kwargs):
         self._model = model
