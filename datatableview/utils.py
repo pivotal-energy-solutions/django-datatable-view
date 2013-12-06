@@ -151,7 +151,7 @@ class DatatableStructure(StrAndUnicode):
         """
         Returns an iterable of 2-tuples in the form
 
-            ("column_name", ' data-bSortable="true"',)
+            ("Pretty name", ' data-bSortable="true"',)
 
         """
 
