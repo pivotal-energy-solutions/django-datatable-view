@@ -29,4 +29,5 @@ setup(name='django-datatable-view',
       package_data={'datatableview': ['static/js/*.js', 'templates/datatableview/*.html']},
       include_package_data=True,
       requires=['django (>=1.2)'],
+      install_requires=['python-dateutil'],
 )
