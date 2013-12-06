@@ -3,9 +3,9 @@ try:
 except ImportError:
     from UserDict import UserDict
 
-from django.utils.encoding import StrAndUnicode
-from django.template.loader import render_to_string
 from django.db.models.fields import FieldDoesNotExist
+from django.template.loader import render_to_string
+from django.utils.encoding import StrAndUnicode
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
