@@ -370,22 +370,16 @@ def get_datatable_structure(ajax_url, model, options):
     return DatatableStructure(ajax_url, model, options)
 
 
-def split_real_fields(model, field_list, key=None):
+def split_real_fields(model, field_list):
     """
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This
     is used repeatedly for allowing a client to request sorting or filtering on virtual or compound
     columns in the display.
 
-    If ``key`` is specified, it is used to access items in ``field_list`` for the comparison, in
-    the same fashion as the built-in ``sort`` function.
-
     Returns a 2-tuple, where the database can safely handle the first item, and the second must be
     handled in code.
 
     """
-
-    if key:
-        field_list = map(key, field_list)
 
     i = 0
 
