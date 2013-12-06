@@ -397,8 +397,8 @@ def filter_real_fields(model, fields, key=None):
 
     """
 
-    field_map = dict(zip(map(key, fields), fields))
-
+    field_hints = zip(map(key, fields), fields)
+    field_map = dict(field_hints)
     field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())
 
@@ -407,6 +407,12 @@ def filter_real_fields(model, fields, key=None):
     virtual_fields = field_list.difference(concrete_names)
 
     # Get back the original data items that correspond to the found data
-    db_fields = filter(lambda f: (key(f) if key else f) in concrete_fields, fields)
-    virtual_fields = map(field_map.get, virtual_fields)
+    db_fields = []
+    virtual_fields = []
+    for bit, field in field_hints:
+        if bit in concrete_fields:
+            db_fields.append(field)
+        else:
+            virtual_fields.append(field)
     return db_fields, virtual_fields
+
