@@ -193,17 +193,11 @@ class DatatableStructure(StrAndUnicode):
         column_info = []
         model_fields = self.model._meta.get_all_field_names()
 
-        for name in self.options.columns:
-            if isinstance(name, (tuple, list)):
-                # Take the friendly representation
-                name = pretty_name = name[0]
-            elif name in model_fields:
-                # Get the raw field name's verbose_name attribute.
-                field, model, direct, m2m = self.model._meta.get_field_by_name(name)
-                pretty_name = field.verbose_name.capitalize()
-            else:
-                # Purely virtual column name
-                pretty_name = name.capitalize()
+        for column in self.options.columns:
+            column = get_field_definition(column)
+            pretty_name = column.pretty_name
+            if not pretty_name:
+                pretty_name = column.fields[0].capitalize()
 
             attributes = self.get_column_attributes(name)
 

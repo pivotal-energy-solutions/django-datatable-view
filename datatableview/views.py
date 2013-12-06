@@ -17,7 +17,8 @@ import dateutil.parser
 
 from .forms import XEditableUpdateForm
 from .utils import (ObjectListResult, DatatableOptions, split_real_fields,
-        filter_real_fields, get_datatable_structure, resolve_orm_path)
+        filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
+        get_field_definition)
 
 log = logging.getLogger(__name__)
 
@@ -129,21 +130,8 @@ class DatatableMixin(MultipleObjectMixin):
         #     queryset = queryset.filter(**dict(db_filters))
         #
         if options.search:
-            def key_function(item):
-                """
-                Converts items in the 'columns' definition to field names for determining if it's
-                concrete or not.
-
-                """
-                if isinstance(item, (tuple, list)):
-                    item = item[1]
-                    if item is None:
-                        return item
-                    if not isinstance(item, (tuple, list)):
-                        item = (item,)
-                    return item[0].split('__')[0]
-                return item
-            db_fields, searches = filter_real_fields(self.model, options.columns, key=key_function)
+            db_fields, searches = filter_real_fields(self.model, options.columns,
+                                                     key=get_first_orm_bit)
             db_fields.extend(options.search_fields)
 
             queries = []  # Queries generated to search all fields for all terms
@@ -152,13 +140,9 @@ class DatatableMixin(MultipleObjectMixin):
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
                 # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
-                for name in db_fields:
-                    if isinstance(name, (tuple, list)):
-                        name = name[1]
-                    if not isinstance(name, (tuple, list)):
-                        name = (name,)
-
-                    for component_name in name:
+                for column in db_fields:
+                    column = get_field_definition(column)
+                    for component_name in column.fields:
                         field_queries = []  # Queries generated to search this database field for the search term
 
                         try:
