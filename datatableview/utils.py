@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 try:
     from collections import UserDict
 except ImportError:
@@ -69,7 +71,7 @@ _javascript_boolean = {
     True: 'true',
     False: 'false',
 }
-
+FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
 
 def resolve_orm_path(model, orm_path):
     """
@@ -105,6 +107,39 @@ def get_model_at_related_field(model, attr):
         raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
                 field.__class__.__name__))
     return model
+
+
+def get_first_orm_bit(field_definition):
+    """ Returns the first ORM path component of a field definition's declared db field. """
+    column = get_field_definition(field_definition)
+
+    if not column.fields:
+        return None
+
+    return column.fields[0].split('__')[0]
+
+
+def get_field_definition(field_definition):
+    """ Normalizes a field definition into its component parts, even if some are missing. """
+    if not isinstance(field_definition, (tuple, list)):
+        field_definition = [field_definition]
+    else:
+        field_definition = list(field_definition)
+
+    if len(field_definition) == 1:
+        field = [None, field_definition, None]
+    elif len(field_definition) == 2:
+        field = field_definition + [None]
+    elif len(field_definition) == 3:
+        field = field_definition
+    else:
+        raise ValueError("Invalid field definition format.")
+
+    if not isinstance(field[1], (tuple, list)):
+        field[1] = (field[1],)
+    field[1] = tuple(name for name in field[1] if name is not None)
+
+    return FieldDefinitionTuple(*field)
 
 
 class DatatableStructure(StrAndUnicode):
