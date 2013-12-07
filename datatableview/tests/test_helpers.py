@@ -1,3 +1,4 @@
-from django.test import TestCase
+from .testcase import DatatableViewTestCase
 
-
+class HelpersTests(DatatableViewTestCase):
+    pass

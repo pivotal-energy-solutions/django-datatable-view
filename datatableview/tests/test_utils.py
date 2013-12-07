@@ -1,6 +1,3 @@
-# from django.test import TestCase
-from django.test.utils import override_settings
-
 from .testcase import DatatableViewTestCase
 from .test_app import models
 from .. import utils
@@ -8,7 +5,6 @@ from .. import utils
 def get_structure(columns, opts):
     return utils.get_datatable_structure('/', models.ExampleModel, dict(opts, columns=columns))
 
-@override_settings(INSTALLED_APPS=['datatableview.tests.test_app'])
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
         """  """
