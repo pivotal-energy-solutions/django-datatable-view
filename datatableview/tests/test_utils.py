@@ -5,6 +5,9 @@ from .testcase import DatatableViewTestCase
 from .test_app import models
 from .. import utils
 
+def get_structure(columns, opts):
+    return utils.get_datatable_structure('/', models.ExampleModel, dict(opts, columns=columns))
+
 @override_settings(INSTALLED_APPS=['datatableview.tests.test_app'])
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
@@ -81,3 +84,89 @@ class UtilsTests(DatatableViewTestCase):
 
         self.assertEqual(db_fields, fields)
         self.assertEqual(virtual_fields, fakes)
+
+    def test_structure_ordering(self):
+        """ Verifies that the structural object correctly maps configuration values. """
+        # Verify basic ordering
+        columns = [
+            'name',
+        ]
+        structure = get_structure(columns, { 'ordering': ['name'] })
+        self.assertEqual(structure.ordering['name'].direction, 'asc')
+        structure = get_structure(columns, { 'ordering': ['+name'] })
+        self.assertEqual(structure.ordering['name'].direction, 'asc')
+        structure = get_structure(columns, { 'ordering': ['-name'] })
+        self.assertEqual(structure.ordering['name'].direction, 'desc')
+
+        # Verify compound ordering is preserved
+        columns = [
+            'pk',
+            'name',
+        ]
+        structure = get_structure(columns, { 'ordering': ['name', 'pk'] })
+        self.assertEqual(structure.ordering['name'].order, 0)
+        self.assertEqual(structure.ordering['pk'].order, 1)
+
+        # Verify non-real field ordering is recognized when column is defined
+        columns = [
+            'fake',
+        ]
+        structure = get_structure(columns, { 'ordering': ['fake'] })
+        self.assertEqual(structure.ordering['fake'].direction, 'asc')
+        structure = get_structure(columns, { 'ordering': ['+fake'] })
+        self.assertEqual(structure.ordering['fake'].direction, 'asc')
+        structure = get_structure(columns, { 'ordering': ['-fake'] })
+        self.assertEqual(structure.ordering['fake'].direction, 'desc')
+
+        # Verify invalid ordering names are not included
+        columns = [
+            'name',
+        ]
+        structure = get_structure(columns, { 'ordering': ['fake', 'name'] })
+        self.assertIn('name', structure.ordering)
+        self.assertNotIn('fake', structure.ordering)
+
+    def test_structure_data_api(self):
+        """
+        Verifies that unsortable_columns, hidden_columns, and ordering all add expected data-* API
+        attributes
+        """
+        columns = [
+            'pk',
+            'name',
+        ]
+        structure = get_structure(columns, {})
+        self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'true')
+        self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'true')
+        structure = get_structure(columns, { 'hidden_columns': ['name'] })
+        self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'false')
+        self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'true')
+        structure = get_structure(columns, { 'unsortable_columns': ['name'] })
+        self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'true')
+        self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'false')
+        structure = get_structure(columns, { 'hidden_columns': ['name'], 'unsortable_columns': ['name'] })
+        self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'false')
+        self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'false')
+        structure = get_structure(columns, { 'ordering': ['-name', 'pk'] })
+        self.assertEqual(structure.get_column_attributes('pk')['data-sorting'], '1,0,asc')
+        self.assertEqual(structure.get_column_attributes('name')['data-sorting'], '0,1,desc')
+
+    def test_structure_automatic_pretty_names(self):
+        """ Verify columns missing Pretty Names receive one based on their field name. """
+        columns = [
+            ('Primary Key', 'pk'),
+            'name',
+        ]
+        structure = get_structure(columns, {})
+        column_info = structure.get_column_info()
+        self.assertEqual(column_info[0].pretty_name, "Primary Key")
+        self.assertEqual(column_info[1].pretty_name, "Name")
+
+    def test_structure_is_iterable(self):
+        columns = [
+            'pk',
+            'name',
+            'fake',
+        ]
+        structure = get_structure(columns, {})
+        self.assertEqual(len(list(structure)), len(columns))
