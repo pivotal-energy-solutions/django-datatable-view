@@ -308,21 +308,16 @@ class DatatableOptions(UserDict):
                     if column_index >= len(options['columns']):
                         continue
 
-                    field_name = options['columns'][column_index]
-                    if isinstance(field_name, (tuple, list)):
-                        name, field_name = field_name[:2]
+                    column = options['columns'][column_index]
+                    column = get_field_definition(column)
+                    is_local_field = column.fields[0] in self._model._meta.get_all_field_names()
+                    if not column.fields or len(column.fields) > 1 or not is_local_field:
+                        field_name = '!{0}'.format(column_index)
 
-                        # If the database source for the field is None, then this column will be
-                        # forcefully sorted in code.  If the field_name is an iterable of compound
-                        # sources, the final output from the data method should also be used.
-                        if not field_name or isinstance(field_name, (tuple, list)):
-                            field_name = '!{0}'.format(column_index)
+                    if is_local_field:
+                        name = column.fields[0]
                     else:
-                        name = field_name
-
-                        # If the singular column name isn't a model field, mark it for manual handling
-                        if field_name not in self._model._meta.get_all_field_names():
-                            field_name = '!{0}'.format(column_index)
+                        name = column.pretty_name
 
                     # Reject requests for unsortable columns
                     if name in options.unsortable_columns:
