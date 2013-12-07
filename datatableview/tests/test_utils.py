@@ -100,12 +100,12 @@ class UtilsTests(DatatableViewTestCase):
 
         # Verify compound ordering is preserved
         columns = [
-            'pk',
+            'id',
             'name',
         ]
-        structure = get_structure(columns, { 'ordering': ['name', 'pk'] })
+        structure = get_structure(columns, { 'ordering': ['name', 'id'] })
         self.assertEqual(structure.ordering['name'].order, 0)
-        self.assertEqual(structure.ordering['pk'].order, 1)
+        self.assertEqual(structure.ordering['id'].order, 1)
 
         # Verify non-real field ordering is recognized when column is defined
         columns = [
@@ -132,7 +132,7 @@ class UtilsTests(DatatableViewTestCase):
         attributes
         """
         columns = [
-            'pk',
+            'id',
             'name',
         ]
         structure = get_structure(columns, {})
@@ -147,14 +147,14 @@ class UtilsTests(DatatableViewTestCase):
         structure = get_structure(columns, { 'hidden_columns': ['name'], 'unsortable_columns': ['name'] })
         self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'false')
         self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'false')
-        structure = get_structure(columns, { 'ordering': ['-name', 'pk'] })
-        self.assertEqual(structure.get_column_attributes('pk')['data-sorting'], '1,0,asc')
+        structure = get_structure(columns, { 'ordering': ['-name', 'id'] })
+        self.assertEqual(structure.get_column_attributes('id')['data-sorting'], '1,0,asc')
         self.assertEqual(structure.get_column_attributes('name')['data-sorting'], '0,1,desc')
 
     def test_structure_automatic_pretty_names(self):
         """ Verify columns missing Pretty Names receive one based on their field name. """
         columns = [
-            ('Primary Key', 'pk'),
+            ('Primary Key', 'id'),
             'name',
         ]
         structure = get_structure(columns, {})
@@ -165,7 +165,7 @@ class UtilsTests(DatatableViewTestCase):
     def test_structure_is_iterable(self):
         """ Verify structure object can be iterated for each column definition. """
         columns = [
-            'pk',
+            'id',
             'name',
             'fake',
         ]
