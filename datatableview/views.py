@@ -127,14 +127,7 @@ class DatatableMixin(MultipleObjectMixin):
                     for component_name in column.fields:
                         field_queries = []  # Queries generated to search this database field for the search term
 
-                        try:
-                            field = resolve_orm_path(self.model, component_name)
-                        except models.fields.FieldDoesNotExist:
-                            # Virtual columns won't be found on the model, so this is the escape
-                            # hatch.
-                            # FIXME: Should this even happen if we can promise that this includes
-                            # only database fields?
-                            continue
+                        field = resolve_orm_path(self.model, component_name)
 
                         if isinstance(field, (models.CharField, models.TextField, models.FileField)):
                             field_queries = [{component_name + '__icontains': term}]
