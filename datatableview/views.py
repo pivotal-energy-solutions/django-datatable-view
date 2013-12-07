@@ -102,7 +102,6 @@ class DatatableMixin(MultipleObjectMixin):
         # These will hold residue queries that cannot be handled in at the database level.  Anything
         # in these variables by the end will be handled manually (read: less efficiently)
         sort_fields = []
-        # filters = []
         searches = []
 
         # This count is for the benefit of the frontend datatables.js
@@ -112,23 +111,6 @@ class DatatableMixin(MultipleObjectMixin):
             db_fields, sort_fields = split_real_fields(self.model, options.ordering)
             queryset = queryset.order_by(*db_fields)
 
-        # if options.filters:
-        #     if isinstance(options.filters, dict):
-        #         filters = options.filters.items()
-        #     else:
-        #         # sequence of 2-tuples
-        #         filters = options.filters
-        #
-        #     # The first field in a string like "description__icontains" determines if the lookup
-        #     # is concrete (can be handled by the database query) or virtual.  A query such as
-        #     # "foreignkey__virtualfield__icontains" is not supported.  A query such as
-        #     # "virtualfield__icontains" IS supported but will be handled manually.
-        #     key_function = lambda item: item[0].split('__')[0]
-        #
-        #     db_filters, filters = filter_real_fields(self.model, filters, key=key_function)
-        #
-        #     queryset = queryset.filter(**dict(db_filters))
-        #
         if options.search:
             db_fields, searches = filter_real_fields(self.model, options.columns,
                                                      key=get_first_orm_bit)
