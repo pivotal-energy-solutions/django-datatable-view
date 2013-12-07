@@ -316,11 +316,12 @@ class DatatableOptions(UserDict):
 
                     if is_local_field:
                         name = column.fields[0]
+                        field_name = name
                     else:
                         name = column.pretty_name
 
                     # Reject requests for unsortable columns
-                    if name in options.unsortable_columns:
+                    if name in options['unsortable_columns']:
                         continue
 
                     # Get the client's requested sort direction
