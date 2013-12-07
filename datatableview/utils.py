@@ -198,7 +198,7 @@ class DatatableStructure(StrAndUnicode):
             if not pretty_name:
                 pretty_name = column.fields[0].capitalize()
 
-            attributes = self.get_column_attributes(column.pretty_name or column.fields[0])
+            attributes = self.get_column_attributes(column.pretty_name)
             column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
 
         return column_info
