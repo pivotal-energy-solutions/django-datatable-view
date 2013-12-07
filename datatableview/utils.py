@@ -16,7 +16,6 @@ MINIMUM_PAGE_LENGTH = 5
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
     'ordering': None,  # override to Model._meta.ordering
-    # 'filters': {},  # field_name__lookuptype: value
     'start_offset': 0,  # results to skip ahead
     'page_length': 25,  # length of a single result page
     'search': '',  # client search string
@@ -25,9 +24,6 @@ DEFAULT_OPTIONS = {
     'hidden_columns': [],  # table headers to be generated, but hidden by the client
     'structure_template': "datatableview/default_structure.html",
     'result_counter_id': 'id_count',  # HTML element ID to display the total results
-
-    # TODO: Support additional field options:
-    # 'exclude': [],
 }
 
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
