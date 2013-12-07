@@ -163,6 +163,7 @@ class UtilsTests(DatatableViewTestCase):
         self.assertEqual(column_info[1].pretty_name, "Name")
 
     def test_structure_is_iterable(self):
+        """ Verify structure object can be iterated for each column definition. """
         columns = [
             'pk',
             'name',
