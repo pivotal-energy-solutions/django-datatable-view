@@ -73,6 +73,8 @@ _javascript_boolean = {
     False: 'false',
 }
 FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
+ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
+ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
 def resolve_orm_path(model, orm_path):
     """
@@ -163,7 +165,7 @@ class DatatableStructure(StrAndUnicode):
             if index == -1:
                 continue
             sort_direction = 'desc' if name[0] == '-' else 'asc'
-            self.ordering[plain_name] = (i, index, sort_direction)
+            self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
@@ -201,7 +203,7 @@ class DatatableStructure(StrAndUnicode):
                 pretty_name = column.fields[0].capitalize()
 
             attributes = self.get_column_attributes(column.pretty_name or column.fields[0])
-            column_info.append((pretty_name, flatatt(attributes)))
+            column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
 
         return column_info
 
