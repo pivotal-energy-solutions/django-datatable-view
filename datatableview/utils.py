@@ -232,6 +232,9 @@ class DatatableOptions(UserDict):
         if 'search_fields' not in kwargs or kwargs['search_fields'] is None:
             kwargs['search_fields'] = []
 
+        if 'unsortable_columns' not in kwargs or kwargs['unsortable_columns'] is None:
+            kwargs['unsortable_columns'] = []
+
         # Absorb query GET params
         kwargs = self._normalize_options(query_parameters, kwargs)
 
@@ -324,7 +327,7 @@ class DatatableOptions(UserDict):
                             field_name = '!{0}'.format(column_index)
 
                     # Reject requests for unsortable columns
-                    if name in options.get('unsortable_columns', []):
+                    if name in options.unsortable_columns:
                         continue
 
                     # Get the client's requested sort direction
