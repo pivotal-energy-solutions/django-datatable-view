@@ -241,14 +241,12 @@ class DatatableOptions(UserDict):
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
 
         self._flat_column_names = []
-        for field_name in self.columns:
-            if isinstance(field_name, (tuple, list)):
-                pretty_name, field_name = field_name[:2]
-
-            if not field_name or isinstance(field_name, (tuple, list)):
-                field_name = pretty_name
-
-            self._flat_column_names.append(field_name)
+        for column in self.columns:
+            column = get_field_definition(column)
+            flat_name = column.pretty_name
+            if column.fields:
+                flat_name = column.fields[0]
+            self._flat_column_names.append(flat_name)
 
     def __getattr__(self, k):
         try:
