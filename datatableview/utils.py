@@ -15,11 +15,11 @@ MINIMUM_PAGE_LENGTH = 5
 
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
-    'ordering': [],  # override to Model._meta.ordering
+    'ordering': None,  # override to Model._meta.ordering
     # 'filters': {},  # field_name__lookuptype: value
     'start_offset': 0,  # results to skip ahead
     'page_length': 25,  # length of a single result page
-    'search': None,  # client search string
+    'search': '',  # client search string
     'search_fields': [],  # extra ORM paths to search; not displayed
     'unsortable_columns': [],  # table headers not allowed to be sorted
     'hidden_columns': [],  # table headers to be generated, but hidden by the client
