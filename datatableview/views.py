@@ -164,7 +164,7 @@ class DatatableMixin(MultipleObjectMixin):
                                 continue
 
                             field_queries = [{component_name: term}]
-                        elif isinstance(field, models.IntegerField):
+                        elif isinstance(field, (models.IntegerField, models.AutoField)):
                             try:
                                 field_queries = [{component_name: int(term)}]
                             except ValueError:
