@@ -368,18 +368,19 @@ class DatatableMixin(MultipleObjectMixin):
 
     def get_column_data(self, i, name, instance):
         """ Finds the backing method for column ``name`` and returns the generated data. """
-        is_custom, f = self._get_resolver_method(i, name)
+        column = get_field_definition(name)
+        is_custom, f = self._get_resolver_method(i, column)
         if is_custom:
             args, kwargs = self._get_preloaded_data(instance)
             try:
-                kwargs['default_value'] = self._get_column_data_default(instance, name)[1]
+                kwargs['default_value'] = self._get_column_data_default(instance, column)[1]
             except AttributeError:
                 kwargs['default_value'] = None
             kwargs['field_data'] = name
             kwargs['view'] = self
             values = f(instance, *args, **kwargs)
         else:
-            values = f(instance, name)
+            values = f(instance, column)
 
         if not isinstance(values, (tuple, list)):
             if isinstance(values, str):  # not unicode
@@ -426,7 +427,7 @@ class DatatableMixin(MultipleObjectMixin):
             preloaded_kwargs = {}
         return preloaded_args, preloaded_kwargs
 
-    def _get_resolver_method(self, i, name):
+    def _get_resolver_method(self, i, column):
         """
         Using a slightly mangled version of the column's name (explained below) each column's value
         is derived.
@@ -450,16 +451,17 @@ class DatatableMixin(MultipleObjectMixin):
 
         """
 
-        if isinstance(name, (tuple, list)):
-            if len(name) == 3:
-                # Method name is explicitly given
-                method_name = name[2]
-                if callable(method_name):
-                    return True, method_name
-                return True, getattr(self, method_name)
+        callback = column.callback
+        if callback:
+            if callable(callback):
+                return True, callback
+            return True, getattr(self, callback)
 
-            # Treat the 'nice name' as the starting point for looking up a method
-            name = name[0]
+        # Treat the 'nice name' as the starting point for looking up a method
+        name = column.pretty_name
+        if not name:
+            name = column.fields[0]
+
         mangled_name = re.sub(r'[\W_]+', '_', name)
 
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
@@ -472,8 +474,8 @@ class DatatableMixin(MultipleObjectMixin):
 
         return False, self._get_column_data_default
 
-    def _get_column_data_default(self, instance, name):
-        """ Default mechanism for resolving ``name`` through the model instance ``instance``. """
+    def _get_column_data_default(self, instance, column, *args, **kwargs):
+        """ Default mechanism for resolving ``column`` through the model instance ``instance``. """
 
         def chain_lookup(obj, bit):
             try:
@@ -486,16 +488,8 @@ class DatatableMixin(MultipleObjectMixin):
                         value = value()
             return value
 
-        if isinstance(name, (tuple, list)):
-            name, field_lookup = name[0], name[1]
-        else:
-            field_lookup = name
-
-        if not isinstance(field_lookup, (tuple, list)):
-            field_lookup = (field_lookup,)
-
         values = []
-        for field_name in field_lookup:
+        for field_name in column.fields:
             value = reduce(chain_lookup, [instance] + field_name.split('__'))
 
             if isinstance(value, Model):
