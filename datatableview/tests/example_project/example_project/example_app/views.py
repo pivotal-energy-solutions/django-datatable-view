@@ -157,7 +157,7 @@ class PrettyNamesDatatableView(DemoMixin, DatatableView):
     }
 
     implementation = u"""
-    class PrettyNamesDatatableView(DemoMixin, DatatableView):
+    class PrettyNamesDatatableView(DatatableView):
         model = Entry
         datatable_options = {
             'columns': [
