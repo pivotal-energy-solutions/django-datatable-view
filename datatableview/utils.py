@@ -196,7 +196,7 @@ class DatatableStructure(StrAndUnicode):
             column = get_field_definition(column)
             pretty_name = column.pretty_name
             column_name = column.pretty_name
-            if not pretty_name:
+            if not pretty_name and column.fields[0] in model_fields:
                 field = self.model._meta.get_field_by_name(column.fields[0])[0]
                 column_name = field.name
                 pretty_name = field.verbose_name
