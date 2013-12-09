@@ -518,3 +518,57 @@ class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
             ],
         }
     """
+
+class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
+    """
+    The easiest way to get Bootstrap datatables is to use the alternate structural template
+    ``datatableview/bootstrap_structure.html``, which simply adds the
+    ``table``, ``table-striped``, and ``table-bordered`` classes to the main table tag.  You can
+    specify the template directly in ``datatable_options["structure_template"]``, or you can create
+    your own ``datatableview/default_structure.html`` template and simply paste the contents of the
+    bootstrap version into it.
+    
+    WARNING:
+    Overriding ``datatableview/default_structure.html`` will affect all datatables using the default
+    template!
+
+    This gets the table itself looking better, but the rest of the controls added by dataTables.js
+    are a little lackluster by comparison.  To fix this, download the integration files from
+    <a href="https://github.com/DataTables/Plugins/tree/master/integration/bootstrap/">https://github.com/DataTables/Plugins/tree/master/integration/bootstrap/</a>
+    and then add them to the main template:
+    
+    <pre>
+    &lt;link href="{{ STATIC_URL }}css/dataTables.bootstrap.css" rel="stylesheet" /&gt;
+    </pre>
+    <pre>
+    &lt;script src="{{ STATIC_URL }}js/dataTables.bootstrap.js"&gt;&lt;/script&gt;
+    </pre>
+
+    Alternately, you can use the set of static resources from
+    <a href="https://github.com/Jowin/Datatables-Bootstrap3/">https://github.com/Jowin/Datatables-Bootstrap3/</a>,
+    which do the same thing with mild variances.
+    """
+    model = Entry
+    datatable_options = {
+        'structure_template': "datatableview/bootstrap_structure.html",
+        'columns': [
+            'id',
+            'headline',
+            'blog',
+            'pub_date',
+        ],
+    }
+
+    implementation = u"""
+    class BootstrapTemplateOfficialDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'structure_template': "datatableview/bootstrap_structure.html",
+            'columns': [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ],
+        }
+    """
