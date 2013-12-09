@@ -477,6 +477,40 @@ class UnsortableColumnsDatatableView(DemoMixin, DatatableView):
     """
 
 
+class HiddenColumnsDatatableView(DemoMixin, DatatableView):
+    """
+    Columns may be marked for being hidden.  This is a client-side tweak that has no benefit to
+    server performance.  When dataTables.js sees a column marked for being hidden, it removes it
+    from the DOM, but retains traces of it in memory.  Some of the dataTables.js plugins have used
+    this to allow you to send columns that are invisible on the main website, but if exported to
+    CSV by the client, are included and visible as usual.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+            'blog',
+            'pub_date',
+        ],
+        'hidden_columns': ['id'],
+    }
+
+    implementation = u"""
+    class HiddenColumnsDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ],
+            'hidden_columns': ['id'],
+        }
+    """
+
+
 class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
     """
     When the ``datatable`` context variable is rendered, it looks for a template named
