@@ -174,6 +174,8 @@ class DatatableMixin(MultipleObjectMixin):
                                 field_queries = [{component_name: float(term)}]
                             except ValueError:
                                 pass
+                        elif isinstance(field, models.ForeignKey):
+                            pass
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
 
