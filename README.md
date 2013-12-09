@@ -795,6 +795,27 @@ def get_column_myfield_data(self, instance, *args, **kwargs):
     return make_xeditable(some_primitive_value, pk=some_pk, field_data=("myfield",))
 ```
 
+#### `through_filter()`
+_Description: Accepts a built-in Django template filter and allows it to be used directly as a column callback.  This is normally not possible since callbacks are given ``*args`` and ``**kwargs`` when called, which the filters do not expect._
+##### _As a callback:_ `through_filter(filter_func, arg=None)`
+A built-in Django filter function (or any simple mapping function that takes a simple value argument) may be passed into this helper, and ``through_filter`` will wrap it to prevent unncessary arguments from being sent to the ``filter_func``.
+
+Examples:
+
+```python
+from django.template.defaultfilters import timesince
+datatable_options = {
+    'columns': [
+        # Simplest usage
+        ('Age', 'date_created', through_filter(timesince))),
+        
+        # Extra arg
+        ('Age', 'date_created', through_filter(timesince, arg=other_datetime)),
+    ],
+}
+```
+
+
 ## Javascript "clear" event
 The datatable code that instantiates your table takes a liberty to add a "clear" button next to the search field.  (This may change in the future, since it's not a vanilla dataTables.js behavior.)  When it is clicked, it emits a ``clear.datatable`` event.
 
