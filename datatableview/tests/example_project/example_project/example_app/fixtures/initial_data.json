@@ -1,0 +1,71 @@
+[
+    { "model": "example_app.Blog", "pk": 1, "fields": {
+        "name": "First Blog",
+        "tagline": "First and finest"
+    }},
+    { "model": "example_app.Blog", "pk": 2, "fields": {
+        "name": "Second Blog",
+        "tagline": "Last but not least"
+    }},
+
+    { "model": "example_app.Entry", "pk": 1, "fields": {
+        "blog": 1,
+        "headline": "Hello World",
+        "body_text": "This is a great post",
+        "pub_date": "2013-01-01",
+        "mod_date": "2013-01-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }},
+    { "model": "example_app.Entry", "pk": 2, "fields": {
+        "blog": 1,
+        "headline": "Headline",
+        "body_text": "",
+        "pub_date": "2013-02-01",
+        "mod_date": "2013-02-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }},
+    { "model": "example_app.Entry", "pk": 3, "fields": {
+        "blog": 1,
+        "headline": "",
+        "body_text": "",
+        "pub_date": "2013-01-01",
+        "mod_date": "2013-01-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }},
+    { "model": "example_app.Entry", "pk": 4, "fields": {
+        "blog": 1,
+        "headline": "",
+        "body_text": "",
+        "pub_date": "2013-01-01",
+        "mod_date": "2013-01-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }},
+    { "model": "example_app.Entry", "pk": 5, "fields": {
+        "blog": 1,
+        "headline": "",
+        "body_text": "",
+        "pub_date": "2013-01-01",
+        "mod_date": "2013-01-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }},
+    { "model": "example_app.Entry", "pk": 6, "fields": {
+        "blog": 2,
+        "headline": "",
+        "body_text": "",
+        "pub_date": "2013-01-01",
+        "mod_date": "2013-01-02",
+        "n_comments": 0,
+        "n_pingbacks": 0,
+        "rating": 0
+    }}
+]

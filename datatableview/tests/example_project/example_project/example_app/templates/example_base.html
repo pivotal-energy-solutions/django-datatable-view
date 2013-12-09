@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Live demo</h2>
+    {% block demo %}
+        {{ datatable }}
+    {% endblock demo %}
+
+    <br /><br />
+    <h2>Description</h2>
+    {% block description %}
+        {{ description|safe|linebreaks }}
+    {% endblock description %}
+
+    <br /><br />
+    <h2>Implementation in code</h2>
+    {% block implementation %}
+        <pre class="brush: python">
+        {{ implementation|safe }}
+        </pre>
+    {% endblock implementation %}
+{% endblock content %}

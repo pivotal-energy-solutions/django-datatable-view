@@ -1,0 +1,26 @@
+import re
+
+from django.conf.urls import patterns, include, url
+
+from . import views
+
+urls = []
+for attr in dir(views):
+    View = getattr(views, attr)
+    try:
+        is_demo = issubclass(View, views.DemoMixin) and View is not views.DemoMixin
+    except TypeError:
+        continue
+    if is_demo:
+        name = attr.replace("DatatableView", "")
+        if name.endswith("XEditable"):
+            name = name.replace("XEditable", "")
+        name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1-', name).lower()
+        urls.append(url(r'^{name}/$'.format(name=name), View.as_view(), name=name))
+
+urlpatterns = patterns('',
+    url(r'^$', views.IndexView.as_view(), name="index"),
+    url(r'^column-formtats/$', views.ValidColumnFormatsView.as_view(), name="column-formats"),
+    url(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name="js-init"),
+    *urls
+)

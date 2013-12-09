@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block static %}
+    {{ block.super }}
+    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushXML.js" type="text/javascript"></script>
+    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushJScript.js" type="text/javascript"></script>
+{% endblock static %}
+
+{% block content %}
+    <h2>Automatic initialization</h2>
+    
+    <p>
+        The easiest way to get going is to include the <code>datatableview.js</code> (or
+        <code>datatableview.min.js</code>) file bundled with the app:
+    </p>
+    <pre class="brush: xml">
+&lt;script type="text/javascript" charset="utf8" src="{% templatetag openvariable %} STATIC_URL {% templatetag closevariable %}js/datatableview.js"&gt;&lt;/script&gt;
+    </pre>
+
+    <p>
+        This file includes a jQuery <code>document.ready</code> handler that will initialize any
+        <code>table.datatable</code> elements on the page.  Tables rendered into a template using
+        the tools provided by this app will automatically meet this criteria.
+    </p>
+
+    <p>
+        Global <code>dataTables.js</code> options can be specified normally, but the page requires
+        specific options for its datatable(s), you can specify a global function hook that will be
+        given the <code>options</code> object that will be sent to the dataTable constructor.
+        Including this hook somewhere in the global namespace will ensure that you have control
+        over custom options:
+    </p>
+    
+    <pre class="brush: javascript">
+function confirm_global_datatable_options(options, datatable) {
+    // "datatable" variable is the jQuery object, not the oTable, since it
+    // hasn't been initialized yet.
+    options.fnRowCallback = function(...){ ... };
+    return options;
+}
+    </pre>
+
+    <p>
+        Note that this function hook is <em>not</em> required for the automatic initialization to
+        work.
+    </p>
+{% endblock content %}
