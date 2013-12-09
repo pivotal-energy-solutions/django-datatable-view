@@ -175,7 +175,7 @@ class DatatableMixin(MultipleObjectMixin):
                             except ValueError:
                                 pass
                         else:
-                            raise ValueError("Unhandled field type for %s (%r) in search." % (name, type(field)))
+                            raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
 
                         # print field_queries
 
