@@ -172,7 +172,7 @@ class UtilsTests(DatatableViewTestCase):
         """ Verifies that no columns specified in options means showing all local fields. """
         opts = {}
         options = utils.DatatableOptions(models.ExampleModel, {}, **opts)
-        local_field_names = [f.verbose_name.capitalize() for f in models.ExampleModel._meta.local_fields]
+        local_field_names = [(f.verbose_name, f.name) for f in models.ExampleModel._meta.local_fields]
         self.assertEqual(options.columns, local_field_names)
 
     def test_options_use_defaults(self):
