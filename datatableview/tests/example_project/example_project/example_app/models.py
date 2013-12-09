@@ -27,3 +27,6 @@ class Entry(models.Model):
 
     def __unicode__(self):
         return self.headline
+
+    def get_pub_date(self):
+        return self.pub_date

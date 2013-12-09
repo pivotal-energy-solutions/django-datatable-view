@@ -58,12 +58,21 @@
                     <li class="nav-list-item"><a href="{% url "column-formats" %}">Valid column formats</a></li>
                     <li class="nav-list-item"><a href="{% url "js-init" %}">Javascript initialization</a></li>
                     <li class="divider"></li>
+                    <li class="nav-list-item dropdown-header">Column configurations</li>
                     <li class="nav-list-item"><a href="{% url "zero-configuration" %}">Zero configuration</a></li>
                     <li class="nav-list-item"><a href="{% url "specific-columns" %}">Use only specific columns</a></li>
                     <li class="nav-list-item"><a href="{% url "pretty-names" %}">Use custom column names</a></li>
                     <li class="nav-list-item"><a href="{% url "presentational-changes" %}">Presentational changes</a></li>
                     <li class="nav-list-item"><a href="{% url "virtual-column-definitions" %}">Non-field columns</a></li>
-                    <li class="nav-list-item"><a href="{% url "direct-callback-handle" %}">Supply callback as handle</a></li>
+                    <li class="nav-list-item"><a href="{% url "column-backed-by-method" %}">Method-backed columns</a></li>
+                    <li class="nav-list-item"><a href="{% url "compound-columns" %}">Compound columns</a></li>
+                    <li class="nav-list-item"><a href="{% url "related-fields" %}">Relate fields in columns</a></li>
+                    <li class="nav-list-item"><a href="{% url "default-callback-names" %}">Implicit optional callbacks</a></li>
+                    <li class="divider"></li>
+                    <li class="nav-list-item dropdown-header">Other options</li>
+                    <li class="nav-list-item"><a href="{% url "unsortable-columns" %}">Unsortable columns</a></li>
+                    <li class="divider"></li>
+                    <li class="nav-list-item dropdown-header">Template rendering</li>
                 </ul>
             </div>
             <div class="col-md-9">
