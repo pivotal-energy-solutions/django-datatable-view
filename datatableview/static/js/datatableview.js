@@ -38,7 +38,7 @@ var datatableview = {
         return cookieValue;
     },
 
-    initialize: function($$) {
+    initialize: function($$, opts) {
         if (typeof window.console === "undefined" || typeof window.console.log === "undefined") {
             console = {
                 log: function(){},
@@ -60,7 +60,7 @@ var datatableview = {
 
             datatable.find('thead th').each(function(){
                 var header = $(this);
-                var options = {};
+                var options = $.extend({}, opts || {});
                 for (var i = 0; i < header[0].attributes.length; i++) {
                     var attr = header[0].attributes[i];
                     if (attr.specified && /^data-/.test(attr.name)) {

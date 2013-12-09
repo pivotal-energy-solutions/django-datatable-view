@@ -18,17 +18,45 @@
     </pre>
 
     <p>
-        This file includes a jQuery <code>document.ready</code> handler that will initialize any
-        <code>table.datatable</code> elements on the page.  Tables rendered into a template using
-        the tools provided by this app will automatically meet this criteria.
+        This file introduces a global ``datatableview`` object that wraps the utilities and
+        initialization function.  A jQuery <code>document.ready</code> handler is also provided,
+        which by default will initialize any <code>.datatable</code> elements on the page. Tables
+        rendered into a template using the tools provided by this app will automatically meet this
+        criteria.
     </p>
 
     <p>
-        Global <code>dataTables.js</code> options can be specified normally, but the page requires
-        specific options for its datatable(s), you can specify a global function hook that will be
-        given the <code>options</code> object that will be sent to the dataTable constructor.
-        Including this hook somewhere in the global namespace will ensure that you have control
-        over custom options:
+        To disable automatic initialization, you can include the script, and then set a property
+        on the global object:
+    </p>
+
+    <pre class="brush: javascript">
+datatableview.auto_initialize = false;
+    </pre>
+
+    <p>
+        To easily initialize datatables in Javascript, you can select your elements and send them
+        to <code>datatableview.initialize()</code>:
+    </p>
+
+    <pre class="brush: javascript">
+$(function(){
+    datatableview.initialize($('.mytable'));
+    
+    // Or, if there are common options that should be given to all select elements,
+    // you can specify them now.  data-* API attributes will override these options.
+    var common_options = {};
+    datatableview.initialize($('.mytable'), common_options);
+});
+    </pre>
+
+    <p>
+        Global <code>dataTables.js</code> default options can be specified normally, but if the page
+        requires specific options for its datatable(s) and you are using automatic initialization
+        (i.e., you didn't have an opportunity to set special options in advance), you can specify a
+        global function hook that will be given the <code>options</code> object that will be sent
+        to the dataTable constructor. Including this hook somewhere in the global namespace will
+        ensure that you have control over custom options:
     </p>
     
     <pre class="brush: javascript">
