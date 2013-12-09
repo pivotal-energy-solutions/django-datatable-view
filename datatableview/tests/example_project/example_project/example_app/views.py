@@ -511,6 +511,41 @@ class HiddenColumnsDatatableView(DemoMixin, DatatableView):
     """
 
 
+class SearchFieldsDatatableView(DemoMixin, DatatableView):
+    """
+    When a user searches a datatable, the server will query all of the concrete fields in the
+    displayed columns.  You can enable extra search fields that are not shown on the table, but are
+    consulted during a search query, by adding ``datatable_options["search_fields"]``.
+    
+    ``search_fields`` is a simple list of fields using the normal query language.  In this case,
+    ``"blog__name"`` has been added to the list of fields, and so you can search the above table
+    for the term ``First`` or ``Second`` and see the table filter the results, even though that
+    field is not included as a real column.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+            'pub_date',
+        ],
+        'search_fields': ['blog__name'],
+    }
+
+    implementation = u"""
+    class SearchFieldsDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+                'pub_date',
+            ],
+            'search_fields': ['blog__name'],
+        }
+    """
+
+
 class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
     """
     When the ``datatable`` context variable is rendered, it looks for a template named
