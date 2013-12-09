@@ -195,10 +195,13 @@ class DatatableStructure(StrAndUnicode):
         for column in self.options.columns:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
+            column_name = column.pretty_name
             if not pretty_name:
-                pretty_name = self.model._meta.get_field_by_name(column.fields[0])[0].verbose_name
+                field = self.model._meta.get_field_by_name(column.fields[0])[0]
+                column_name = field.name
+                pretty_name = field.verbose_name
 
-            attributes = self.get_column_attributes(column.pretty_name)
+            attributes = self.get_column_attributes(column_name)
             column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
 
         return column_info
