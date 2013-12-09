@@ -475,3 +475,46 @@ class UnsortableColumnsDatatableView(DemoMixin, DatatableView):
             'unsortable_columns': ['headline', 'body_text', 'blog', 'pub_date'],
         }
     """
+
+
+class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
+    """
+    When the ``datatable`` context variable is rendered, it looks for a template named
+    ``"datatableview/default_structure.html"``.  This template is pretty generic, but lacks special
+    styles for UI frameworks like Twitter Bootstrap and others.
+
+    The default template renders special ``data-*`` attributes on the ``table`` and ``th`` tags,
+    which helps make initializing the tables more seamless when using the ``datatableview.js`` tool.
+
+    Alternately, you can specify a custom template on a per-view basis using
+    ``datatable_options["structure_template"]``, which is a normal template path that will be put
+    through the Django discovery process.
+
+    WARNING:
+    When overriding this template, take care to render the ``data-*`` attributes if you want easy
+    table initialization!
+    """
+    model = Entry
+    datatable_options = {
+        'structure_template': "custom_table_template.html",
+        'columns': [
+            'id',
+            'headline',
+            'blog',
+            'pub_date',
+        ],
+    }
+
+    implementation = u"""
+    class CustomizedTemplateDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'structure_template': "custom_table_template.html",
+            'columns': [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ],
+        }
+    """

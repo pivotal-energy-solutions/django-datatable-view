@@ -1,0 +1,9 @@
+<table class="table table-striped table-bordered datatable" data-source-url="{{ url }}">
+    <thead>
+        <tr>
+            {% for name, attributes in column_info %}
+            <th data-name="{{ name|slugify }}" {{ attributes|safe }}>{{ name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table>
