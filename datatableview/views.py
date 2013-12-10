@@ -556,7 +556,7 @@ class XEditableMixin(object):
                     'status': 'error',
                     'message': "Object does not exist."
                 })
-                return HttpResponse(data, content_type="application/json", status_code=404)
+                return HttpResponse(data, content_type="application/json", status=404)
             return self.update_object(form, obj)
         else:
             data = json.dumps({
@@ -564,7 +564,7 @@ class XEditableMixin(object):
                 'message': "Invalid request",
                 'form_errors': form.errors,
             })
-            return HttpResponse(data, content_type="application/json", status_code=400)
+            return HttpResponse(data, content_type="application/json", status=400)
 
     def get_xeditable_form_class(self):
         return self.xeditable_form_class
