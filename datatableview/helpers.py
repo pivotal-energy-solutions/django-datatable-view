@@ -256,14 +256,14 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
 
-def through_filter(template_filter):
-    def helper(instance, arg=None, *args, **kwargs):
+def through_filter(template_filter, arg=None):
+    def helper(instance, *args, **kwargs):
         value = kwargs.get('default_value')
         if value is None:
             value = instance
         if arg is not None:
-            arg = [arg]
+            extra_arg = [arg]
         else:
-            arg = []
-        return template_filter(value, *arg)
+            extra_arg = []
+        return template_filter(value, *extra_arg)
     return helper
