@@ -7,6 +7,7 @@ from django.conf import settings
 from django.template.defaultfilters import timesince
 
 from datatableview.views import DatatableView, XEditableDatatableView
+from datatableview import helpers
 
 from .models import Entry
 
@@ -46,12 +47,8 @@ class DemoMixin(object):
     def get_template_names(self):
         """ Try the view's snake_case name, or else use default simple template. """
         name = self.__class__.__name__.replace("DatatableView", "")
-        folder = "datatable"
-        if name.endswith("XEditable"):
-            folder = "xeditable"
-            name = name.replace("XEditable", "")
         name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1_', name)
-        return [os.path.join(folder, name.lower() + ".html"), "example_base.html"]
+        return [name.lower() + ".html", "example_base.html"]
 
     def get_context_data(self, **kwargs):
         context = super(DemoMixin, self).get_context_data(**kwargs)
@@ -438,6 +435,63 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
         def get_column_Publication_Date_data(self, instance, *args, **kwargs):
             return instance.pub_date.strftime("%m/%d/%Y")
     """
+
+class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
+    """
+    The <a href="http://vitalets.github.io/x-editable/">x-editable</a> javascript tool is a way to
+    turn table cells into interactive forms that can post incremental updates over ajax.  x-editable
+    supports Bootstrap, jQueryUI, and plain jQuery.  It requires its own specific initialization to
+    take place after the datatable has populated itself with data.
+
+    To enable x-editable columns, inherit your view from ``XEditableDatatableView`` instead of the
+    plain ``DatatableView``.  The x-editable variant has ajax responders built into it so that the
+    incremental updates can be received, validated, and responded to.
+
+    Next, use the ``datatableview.helpers.make_xeditable`` function as a callback for the columns
+    that should become interactive.  You can customize the helper's behavior, but by default,
+    ``make_xeditable`` will try to pick reasonable defaults for the field type.  This callback
+    returns a ``&lt;a&gt;`` tag with ``data-*`` API attributes on it that the x-editable javascript
+    knows how to read.
+
+    Finally, on your template you will need to include a special initialization to make sure that
+    the frontend understands how to handle what you've set up.  The global Javascript object
+    ``datatableview`` has a member called ``make_xeditable`` (named after the helper function you
+    use in the column definitions), which is a factory that returns a callback for the dataTables.js
+    ``fnRowCallback`` hook.  See the implementation snippets below.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            ("Headline", 'headline', helpers.make_xeditable),
+            ("Blog", 'blog', helpers.make_xeditable),
+            ("Published date", 'pub_date', helpers.make_xeditable),
+        ]
+    }
+
+    implementation = u"""
+    class XEditableColumnsDatatableView(XEditableDatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                ("Headline", 'headline', helpers.make_xeditable),
+                ("Blog", 'blog', helpers.make_xeditable),
+                ("Published date", 'pub_date', helpers.make_xeditable),
+            ]
+        }
+    </pre>
+    <pre class="brush: javascript">
+    // Page javascript
+    datatableview.auto_initialize = false;
+    $(function(){
+        var xeditable_options = {};
+        datatableview.initialize($('.datatable'), {
+            fnRowCallback: datatableview.make_xeditable(xeditable_options),
+        });
+    })
+    """
+
 
 class UnsortableColumnsDatatableView(DemoMixin, DatatableView):
     """
