@@ -9,7 +9,7 @@ in any way.
 
 """
 
-from functools import partial
+from functools import partial, wraps
 
 from django import get_version
 from django.forms.util import flatatt
@@ -47,6 +47,7 @@ def keyed_helper(helper):
 
     """
 
+    @wraps(helper)
     def wrapper(instance=None, key=None, *args, **kwargs):
         if instance is not None and not key:
             value = instance
@@ -55,6 +56,7 @@ def keyed_helper(helper):
             if key:
                 # Helper is used directly in the columns declaration.  A new callable is
                 # returned to take the place of a callback.
+                @wraps(helper)
                 def helper_wrapper(instance, *args, **kwargs):
                     return helper(key(instance), *args, **kwargs)
                 return helper_wrapper
