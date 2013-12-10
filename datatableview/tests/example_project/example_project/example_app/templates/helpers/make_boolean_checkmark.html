@@ -1,0 +1,41 @@
+<h3>
+    <a id="make_boolean_checkmark" name="make_boolean_checkmark" href="#make_boolean_checkmark">
+        <code>make_boolean_checkmark</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>Interaction (no args)</em></h6>
+
+<p>
+    Shortcut for coercing the column's data into a boolean <code>True</code> or <code>False</code>,
+    but rendering a <code>&#10004;</code> (<code>&amp;#10004;</code>) or <code>&#10008;</code>
+    (<code>&amp;#10008;</code>)
+</p>
+<p>
+    Any value can be used with this helper, as long as it can be assessed in an
+    <code>if value:</code> statement.  The helper can optionally be called with
+    <code>true_value</code> and <code>false_value</code> arguments, which default to the entity
+    strings shown above.
+</p>
+<pre class="brush: python">
+datatable_options = {
+    'columns': [
+        # Standard use, no need to actually call the helper
+        ("Comments", 'n_comments', helpers.make_boolean_checkmark),
+        # Specify custom string
+        ("Blog", 'blog__name', helpers.make_boolean_checkmark(false_value="")),
+    ],
+}
+</pre>
+<p>
+    You can use this helper in your own custom callbacks if there is some kind of value calculation
+    that needs to be done before the helper should execute:
+</p>
+<pre class="brush: python">
+def get_column_Interaction_data(self, instance, *args, **kwargs):
+    # Simplest use; grab the 'default_value' argument that DatatableView found for us
+    return helpers.make_boolean_checkmark(kwargs['default_value'])
+    
+    # Specify custom true and/or false strings
+    value = instance.get_some_value()
+    return helpers.make_boolean_checkmark(value, true_value="Yes", false_value="No")
+</pre>

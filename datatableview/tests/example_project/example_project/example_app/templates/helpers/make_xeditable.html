@@ -1,0 +1,97 @@
+<h3>
+    <a id="make_xeditable" name="make_xeditable" href="#make_xeditable">
+        <code>make_xeditable</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>Headline</em></h6>
+
+<p>
+    Shortcut for converting the value of the column into an interactive x-editable form.
+</p>
+<p class="alert alert-info">
+    This helper will generally require that you inherit your view from
+    <code>datatableview.views.XEditableDatatableView</code> instead of just the normal
+    <code>DatatableView</code>, so that the view can serve as the ajax endpoint for the updates that
+    get made to the data.  See <a href="{% url "x-editable-columns" %}">x-editable columns</a> for a
+    full reference of how to get that view set up so that this helper can do its job.
+</p>
+<p>
+    This helper allows you to specify the HTML <code>data-*</code> API attributes expected by the
+    x-editable javascript.  By default you can get away with not sending any keyword arguments to
+    the helper, and it will choose reasonable defaults for field types, etc.
+</p>
+<p>
+    The full list of default keyword arguments are as follows:
+</p>
+<ul>
+    <li><code>type</code>: Defaults to the basic type of the Django field (e.g., "text", "number", "datetime")
+    <li><code>title</code>: Defaults to empty
+    <li><code>placeholder</code>: Defaults to the value of <code>title</code> if not provided
+    <li><code>url</code>: Defaults to <code>request.path</code>, so that the <code>XEditableDatatableView</code> can service the ajax updates.
+    <li><code>source</code>: Defaults to <code>request.path</code>, so that the <code>XEditableDatatableView</code> can service ajax queries for the <code>choices</code> data of the field.
+    <li><code>pk</code>: Defaults to the pk of the supplied instance.  The instance should be the first argument to the final call to <code>make_xeditable</code> for this default to work as intended.
+</ul>
+<p>
+    Extra <code>data-*</code> API attributes can be given by specifying what they are in the keyword
+    argument <code>extra_attrs</code>:
+</p>
+<pre class="brush: python">
+helpers.make_xeditable(extra_attrs=['data_format'], data_format="yyyy-mm-dd")
+</pre>
+<p>
+    Arguments given in this way will be converted to use <code>"-"</code> instead of
+    <code>"_"</code>, which simplifies how you give them as keyword arguments.
+</p>
+<p>
+    Calls to <code>make_xeditable</code> that don't include an <code>"instance"</code> as its first
+    positional argument will create a <code>functools.partial</code> around the call and return it
+    so that new arguments can be given.  This lets you build up a set of custom attributes if you
+    want to create certain common x-editable styles.  See the examples below.
+</p>
+<p>
+    Following are some examples of how the helper can be used:
+</p>
+
+<pre class="brush: python">
+from datatableview.views import XEditableDatatableView
+from datatableview import helpers
+from .models import Entry
+
+# See third and fourth example columns just below
+xeditable_date = helpers.make_xeditable(type="date")
+
+class EditableDatatableView(XEditableDatatableView):
+    model = Entry
+    datatable_options = {
+        'columns': [
+            # Standard use; supply callback directly for all default options
+            ("Headline", 'headline', helpers.make_xeditable),
+
+            # Customize options described above via kwargs
+            ("Headline", 'headline', helpers.make_xeditable(type="textarea")),
+
+            # Supply a previously created "partial" helper; calls chain until there is an instance
+            ("Publication Date", 'pub_date', xeditable_date),
+            ("Publication Date", 'pub_date', xeditable_date(placeholder="Enter a valid date")),
+        ],
+    }
+</pre>
+<p>
+    If you're using a custom callback method, you can still ask <code>make_xeditable</code> to
+    create a <code>&lt;a&gt;</code> tag to use in your own return value.  Using this direct
+    strategy, you can supply the instance at the same time as the other keyword arguments to avoid
+    having to call the helper more than once for the final effect:
+</p>
+<pre class="brush: python">
+def get_column_Headline_data(self, instance, *args, **kwargs):
+    # Simplest use; direct return of the x-editable &lt;a&gt; HTML
+    return helpers.make_xeditabe(instance)
+
+    # You can also supply additional arguments at the same time
+    return helpers.make_xeditabe(instance, type="textarea")
+
+    # You can still chain calls together and reuse previously generated "partials"
+    xeditable_date = helpers.make_xeditabe(type="date")
+    return xeditable_date(instance)
+    return xeditable_date(instance, placeholder="Enter a valid date")
+</pre>

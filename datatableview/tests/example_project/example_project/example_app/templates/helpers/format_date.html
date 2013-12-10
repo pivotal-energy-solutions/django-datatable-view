@@ -1,0 +1,45 @@
+<h3>
+    <a id="format_date" name="format_date" href="#format_date">
+        <code>format_date</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>Publication Date</em></h6>
+
+<p>
+    Shortcut for supplying a standard <code>strftime</code> format to be applied to
+    <code>date</code> and <code>datetime</code> objects.
+</p>
+<p>
+    This helper must be called inline with the column definition, in order to provide the format
+    string.  It will returned a stand-in callback to defer the formating until the callback is
+    needed.
+</p>
+<p>
+    As of Django 1.5, support for <code>localtime</code> is available by passing in an extra keyword
+    argument <code>localize=True</code>.  Doing this on Django version 1.4 or earlier will raise an
+    exception with a message detailing this fact.
+</p>
+<pre class="brush: python">
+datatable_options = {
+    'columns': [
+        # Standard use; must call the helper once to give it the format string
+        ("Publication Date", 'pub_date', helpers.format_date("%m/%d/%Y"),
+        # If Django 1.5 or later, you can ask for the localtime version
+        ("Modified Date", 'mode_date', helpers.format_date("%Y-%m-%d", localize=True),
+    ],
+}
+</pre>
+<p>
+    Using this helper in custom callbacks provides no tangible benefit over formatting the date or
+    datetime instance yourself, but can still be done:
+</p>
+<pre class="brush: python">
+def get_column_Publication_Date_data(self, instance, *args, **kwargs):
+    # Generate the real callback helper, then call it
+    callback = helpers.format_date('%m/%d/%Y', localize=True)
+    return callback(kwargs['default_value'])
+    
+    # This is equivalent real Python code, and better for readability
+    from django.utils.timezone import localtime
+    return localtime(kwargs['default_value']).strftime('%m/%d/%Y')
+</pre>

@@ -1,0 +1,50 @@
+<h3>
+    <a id="link_to_model" name="link_to_model" href="#link_to_model">
+        <code>link_to_model</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>ID (no args)</em>, <em>Blog (using <code>key</code> arg)</em></h6>
+
+<p>
+    Shortcut for rendering a simple
+    <code>&lt;a href="{instance.get_absolute_url}"&gt;{text}&lt;/a&gt;</code>,
+    where <code>instance</code> is the row's object and <code>text</code> is whatever field
+    you've set the column to represent.
+</p>
+<p>
+    This is primarily useful for converting the main "name" column (whatever that might be in
+    your specific situation) for the row into a clickable link for that item's detail view, but
+    it can be used to link to related models too via a <code>key</code> argument.
+</p>
+<pre class="brush: python">
+datatable_options = {
+    'columns': [
+        # Standard use, no need to actually call the helper
+        ("Headline", 'headline', helpers.link_to_model),
+        # Target a related field; helper returns a new customized helper
+        ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
+    ],
+}
+</pre>
+<p>
+    Note how the related case needs to give the <code>key</code> argument.  This follows the
+    idiom in Python for sorting, comparing, and mapping functions, described
+    <a href="https://wiki.python.org/moin/HowTo/Sorting/#Key_Functions">here</a>.  A "key
+    function" is just a simple mapper: it takes a value in, and returns another.
+    <code>link_to_model</code> uses this argument to let you accept the row's
+    <code>instance</code> and return the foreign key you intend to link.  Without the key
+    function, you would end up with a link to the row's instance with the text of the blog name,
+    which wouldn't be intuitive.
+</p>
+<p>
+    You can use this helper in your own custom callbacks if you want to avoid writing an HTML anchor
+    tag in your Python code:
+</p>
+<pre class="brush: python">
+def get_column_Blog_data(self, instance, *args, **kwargs):
+    # Simplest use, "text" will be the unicode of instance.blog
+    return helpers.link_to_model(instance.blog)
+    
+    # Specify a custom text
+    return helpers.link_to_model(instance.blog, text=instance.blog.name)
+</pre>

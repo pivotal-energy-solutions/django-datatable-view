@@ -16,6 +16,7 @@
         how it can be implemented.
     </p>
 
+    <h2>Database status</h2>
     {% if db_works %}
         <p class="alert alert-success">
             Your database tables appear sync'd!  Check out the example pages at your leisure.
@@ -37,8 +38,22 @@ $ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py run
 </pre>
     {% endif %}
 
+    <h2>Main topics</h2>
     <p>
         The demos and example code found in this example project all rely on the automatic
-        initialization provided by a simple jQuery <code>document.ready</code> event.
+        initialization provided by a simple jQuery <code>document.ready</code> event.  A couple of
+        the pages use additional static resources (Bootstrap theme, x-editable); these pages include
+        an HTML comment in the source that highlights their use in the live demo.
     </p>
+
+    <p>
+        Aside from the primary value of this set of examples as a reference site, noteworthy topics
+        that branch outside of basic syntax are:
+    </p>
+    <ul>
+        <li><a href="{% url "javascript-initialize" %}">Automatic vs manual Javascript initialization</a></li>
+        <li><a href="{% url "bootstrap-template" %}">Bootstrap integration</a></li>
+        <li><a href="{% url "x-editable-columns" %}">x-editable integration</a></li>
+        <li><a href="{% url "helpers-reference" %}">Demonstrations of the <code>helpers</code> column callbacks</a></li>
+    </ul>
 {% endblock content %}

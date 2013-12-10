@@ -1,0 +1,64 @@
+<h3>
+    <a id="through_filter" name="through_filter" href="#through_filter">
+        <code>through_filter</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>Age</em></h6>
+
+<p>
+    Shortcut for letting a external mapping function accept the extra <code>*args</code> and
+    <code>**kwargs</code> that <code>DatatableView</code> sends.
+</p>
+<p>
+    This helper must be called inline with the column definition, in order to provide the target
+    function that you'd like to use.  It will returned a stand-in callback that will avoid sending
+    unwanted arguments to the target function.
+</p>
+<p>
+    This is a useful helper for applying the default template language filter functions to your
+    column value, but it can work for any 1-argument or 2-argument function, where the first
+    argument is just the value to process, and the second argument can be specified in advance.  The
+    template filters are great examples of this, where you can provide a number of characters to
+    truncate.  Secondary arguments must be specified in advance, and will always take the name
+    <code>arg</code>, for simplicity, but will always be sent to the target function as a positional
+    argument just after the main value.
+</p>
+<pre class="brush: python">
+from django.template.defaultfilters import timesince, truncatewords
+datatable_options = {
+    'columns': [
+        # Standard use; must call the helper once to give it the target function
+        ("Age", 'pub_date', helpers.through_filter(timesince),
+        # Optionally specify a 'arg' that will be sent.
+        # This target function will be called like: truncatewords(body_text, 10)
+        ("Body Text", 'body_text', helpers.through_filter(truncatewords, arg=10),
+    ],
+}
+</pre>
+<p>
+    If additional arguments or keywords need to be sent to the target function, try wrapping it in
+    a <code>functools.partial</code> first.  <code>helpers.through_filter</code> will continue
+    guarding the target function from unwanted extra arguments:
+</p>
+<pre class="brush: python">
+from functools import partial
+datatable_options = {
+    'columns': [
+        # Standard use; must call the helper once to give it the target function
+        ("Age", 'pub_date', helpers.through_filter(partial(some_function, custom_arg=True)),
+    ],
+}
+</pre>
+<p>
+    Using this helper in custom callbacks provides no tangible benefit over using the target
+    function directly, but can still be done:
+</p>
+<pre class="brush: python">
+def get_column_Body_Text_data(self, instance, *args, **kwargs):
+    # Generate the real callback helper, then call it
+    callback = helpers.through_filter(truncatewords, arg=10)
+    return callback(kwargs['default_value'])
+    
+    # This is equivalent real Python code, and better for readability
+    return truncatewords(kwargs['default_value'], 10)
+</pre>

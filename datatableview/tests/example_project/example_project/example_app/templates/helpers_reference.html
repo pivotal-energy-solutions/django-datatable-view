@@ -1,0 +1,29 @@
+{% extends "example_base.html" %}
+
+{% block description %}
+    {{ block.super }}
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="list-group">
+                <a class="list-group-item" href="#link_to_model">link_to_model</a>
+                <a class="list-group-item" href="#make_boolean_checkmark">make_boolean_checkmark</a>
+                <a class="list-group-item" href="#format_date">format_date</a>
+                <a class="list-group-item" href="#format">format</a>
+                <a class="list-group-item" href="#through_filter">through_filter</a>
+                <a class="list-group-item" href="#itemgetter">itemgetter</a>
+                <a class="list-group-item" href="#attrgetter">attrgetter</a>
+                <a class="list-group-item" href="#make_xeditable">make_xeditable</a>
+            </div>
+        </div>
+    </div>
+
+    <br /><br />{% include "helpers/link_to_model.html" %}
+    <br /><br />{% include "helpers/make_boolean_checkmark.html" %}
+    <br /><br />{% include "helpers/format_date.html" %}
+    <br /><br />{% include "helpers/format.html" %}
+    <br /><br />{% include "helpers/through_filter.html" %}
+    <br /><br />{% include "helpers/itemgetter.html" %}
+    <br /><br />{% include "helpers/attrgetter.html" %}
+    <br /><br />{% include "helpers/make_xeditable.html" %}
+{% endblock description %}

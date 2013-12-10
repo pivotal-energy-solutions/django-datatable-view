@@ -445,7 +445,9 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
 
     To enable x-editable columns, inherit your view from ``XEditableDatatableView`` instead of the
     plain ``DatatableView``.  The x-editable variant has ajax responders built into it so that the
-    incremental updates can be received, validated, and responded to.
+    incremental updates can be received, validated, and responded to.  Choices lists are also
+    fetched over ajax by the x-editable Javascript library, so this specialized view also responds
+    to those.
 
     Next, use the ``datatableview.helpers.make_xeditable`` function as a callback for the columns
     that should become interactive.  You can customize the helper's behavior, but by default,
@@ -490,6 +492,49 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
             fnRowCallback: datatableview.make_xeditable(xeditable_options),
         });
     })
+    """
+
+
+class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
+    """
+    ``datatableview.helpers`` is a module decidated to functions that can be supplied directly as
+    column callback functions.  Some of them are easy to use at runtime in your own callbacks,
+    making some work easier for you, but the majority aim to solve common problems with as little
+    fuss as possible.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            ("ID", 'id', helpers.link_to_model),
+            ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
+            ("Headline", 'headline', helpers.make_xeditable),
+            ("Body Text", 'body_text', helpers.itemgetter(slice(0, 30))),
+            ("Publication Date", 'pub_date', helpers.format_date('%A, %b %d, %Y')),
+            ("Modified Date", 'mod_date'),
+            ("Age", 'pub_date', helpers.through_filter(timesince)),
+            ("Interaction", 'get_interaction_total', helpers.make_boolean_checkmark),
+            ("Comments", 'n_comments', helpers.format("{0:,}")),
+            ("Pingbacks", 'n_pingbacks', helpers.format("{0:,}")),
+        ],
+    }
+
+    implementation = u"""
+    class HelpersReferenceDatatableView(XEditableDatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                ("ID", 'id', helpers.link_to_model),
+                ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
+                ("Headline", 'headline', helpers.make_xeditable),
+                ("Body Text", 'body_text', helpers.itemgetter(slice(0, 30))),
+                ("Publication Date", 'pub_date', helpers.format_date('%A, %b %d, %Y')),
+                ("Modified Date", 'mod_date'),
+                ("Age", 'pub_date', helpers.through_filter(timesince)),
+                ("Interaction", 'get_interaction_total', helpers.make_boolean_checkmark),
+                ("Comments", 'n_comments', helpers.format("{0:,}")),
+                ("Pingbacks", 'n_pingbacks', helpers.format("{0:,}")),
+            ],
+        }
     """
 
 
