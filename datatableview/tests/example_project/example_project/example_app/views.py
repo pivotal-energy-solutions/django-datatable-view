@@ -377,6 +377,52 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
     """
 
 
+class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
+    """
+    ``ManyToManyField`` relationships should not be specified directly as a column's data source.
+    There's too much missing information, and the field name or field list should enumerate the
+    real data points that are being shown.
+
+    The most straightforward way to reveal a plural set of objects is to create your own callback
+    handler that handles each item in the relationship as you see fit.  For example, combined with
+    the ``helpers`` module, you can quickly make links out of the objects in the relationship.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+            ("Authors", 'authors__name', 'get_author_names'),
+            ("Authors", 'authors__name', 'get_author_names_as_links'),
+        ],
+    }
+
+    def get_author_names(self, instance, *args, **kwargs):
+        return ", ".join([author.name for author in instance.authors.all()])
+
+    def get_author_names_as_links(self, instance, *args, **kwargs):
+        return ", ".join([helpers.link_to_model(author) for author in instance.authors.all()])
+
+    implementation = u"""
+    class ManyToManyFields(DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+                ("Authors", 'authors__name', 'get_author_names'),
+                ("Authors", 'authors__name', 'get_author_names_as_links'),
+            ],
+        }
+
+        def get_author_names(self, instance, *args, **kwargs):
+            return ", ".join([author.name for author in instance.authors.all()])
+
+        def get_author_names_as_links(self, instance, *args, **kwargs):
+            from datatableview import helpers
+            return ", ".join([helpers.link_to_model(author) for author in instance.authors.all()])
+    """
+
 class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     """
     If a column definition hasn't supplied an explicit callback value processor, there is a default
