@@ -147,12 +147,11 @@ def format_date(format_string, key=None, localize=False):
             value = key(value)
         else:
             value = kwargs.get('default_value', value)
+        if value is None:
+            return ""
         if localize:
             value = localtime(value)
-        try:
-            return value.strftime(format_string)
-        except AttributeError as e:
-            return ""
+        return value.strftime(format_string)
 
     if key:
         return keyed_helper(helper)(key=key)
