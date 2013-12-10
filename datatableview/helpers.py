@@ -141,7 +141,7 @@ def attrgetter(attr, key=None):
 
 def format_date(format_string, localize=False, key=None):
     if localize is not False and localtime is None:
-        raise Exception("Cannot use format_date argument 'localized' with Django < 1.5")
+        raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
