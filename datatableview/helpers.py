@@ -88,6 +88,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
 
 @keyed_helper
 def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;", *args, **kwargs):
+    value = kwargs.get('default_value', value)
     if value:
         return true_value
     return false_value
