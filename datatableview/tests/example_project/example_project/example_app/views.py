@@ -213,9 +213,8 @@ class PresentationalChangesDatatableView(DemoMixin, DatatableView):
 
 class VirtualColumnDefinitionsDatatableView(DemoMixin, DatatableView):
     """
-    Columns that have values derived at runtime, either by callbacks located on the view or by
-    readonly methods/attributes/properties on the model, should specify their field as ``None``,
-    and then provide a callback name or function reference.
+    Columns that have values derived at runtime by callbacks located on the view should specify
+    their field as ``None``, and then provide a callback name or function reference.
 
     Callbacks should take the ``instance`` represented by the row, and ``*args`` and ``**kwargs``
     to maximize flexibility with future data arguments sent by the callback dispatcher.
