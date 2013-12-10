@@ -146,7 +146,7 @@ def format_date(format_string, key=None, localize=False):
         if key:
             value = key(value)
         else:
-            value = kwargs.get('default_value') or value
+            value = kwargs.get('default_value', value)
         if localize:
             value = localtime(value)
         try:
