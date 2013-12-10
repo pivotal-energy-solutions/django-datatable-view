@@ -80,18 +80,24 @@ class EditableDatatableView(XEditableDatatableView):
     If you're using a custom callback method, you can still ask <code>make_xeditable</code> to
     create a <code>&lt;a&gt;</code> tag to use in your own return value.  Using this direct
     strategy, you can supply the instance at the same time as the other keyword arguments to avoid
-    having to call the helper more than once for the final effect:
+    having to call the helper more than once for the final effect.
+</p>
+<p class="alert alert-info">
+    The only catch to using the helper manually is that you should take care to forward the
+    <code>**kwargs</code> from your callback to it.  Chances are good that some default value that
+    the helper wants to fill out may need information that <code>XEditableDatatableView</code> is
+    trying to supply to it.
 </p>
 <pre class="brush: python">
 def get_column_Headline_data(self, instance, *args, **kwargs):
     # Simplest use; direct return of the x-editable &lt;a&gt; HTML
-    return helpers.make_xeditabe(instance)
+    return helpers.make_xeditabe(instance, **kwargs)
 
     # You can also supply additional arguments at the same time
-    return helpers.make_xeditabe(instance, type="textarea")
+    return helpers.make_xeditabe(instance, type="textarea", **kwargs)
 
     # You can still chain calls together and reuse previously generated "partials"
     xeditable_date = helpers.make_xeditabe(type="date")
-    return xeditable_date(instance)
-    return xeditable_date(instance, placeholder="Enter a valid date")
+    return xeditable_date(instance, **kwargs)
+    return xeditable_date(instance, placeholder="Enter a valid date", **kwargs)
 </pre>

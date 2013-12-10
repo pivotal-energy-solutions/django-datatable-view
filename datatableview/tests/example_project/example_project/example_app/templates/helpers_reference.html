@@ -1,5 +1,24 @@
 {% extends "example_base.html" %}
 
+{% block static %}
+    {{ block.super }}
+    <!-- Resources for "make_xeditable" portion of the helpers demo -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
+
+    <!-- Initialization for x-editable tables -->
+    <script type="text/javascript">
+        $.fn.editable.defaults.mode = 'inline';
+        datatableview.auto_initialize = false;
+        $(function(){
+            var xeditable_options = {};
+            datatableview.initialize($('.datatable'), {
+                fnRowCallback: datatableview.make_xeditable(xeditable_options),
+            });
+        });
+    </script>
+{% endblock static %}
+
 {% block description %}
     {{ block.super }}
 
