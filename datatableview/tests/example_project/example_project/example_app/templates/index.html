@@ -56,4 +56,33 @@ $ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py run
         <li><a href="{% url "x-editable-columns" %}">x-editable integration</a></li>
         <li><a href="{% url "helpers-reference" %}">Demonstrations of the <code>helpers</code> column callbacks</a></li>
     </ul>
+
+    <h2>Models used in the examples</h2>
+    <p>
+        The main model used in most of the examples is <code>Entry</code>, because of its diverse
+        fields.  <code>Blog</code> makes a simple relationship demonstration possible, and
+        <code>Author</code> helps shed light on how to handle
+        <a href="{% url "many-to-many-fields" %}">many to many</a> relationships.
+    </p>
+<pre class="brush: python">
+class Blog(models.Model):
+    name = models.CharField(max_length=100)
+    tagline = models.TextField()
+
+class Author(models.Model):
+    name = models.CharField(max_length=50)
+    email = models.EmailField()
+
+class Entry(models.Model):
+    blog = models.ForeignKey(Blog)
+    headline = models.CharField(max_length=255)
+    body_text = models.TextField()
+    pub_date = models.DateField()
+    mod_date = models.DateField()
+    authors = models.ManyToManyField(Author)
+    n_comments = models.IntegerField()
+    n_pingbacks = models.IntegerField()
+    rating = models.IntegerField()
+</pre>
+
 {% endblock content %}
