@@ -48,7 +48,7 @@ class DemoMixin(object):
         """ Try the view's snake_case name, or else use default simple template. """
         name = self.__class__.__name__.replace("DatatableView", "")
         name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1_', name)
-        return [name.lower() + ".html", "example_base.html"]
+        return ["demos/" + name.lower() + ".html", "example_base.html"]
 
     def get_context_data(self, **kwargs):
         context = super(DemoMixin, self).get_context_data(**kwargs)
