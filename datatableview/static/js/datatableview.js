@@ -2,6 +2,10 @@
 
 var datatableview = {
     auto_initialize: true,
+    defaults: {
+        "bServerSide": true
+    },
+
     make_xeditable: function(options) {
         var options = $.extend({}, options);
         if (!options.ajaxOptions) {
@@ -60,7 +64,7 @@ var datatableview = {
 
             datatable.find('thead th').each(function(){
                 var header = $(this);
-                var options = $.extend({}, opts || {});
+                var options = {};
                 for (var i = 0; i < header[0].attributes.length; i++) {
                     var attr = header[0].attributes[i];
                     if (attr.specified && /^data-/.test(attr.name)) {
@@ -93,8 +97,7 @@ var datatableview = {
                 sorting_options[i] = sorting_options[i].slice(1);
             }
 
-            options = {
-                "bServerSide": true,
+            options = $.extend({}, datatableview.defaults, opts, {
                 "aaSorting": sorting_options,
                 "aoColumns": column_options,
                 "sAjaxSource": datatable.attr('data-source-url'),
@@ -106,7 +109,7 @@ var datatableview = {
                     }
                     return infoString;
                 }
-            }
+            });
             try {
                 options = confirm_datatable_options(options, datatable);
             } catch (e) {
