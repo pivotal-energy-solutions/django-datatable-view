@@ -50,8 +50,7 @@ def keyed_helper(helper):
     @wraps(helper)
     def wrapper(instance=None, key=None, *args, **kwargs):
         if instance is not None and not key:
-            value = instance
-            return helper(value, *args, **kwargs)
+            return helper(instance, *args, **kwargs)
         elif instance is None:
             if key:
                 # Helper is used directly in the columns declaration.  A new callable is
