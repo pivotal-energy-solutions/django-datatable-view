@@ -12,10 +12,8 @@ for attr in dir(views):
     except TypeError:
         continue
     if is_demo:
-        name = attr.replace("DatatableView", "")
-        if name.endswith("XEditable"):
-            name = name.replace("XEditable", "")
-        name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1-', name).lower()
+        name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1-', attr).lower()
+        name = name.replace("-datatable-view", "")
         urls.append(url(r'^{name}/$'.format(name=name), View.as_view(), name=name))
 
 urlpatterns = patterns('',
