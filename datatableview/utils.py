@@ -199,7 +199,7 @@ class DatatableStructure(StrAndUnicode):
             column = get_field_definition(column)
             pretty_name = column.pretty_name
             column_name = column.pretty_name
-            if column.fields[0] in model_fields:
+            if column.fields and column.fields[0] in model_fields:
                 ordering_name = column.fields[0]
                 if not pretty_name:
                     field = self.model._meta.get_field_by_name(column.fields[0])[0]

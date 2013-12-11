@@ -1094,6 +1094,7 @@ class SatelliteDatatableView(DatatableView):
     """
     External view powering the embedded table for ``EmbeddedTableDatatableView``.
     """
+    template_name = "blank.html"
     model = Entry
     datatable_options = {
         'columns': [
