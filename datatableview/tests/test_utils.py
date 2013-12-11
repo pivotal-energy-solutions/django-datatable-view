@@ -3,7 +3,7 @@ from .test_app import models
 from .. import utils
 
 def get_structure(columns, opts):
-    return utils.get_datatable_structure('/', models.ExampleModel, dict(opts, columns=columns))
+    return utils.get_datatable_structure('/', dict(opts, columns=columns), model=models.ExampleModel)
 
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
@@ -155,8 +155,11 @@ class UtilsTests(DatatableViewTestCase):
         ]
         structure = get_structure(columns, {})
         column_info = structure.get_column_info()
+
         self.assertEqual(column_info[0].pretty_name, "Primary Key")
-        self.assertEqual(column_info[1].pretty_name, "Name")
+
+        name_field = models.ExampleModel._meta.get_field_by_name('name')[0]
+        self.assertEqual(column_info[1].pretty_name, name_field.name)
 
     def test_structure_is_iterable(self):
         """ Verify structure object can be iterated for each column definition. """

@@ -15,7 +15,7 @@ MINIMUM_PAGE_LENGTH = 5
 
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
-    'ordering': None,  # override to Model._meta.ordering
+    'ordering': [],  # override to Model._meta.ordering
     'start_offset': 0,  # results to skip ahead
     'page_length': 25,  # length of a single result page
     'search': '',  # client search string
