@@ -820,6 +820,36 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     """
 
 
+class CSSStylingDatatableView(DemoMixin, DatatableView):
+    """
+    The default template used by the datatable context variable when you render it will include
+    ``data-name`` attributes on the ``&lt;th&gt;`` column headers, which is the ``slugify``'d
+    version of the column's label.  This makes sizing the columns very easy.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+            'blog',
+            ("Publication date", 'pub_date'),
+        ],
+    }
+
+    implementation = u"""
+    class CSSStylingDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ],
+        }
+    """
+
+
 class MultipleTablesDatatableView(DemoMixin, DatatableView):
     """
     ``DatatableView`` makes the initial assumption that it will power just one queryset.  You can
