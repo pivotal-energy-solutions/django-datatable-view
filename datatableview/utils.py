@@ -153,15 +153,15 @@ class DatatableStructure(StrAndUnicode):
         self.model = model
         self.options = options
 
-        ordering = options.ordering or model._meta.ordering
         self.ordering = {}
-        for i, name in enumerate(ordering):
-            plain_name = name.lstrip('-+')
-            index = options.get_column_index(plain_name)
-            if index == -1:
-                continue
-            sort_direction = 'desc' if name[0] == '-' else 'asc'
-            self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
+        if options.ordering:
+            for i, name in enumerate(options.ordering):
+                plain_name = name.lstrip('-+')
+                index = options.get_column_index(plain_name)
+                if index == -1:
+                    continue
+                sort_direction = 'desc' if name[0] == '-' else 'asc'
+                self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
     def __unicode__(self):
         return render_to_string(self.options.structure_template, {
@@ -339,6 +339,8 @@ class DatatableOptions(UserDict):
                         continue
 
                     options['ordering'].append('%s%s' % (sort_modifier, field_name))
+        if not options['ordering'] and self._model:
+            options['ordering'] = self._model._meta.ordering
 
         return options
 
