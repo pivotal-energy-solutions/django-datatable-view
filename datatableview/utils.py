@@ -148,10 +148,10 @@ class DatatableStructure(StrAndUnicode):
 
     """
 
-    def __init__(self, ajax_url, model, options):
+    def __init__(self, ajax_url, options, model=None):
         self.url = ajax_url
-        self.model = model
         self.options = options
+        self.model = model
 
         self.ordering = {}
         if options.ordering:
@@ -190,7 +190,10 @@ class DatatableStructure(StrAndUnicode):
         """
 
         column_info = []
-        model_fields = self.model._meta.get_all_field_names()
+        if self.model:
+            model_fields = self.model._meta.get_all_field_names()
+        else:
+            model_fields = []
 
         for column in self.options.columns:
             column = get_field_definition(column)
@@ -358,7 +361,7 @@ class ObjectListResult(list):
     _dtv_unpaged_total = None
 
 
-def get_datatable_structure(ajax_url, model, options):
+def get_datatable_structure(ajax_url, options, model=None):
     """
     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
 
@@ -367,7 +370,7 @@ def get_datatable_structure(ajax_url, model, options):
     if not isinstance(options, DatatableOptions):
         options = DatatableOptions(model, {}, **options)
 
-    return DatatableStructure(ajax_url, model, options)
+    return DatatableStructure(ajax_url, options, model=model)
 
 
 def split_real_fields(model, field_list):
