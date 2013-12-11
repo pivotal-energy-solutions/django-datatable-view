@@ -20,5 +20,6 @@ urlpatterns = patterns('',
     url(r'^$', views.IndexView.as_view(), name="index"),
     url(r'^column-formats/$', views.ValidColumnFormatsView.as_view(), name="column-formats"),
     url(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name="js-init"),
+    url(r'^satellite/$', views.SatelliteDatatableView.as_view(), name="satellite"),
     *urls
 )

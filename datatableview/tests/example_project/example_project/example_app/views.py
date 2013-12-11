@@ -4,12 +4,14 @@ import re
 
 from django.views.generic import TemplateView
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
 from datatableview.views import DatatableView, XEditableDatatableView
+from datatableview.utils import get_datatable_structure
 from datatableview import helpers
 
-from .models import Entry
+from .models import Entry, Blog
 
 class IndexView(TemplateView):
     template_name = "index.html"
@@ -583,6 +585,37 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
 
 
+class OrderingDatatableView(DemoMixin, DatatableView):
+    """
+    Default ordering is normally controlled by the model's Meta option ``ordering``, which is a list
+    of field names (possibly with a prefix ``"-"`` character to denote reverse order).
+    
+    ``datatable_options["ordering"]`` is the same kind of list, with the exception that it should
+    target virtual and compound fields by their "pretty name", which is the first item in the column
+    definition tuple.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            ("Pretty name", 'id'),
+            'headline',
+        ],
+        'ordering': ['-id'],
+    }
+
+    implementation = u"""
+    class OrderingDatatableView(DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+            ],
+            'ordering': ['-id'],
+        }
+    """
+
+
 class UnsortableColumnsDatatableView(DemoMixin, DatatableView):
     """
     Columns that should be blocked from sorting (on the frontend and also by the backend) can be
@@ -785,3 +818,287 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
             ],
         }
     """
+
+
+class MultipleTablesDatatableView(DemoMixin, DatatableView):
+    """
+    ``DatatableView`` makes the initial assumption that it will power just one queryset.  You can
+    implement ``get_queryset()``, ``get_datatable_options()``, and ``get_datatable()`` methods that
+    use switching behavior depending on which table is asking for updates. (More on how to flag
+    that fact farther down.)
+
+    WARNING:
+    If more than one model class type might end up getting returned via the ``get_queryset()``
+    method, as is the case in the following scenario, you should avoid setting the class attribute
+    ``model``.  Instead, you can let the standard ``ListView`` mechanics that ``DatatableView`` uses
+    automatically read the model class from the returned queryset from ``get_queryset()``.
+
+    See the following examples for how to handle certain scenarios.
+    
+    The principle of the process is that you can override ``get_datatable_options()`` and
+    ``get_datatable()`` to modify the structural objects that get returned by the view based on
+    certain URL kwargs, GET data, etc.  If you examine the implementation code at the bottom of the
+    page, you will see how these two methods have been customized to accept a ``type`` argument.
+    This is used when the context data is originally fetched, so that we can request each table
+    structure object.
+
+    Once AJAX calls start happening on the page, each table structure needs to identify itself so
+    that the view can deal with each one separately.  To accomplish this, our ``get_datatable()``
+    implementation adds a GET parameter in the AJAX url for each table to distinguish them.  This
+    parameter is fed back to us during AJAX calls.
+
+    Finally, we can modify the ``get_queryset()`` method on the same principle; depending on the GET
+    flag we've set up, the method should perhaps return customized content.
+
+    Demo #1 in this series of examples is the default code path, where no modifications of any kind
+    are at play.  Demo #2 slices off the ``"Header"`` column from the options of #1.  Demo #3 uses
+    its own separate model and options.  All are identified separately in their AJAX queries by the
+    variable we planted in each table's structure in ``get_context_data()``.
+    """
+
+    # Demo #1 and Demo # 2 will use variations of the same options.
+    # Note that we're not setting the model here as usually.  See the warning above.
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+        ],
+    }
+
+    # Demo #3 will use completely separate options.
+    blog_datatable_options = {
+        'columns': [
+            'id',
+            'name',
+            'tagline',
+        ],
+    }
+
+    def get_queryset(self, type=None):
+        """
+        Customized implementation of the queryset getter.  The custom argument ``type`` is managed
+        by us, and is used in the context and GET parameters to control which table we return.
+        """
+
+        if type is None:
+            type = self.request.GET.get('datatable-type', None)
+
+        if type == "demo3":
+            return Blog.objects.all()
+        return Entry.objects.all()
+
+    def get_datatable_options(self, type=None):
+        """
+        Customized implementation of the options getter.  The custom argument ``type`` is managed
+        by us, and is used in the context and GET parameters to control which table we return.
+        """
+
+        if type is None:
+            type = self.request.GET.get('datatable-type', None)
+
+        options = self.datatable_options
+
+        if type == "demo2":
+            # If modifying the options, be sure make copies of the pieces you are changing, or else
+            # you'll end up changing class-level definitions that are not thread-safe!
+            options = self.datatable_options.copy()
+            options['columns'] = options['columns'][1:]
+        elif type == "demo3":
+            # Return separate options settings
+            options = self.blog_datatable_options
+
+        return options
+
+    def get_datatable(self, type=None):
+        """
+        Customized implementation of the structure getter.  The custom argument ``type`` is managed
+        by us, and is used in the context and GET parameters to control which table we return.
+        """
+        if type is None:
+            type = self.request.GET.get('datatable-type', None)
+
+        if type is not None:
+            datatable_options = self.get_datatable_options(type=type)
+            # Put a marker variable in the AJAX GET request so that the table identity is known
+            ajax_url = self.request.path + "?datatable-type={type}".format(type=type)
+
+        if type == "demo2":
+            datatable = get_datatable_structure(ajax_url, datatable_options, model=Entry)
+        elif type == "demo3":
+            # Change the reference model to Blog, instead of Entry
+            datatable = get_datatable_structure(ajax_url, datatable_options, model=Blog)
+        else:
+            return super(MultipleTablesDatatableView, self).get_datatable()
+
+        return datatable
+        
+
+    def get_context_data(self, **kwargs):
+        context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
+    
+        # Get the other structure objects for the initial context
+        context['modified_columns_datatable'] = self.get_datatable(type="demo2")
+        context['blog_datatable'] = self.get_datatable(type="demo3")
+        return context
+
+    implementation = u'''
+    from .models import Entry, Blog
+    class MultipleTablesDatatableView(DatatableView):
+        # Demo #1 and Demo # 2 will use variations of the same options
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+            ],
+        }
+
+        # Demo #3 will use completely separate options
+        blog_datatable_options = {
+            'columns': [
+                'id',
+                'name',
+                'tagline',
+            ],
+        }
+
+        def get_queryset(self, type=None):
+            """
+            Customized implementation of the queryset getter.  The custom argument ``type`` is managed
+            by us, and is used in the context and GET parameters to control which table we return.
+            """
+
+            if type is None:
+                type = self.request.GET.get('datatable-type', None)
+
+            if type == "demo3":
+                return Blog.objects.all()
+            return super(MultipleTablesDatatableView, self).get_queryset()
+
+        def get_datatable_options(self, type=None):
+            """
+            Customized implementation of the options getter.  The custom argument ``type`` is managed
+            by us, and is used in the context and GET parameters to control which table we return.
+            """
+
+            if type is None:
+                type = self.request.GET.get('datatable-type', None)
+
+            options = self.datatable_options
+
+            if type == "demo2":
+                # If modifying the options, be sure make copies of the pieces you are changing, or else
+                # you'll end up changing class-level definitions that are not thread-safe!
+                options = self.datatable_options.copy()
+                options['columns'] = options['columns'][1:]
+            elif type == "demo3":
+                # Return separate options settings
+                options = self.blog_datatable_options
+
+            return options
+
+        def get_datatable(self, type=None):
+            """
+            Customized implementation of the structure getter.  The custom argument ``type`` is managed
+            by us, and is used in the context and GET parameters to control which table we return.
+            """
+            if type is None:
+                type = self.request.GET.get('datatable-type', None)
+
+            if type is not None:
+                datatable_options = self.get_datatable_options(type=type)
+                # Put a marker variable in the AJAX GET request so that the table identity is known
+                ajax_url = self.request.path + "?datatable-type={type}".format(type=type)
+
+            if type == "demo2":
+                datatable = get_datatable_structure(ajax_url, datatable_options, model=Blog)
+            elif type == "demo3":
+                # Change the reference model to Blog, instead of Entry
+                datatable = get_datatable_structure(ajax_url, datatable_options, model=Entry)
+            else:
+                return super(MultipleTablesDatatableView, self).get_datatable()
+
+            return datatable
+        
+
+        def get_context_data(self, **kwargs):
+            context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
+
+            # Get the other structure objects for the initial context
+            context['modified_columns_datatable'] = self.get_datatable(type="demo2")
+            context['blog_datatable'] = self.get_datatable(type="demo3")
+            return context
+    '''
+
+
+class EmbeddedTableDatatableView(DemoMixin, TemplateView):
+    """
+    To embed a datatable onto a page that shouldn't be responsible for generating all of the ajax
+    queries, you can easily just create the structure object that serves as the context variable,
+    but base it on the options of some other view.  The other view will indeed need access to those
+    options once queries begin to autonomously route to it over AJAX, so you won't be able to
+    specify the column options directly inside of the ``get_context_data()``, but you can get pretty
+    close.
+
+    In this example, we've created a separate view, called ``SatelliteDatatableView``, which houses
+    all of the options and machinery for getting the structure object for the context.
+
+    Just add a ``get_context_data()`` method, instantiate the other view, and ask it to generate
+    the options object via ``get_datatable_options()``.  You can feed this options object into 
+    the ``datatableview.utils.get_datatable_structure()`` utility.
+    
+    ``get_datatable_structure()`` takes at least two arguments, and is the mechanism that a regular
+    call to a ``DatatableView.get_datatable()`` uses to get the context variable: the ``ajax_url``
+    the table will target, and the ``options`` object.  Unless there are ordering options set in
+    the main ``datatable_options`` object, the table won't know how to use default ordering, so you
+    can specify the third optional argument ``model``.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(EmbeddedTableDatatableView, self).get_context_data(**kwargs)
+
+        satellite_view = SatelliteDatatableView()
+        options = satellite_view.get_datatable_options()
+        datatable = get_datatable_structure(reverse('satellite'), options)
+
+        context['datatable'] = datatable
+        return context
+
+    implementation = u'''
+    class EmbeddedTableDatatableView(TemplateView):
+        def get_context_data(self, **kwargs):
+            context = super(EmbeddedTableDatatableView, self).get_context_data(**kwargs)
+
+            satellite_view = SatelliteDatatableView()
+            options = satellite_view.get_datatable_options()
+            datatable = get_datatable_structure(reverse('satellite'), options)
+
+            context['datatable'] = datatable
+            return context
+
+    class SatelliteDatatableView(DatatableView):
+        """
+        External view powering the embedded table for ``EmbeddedTableDatatableView``.
+        """
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+                'pub_date',
+            ],
+        }
+    '''
+
+class SatelliteDatatableView(DatatableView):
+    """
+    External view powering the embedded table for ``EmbeddedTableDatatableView``.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+            'pub_date',
+        ],
+    }
