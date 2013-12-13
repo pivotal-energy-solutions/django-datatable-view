@@ -2,7 +2,7 @@ from os import sep
 import os.path
 import re
 
-from django.views.generic import TemplateView
+from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
@@ -12,6 +12,15 @@ from datatableview.utils import get_datatable_structure
 from datatableview import helpers
 
 from .models import Entry, Blog
+
+class ResetView(View):
+    """ Google App Engine view for reloading the database to a fresh state every 24 hours. """
+    def get(self, request, *args, **kwargs):
+        from django.core.management import call_command
+        from django.http import HttpResponse
+        call_command('syncdb')
+        return HttpResponse("Done.")
+
 
 class IndexView(TemplateView):
     template_name = "index.html"
