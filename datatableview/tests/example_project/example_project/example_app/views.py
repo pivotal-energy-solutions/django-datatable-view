@@ -2,11 +2,13 @@ from os import sep
 import os.path
 import re
 
+import django
 from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
+import datatableview
 from datatableview.views import DatatableView, XEditableDatatableView
 from datatableview.utils import get_datatable_structure
 from datatableview import helpers
@@ -39,6 +41,12 @@ class IndexView(TemplateView):
         path, working_directory = os.path.split(os.path.abspath('.'))
         context['working_directory'] = working_directory
         context['os_sep'] = sep
+
+        # Versions
+        context.update({
+            'datatableview_version': '.'.join(map(str, datatableview.__version_info__)),
+            'django_version': django.get_version(),
+        })
 
         return context
 
