@@ -48,7 +48,9 @@ $ mkvirtualenv datatableview
 
 The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware but the ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
 
-A public online version of the example project will be set up in the near future.
+A public online version of the example project can be found here:
+
+http://django-datatable-view.appspot.com/
 
 ## Authors
 
