@@ -12,6 +12,7 @@ from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
+from django import get_version
 
 import dateutil.parser
 
@@ -22,6 +23,8 @@ from .utils import (ObjectListResult, DatatableOptions, split_real_fields,
 
 log = logging.getLogger(__name__)
 
+
+CAN_UPDATE_FIELDS = get_version().split('.') >= ['1', '5']
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -600,7 +603,10 @@ class XEditableMixin(object):
         field_name = form.cleaned_data['name']
         value = form.cleaned_data['value']
         setattr(obj, field_name, value)
-        obj.save(update_fields=[field_name])
+        save_kwargs = {}
+        if CAN_UPDATE_FIELDS:
+            save_kwargs['update_fields'] = [field_name]
+        obj.save(**save_kwargs)
 
         data = json.dumps({
             'status': 'success',
