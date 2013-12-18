@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 setup(name='django-datatable-view',
-      version='0.6',
+      version='0.6.1',
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
