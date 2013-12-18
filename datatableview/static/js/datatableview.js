@@ -57,6 +57,7 @@ var datatableview = {
 
         var template_clear_button = $('<a href="#" class="clear-search">Clear</a>');
 
+        var initialized_datatables = [];
         $$.each(function(){
             var datatable = $(this);
             var column_options = [];
@@ -117,6 +118,7 @@ var datatableview = {
             }
 
             var initialized_datatable = datatable.dataTable(options);
+            initialized_datatables.push(initialized_datatable);
 
             try {
                 initialized_datatable.fnSetFilteringDelay();
@@ -133,6 +135,7 @@ var datatableview = {
             });
             search_input.after(clear_button).after(' ');
         });
+        return $(initialized_datatables);
     }
 }
 
