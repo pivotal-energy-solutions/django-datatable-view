@@ -118,7 +118,7 @@ var datatableview = {
             }
 
             var initialized_datatable = datatable.dataTable(options);
-            initialized_datatables.push(initialized_datatable);
+            initialized_datatables.push(initialized_datatable[0]);
 
             try {
                 initialized_datatable.fnSetFilteringDelay();
@@ -135,7 +135,7 @@ var datatableview = {
             });
             search_input.after(clear_button).after(' ');
         });
-        return $(initialized_datatables);
+        return $(initialized_datatables).dataTable();
     }
 }
 
