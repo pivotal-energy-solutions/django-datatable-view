@@ -1,3 +1,7 @@
+try:
+   from functools import reduce
+except ImportError:
+   pass
 import json
 import re
 import operator
