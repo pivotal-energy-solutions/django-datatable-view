@@ -320,7 +320,10 @@ class DatatableOptions(UserDict):
 
                     column = options['columns'][column_index]
                     column = get_field_definition(column)
-                    is_local_field = column.fields[0] in self._model._meta.get_all_field_names()
+                    if column.fields and column.fields[0] in self._model._meta.get_all_field_names():
+                        is_local_field = True
+                    else:
+                        is_local_field = False
                     if not column.fields or len(column.fields) > 1 or not is_local_field:
                         field_name = '!{0}'.format(column_index)
 
