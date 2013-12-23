@@ -2,6 +2,11 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.6.4
+This release adds incremental support for Python 3 (not completed yet, but the occational pull request comes in to help get things ready), and fixes a Python 2.6 compatibility issue with string formatting syntax.
+
+The history of changes on each release has also been added to the code repository, available at ``django-datatable-view/CHANGELOG.md``.
+
 ## 0.6.3
 This release fixes an issue with non-local fields sometimes raising errors when requested for sorting operations over ajax.
 
