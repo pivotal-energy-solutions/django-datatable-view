@@ -264,7 +264,7 @@ class DatatableMixin(MultipleObjectMixin):
                 try:
                     object_list.sort(key=key_function(sort_field), reverse=reverse)
                 except TypeError as err:
-                    log.error("Unable to sort on {} - {}".format(sort_field, err))
+                    log.error("Unable to sort on {0} - {1}".format(sort_field, err))
 
             object_list._dtv_unpaged_total = len(object_list)
 

@@ -83,7 +83,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
     """
     if not text:
         text = kwargs.get('default_value') or unicode(instance)
-    return u"""<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
+    return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
 @keyed_helper
@@ -184,7 +184,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         if k in valid_attr_names:
             if k.startswith('data_'):
                 k = k[5:]
-            attrs['data-{}'.format(k)] = v
+            attrs['data-{0}'.format(k)] = v
 
     attrs['data-xeditable'] = "xeditable"
 
