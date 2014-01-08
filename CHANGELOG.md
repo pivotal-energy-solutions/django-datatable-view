@@ -2,6 +2,9 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.6.5
+This release fixes a bug with sorting columns backed by concrete db fields not on the local model.  The sorting operation would fail to recognize the field as concrete and would fall back to text-only sorting, which produced unexpected results.
+
 ## 0.6.4
 This release adds incremental support for Python 3 (not completed yet, but the occational pull request comes in to help get things ready), and fixes a Python 2.6 compatibility issue with string formatting syntax.
 
