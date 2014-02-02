@@ -114,17 +114,19 @@ class DatatableMixin(MultipleObjectMixin):
         # This count is for the benefit of the frontend datatables.js
         total_initial_record_count = queryset.count()
 
-        if options.ordering:
-            db_fields, sort_fields = split_real_fields(self.model, options.ordering)
+        if options['ordering']:
+            db_fields, sort_fields = split_real_fields(self.model, options['ordering'])
             queryset = queryset.order_by(*db_fields)
 
-        if options.search:
-            db_fields, searches = filter_real_fields(self.model, options.columns,
+        if options['search']:
+            db_fields, searches = filter_real_fields(self.model, options['columns'],
                                                      key=get_first_orm_bit)
-            db_fields.extend(options.search_fields)
+            db_fields.extend(options['search_fields'])
+
+            print(">>> searches:", searches)
 
             queries = []  # Queries generated to search all fields for all terms
-            search_terms = map(lambda q: q.strip("'\" "), smart_split(options.search))
+            search_terms = map(lambda q: q.strip("'\" "), smart_split(options['search']))
 
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
@@ -240,7 +242,7 @@ class DatatableMixin(MultipleObjectMixin):
 
             def data_getter_custom(i):
                 def key(obj):
-                    rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
+                    rich_value, plain_value = self.get_column_data(i, options['columns'][i], obj)
                     return plain_value
                 return key
 
@@ -337,9 +339,9 @@ class DatatableMixin(MultipleObjectMixin):
         options = self._get_datatable_options()
 
         # Narrow the results to the appropriate page length for serialization
-        if options.page_length != -1:
-            i_begin = options.start_offset
-            i_end = options.start_offset + options.page_length
+        if options['page_length'] != -1:
+            i_begin = options['start_offset']
+            i_end = options['start_offset'] + options['page_length']
             object_list = object_list[i_begin:i_end]
 
         return object_list
@@ -368,11 +370,9 @@ class DatatableMixin(MultipleObjectMixin):
         data = {
             'DT_RowId': obj.pk,
         }
-        for i, name in enumerate(options.columns):
+        for i, name in enumerate(options['columns']):
             column_data = self.get_column_data(i, name, obj)[0]
-            if isinstance(column_data, str):  # not unicode
-                column_data = column_data.decode('utf-8')
-            data[str(i)] = unicode(column_data)
+            data[str(i)] = str(column_data)
         return data
 
     def get_column_data(self, i, name, instance):
@@ -392,11 +392,7 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, column)
 
         if not isinstance(values, (tuple, list)):
-            if isinstance(values, str):  # not unicode
-                unicode_value = values.decode('utf-8')
-            else:
-                unicode_value = unicode(values)
-            values = (values, re.sub(r'<[^>]+>', '', unicode_value))
+            values = (values, re.sub(r'<[^>]+>', '', str(values)))
 
         return values
 
@@ -510,7 +506,7 @@ class DatatableMixin(MultipleObjectMixin):
         if len(values) == 1:
             value = values[0]
         else:
-            value = ' '.join(map(unicode, values))
+            value = ' '.join(map(str, values))
 
         return value, value
 

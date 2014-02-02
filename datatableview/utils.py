@@ -1,3 +1,8 @@
+try:
+    from functools import reduce
+except ImportError:
+    pass
+
 from collections import namedtuple
 
 try:
@@ -418,7 +423,7 @@ def filter_real_fields(model, fields, key=None):
 
     """
 
-    field_hints = zip(map(key, fields), fields)
+    field_hints = tuple(zip(map(key, fields), fields))
     field_map = dict(field_hints)
     field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())
