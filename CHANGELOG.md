@@ -2,6 +2,13 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.7.0
+This release adds Python 3 support with the help of the (``six``)[http://pythonhosted.org/six/] project.  We've taken some time to verify that unicode handling is handled correctly for both Python 2 and 3 simultaneously.
+
+The options provided by a DatatableView are processed and merged with incoming GET data from ajax calls, and the resulting object replaces the view's ``datatable_options`` attribute at runtime.  Previous to this release, that merged object implemented an attribute API to support lookups like ``options.search`` to get the search string.
+
+As of this release, that attribute API has been removed for the sake of simplicity.  Treat ``options`` like a normal dictionary and use the keys and values it contains to read any options.  The only reason the object is a subclass of the base ``dict`` itself is to provide a constructor that accepts a GET query string and normalizes and validates options.  Other than the normalization phase, it is a dictionary, first and foremost.
+
 ## 0.6.5
 This release fixes a bug with sorting columns backed by concrete db fields not on the local model.  The sorting operation would fail to recognize the field as concrete and would fall back to text-only sorting, which produced unexpected results.
 
