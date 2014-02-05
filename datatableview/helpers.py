@@ -14,6 +14,8 @@ from functools import partial, wraps
 from django import get_version
 from django.forms.util import flatatt
 
+import six
+
 from .utils import resolve_orm_path, FIELD_TYPES
 
 if get_version().split('.') >= ['1', '5']:
@@ -82,7 +84,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
 
     """
     if not text:
-        text = kwargs.get('default_value') or unicode(instance)
+        text = kwargs.get('default_value') or six.text_type(instance)
     return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
@@ -106,7 +108,7 @@ def itemgetter(k, ellipsis=False, key=None):
         if default_value is None:
             default_value = instance
         value = default_value[k]
-        if ellipsis and isinstance(k, slice) and isinstance(value, basestring) and \
+        if ellipsis and isinstance(k, slice) and isinstance(value, six.string_types) and \
                 len(default_value) > len(value):
             if ellipsis is True:
                 value += "..."

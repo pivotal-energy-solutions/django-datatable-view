@@ -1,11 +1,11 @@
-try:
-    from functools import reduce
-except ImportError:
-    pass
 import json
 import re
 import operator
 import logging
+try:
+    from functools import reduce
+except ImportError:
+    pass
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -18,6 +18,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from django import get_version
 
+import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
@@ -370,7 +371,9 @@ class DatatableMixin(MultipleObjectMixin):
         }
         for i, name in enumerate(options['columns']):
             column_data = self.get_column_data(i, name, obj)[0]
-            data[str(i)] = str(column_data)
+            if six.PY2 and isinstance(column_data, str):  # not unicode
+                column_data = column_data.decode('utf-8')
+            data[str(i)] = six.text_type(column_data)
         return data
 
     def get_column_data(self, i, name, instance):
@@ -390,7 +393,12 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, column)
 
         if not isinstance(values, (tuple, list)):
-            values = (values, re.sub(r'<[^>]+>', '', str(values)))
+            if six.PY2:
+                if isinstance(values, str):  # not unicode
+                    values = values.decode('utf-8')
+                else:
+                    values = unicode(values)
+            values = (values, re.sub(r'<[^>]+>', '', six.text_type(values)))
 
         return values
 
@@ -496,7 +504,7 @@ class DatatableMixin(MultipleObjectMixin):
             value = reduce(chain_lookup, [instance] + field_name.split('__'))
 
             if isinstance(value, Model):
-                value = unicode(value)
+                value = six.text_type(value)
 
             if value is not None:
                 values.append(value)
@@ -504,7 +512,7 @@ class DatatableMixin(MultipleObjectMixin):
         if len(values) == 1:
             value = values[0]
         else:
-            value = ' '.join(map(str, values))
+            value = u' '.join(map(six.text_type, values))
 
         return value, value
 

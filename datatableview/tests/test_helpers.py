@@ -3,6 +3,8 @@ from functools import partial
 
 from datatableview import helpers
 
+import six
+
 from .testcase import DatatableViewTestCase
 from .test_app.models import ExampleModel, RelatedModel, RelatedM2MModel
 
@@ -168,7 +170,7 @@ class HelpersTests(DatatableViewTestCase):
         data = ExampleModel.objects.get(pk=1)
         # This needs a "url" arg because we want to test successful use
         output = tertiary_helper(data, url="/", **internals)
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, six.string_types))
 
         # Verify that no "view" kwarg means the url is required from the call
         with self.assertRaises(ValueError) as cm:

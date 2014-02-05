@@ -1,10 +1,8 @@
+from collections import namedtuple
 try:
     from functools import reduce
 except ImportError:
     pass
-
-from collections import namedtuple
-
 try:
     from collections import UserDict
 except ImportError:
@@ -14,6 +12,8 @@ from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.encoding import StrAndUnicode
 from django.forms.util import flatatt
+
+import six
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
@@ -225,7 +225,7 @@ class DatatableStructure(StrAndUnicode):
         }
 
         if name in self.ordering:
-            attributes['data-sorting'] = ','.join(map(unicode, self.ordering[name]))
+            attributes['data-sorting'] = ','.join(map(six.text_type, self.ordering[name]))
 
         return attributes
 
@@ -239,7 +239,7 @@ class DatatableOptions(UserDict):
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
-            kwargs['columns'] = map(lambda f: (f.verbose_name, f.name), model_fields)
+            kwargs['columns'] = list(map(lambda f: (f.verbose_name, f.name), model_fields))
 
         if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
             kwargs['hidden_columns'] = []
