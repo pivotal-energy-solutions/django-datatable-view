@@ -3,7 +3,7 @@
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
 ## 0.7.0
-This release adds Python 3 support with the help of the (``six``)[http://pythonhosted.org/six/] project.  We've taken some time to verify that unicode handling is handled correctly for both Python 2 and 3 simultaneously.
+This release adds Python 3 support with the help of the [six](http://pythonhosted.org/six/) project.  We've taken some time to verify that unicode handling is handled correctly for both Python 2 and 3 simultaneously.
 
 The options provided by a DatatableView are processed and merged with incoming GET data from ajax calls, and the resulting object replaces the view's ``datatable_options`` attribute at runtime.  Previous to this release, that merged object implemented an attribute API to support lookups like ``options.search`` to get the search string.
 
