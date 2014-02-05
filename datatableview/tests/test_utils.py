@@ -176,12 +176,12 @@ class UtilsTests(DatatableViewTestCase):
         opts = {}
         options = utils.DatatableOptions(models.ExampleModel, {}, **opts)
         local_field_names = [(f.verbose_name, f.name) for f in models.ExampleModel._meta.local_fields]
-        self.assertEqual(options.columns, local_field_names)
+        self.assertEqual(options['columns'], local_field_names)
 
     def test_options_use_defaults(self):
         """ Verifies that no options normalizes to the default set. """
         options = utils.DatatableOptions(models.ExampleModel, {})
-        self.assertEqual(options, dict(utils.DEFAULT_OPTIONS, columns=options.columns))
+        self.assertEqual(options, dict(utils.DEFAULT_OPTIONS, columns=options['columns']))
 
     def test_options_normalize_values(self):
         """ Verifies that the options object fixes bad values. """
@@ -192,26 +192,26 @@ class UtilsTests(DatatableViewTestCase):
             'hidden_columns': None,
         }
         options = utils.DatatableOptions(model, {}, **opts)
-        self.assertEqual(options.search_fields, [])
-        self.assertEqual(options.unsortable_columns, [])
-        self.assertEqual(options.hidden_columns, [])
+        self.assertEqual(options['search_fields'], [])
+        self.assertEqual(options['unsortable_columns'], [])
+        self.assertEqual(options['hidden_columns'], [])
 
         data = { utils.OPTION_NAME_MAP['start_offset']: -5 }
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options.start_offset, 0)
+        self.assertEqual(options['start_offset'], 0)
         data = { utils.OPTION_NAME_MAP['start_offset']: 'not a number' }
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options.start_offset, 0)
+        self.assertEqual(options['start_offset'], 0)
 
         data = { utils.OPTION_NAME_MAP['page_length']: -5 }
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options.page_length, utils.MINIMUM_PAGE_LENGTH)
+        self.assertEqual(options['page_length'], utils.MINIMUM_PAGE_LENGTH)
         data = { utils.OPTION_NAME_MAP['page_length']: -1 }  # special case for dataTables.js
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options.page_length, -1)
+        self.assertEqual(options['page_length'], -1)
         data = { utils.OPTION_NAME_MAP['page_length']: 'not a number' }
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options.page_length, utils.DEFAULT_OPTIONS['page_length'])
+        self.assertEqual(options['page_length'], utils.DEFAULT_OPTIONS['page_length'])
 
     def test_options_sorting_validation(self):
         """ Verifies that sorting options respect configuration. """
@@ -229,7 +229,7 @@ class UtilsTests(DatatableViewTestCase):
         # Invalid sort number means use default sorting
         data = { utils.OPTION_NAME_MAP['num_sorting_columns']: 'not a number' }
         options = utils.DatatableOptions(model, data, **opts)
-        self.assertEqual(options.ordering, ['name', 'id'])
+        self.assertEqual(options['ordering'], ['name', 'id'])
 
         # Invalid sort index means no sorting for that sorting priority
         data = {
@@ -240,7 +240,7 @@ class UtilsTests(DatatableViewTestCase):
             (utils.OPTION_NAME_MAP['sort_column_direction'] % 1): 'asc',
         }
         options = utils.DatatableOptions(model, data, **opts)
-        self.assertEqual(options.ordering, ['name'])
+        self.assertEqual(options['ordering'], ['name'])
 
         # Sort requested for unsortable column rejects sorting
         data = {
@@ -251,7 +251,7 @@ class UtilsTests(DatatableViewTestCase):
             (utils.OPTION_NAME_MAP['sort_column_direction'] % 1): 'asc',
         }
         options = utils.DatatableOptions(model, data, **opts)
-        self.assertEqual(options.ordering, ['id'])
+        self.assertEqual(options['ordering'], ['id'])
 
         # Invalid sort direction rejects sorting
         data = {
@@ -262,7 +262,7 @@ class UtilsTests(DatatableViewTestCase):
             (utils.OPTION_NAME_MAP['sort_column_direction'] % 1): 'asc',
         }
         options = utils.DatatableOptions(model, data, **opts)
-        self.assertEqual(options.ordering, ['id'])
+        self.assertEqual(options['ordering'], ['id'])
 
     def test_options_normalize_virtual_columns_to_special_names(self):
         """
@@ -287,4 +287,4 @@ class UtilsTests(DatatableViewTestCase):
             (utils.OPTION_NAME_MAP['sort_column_direction'] % 2): 'asc',
         }
         options = utils.DatatableOptions(model, data, **opts)
-        self.assertEqual(options.ordering, ['-id', '-!1', '!2'])
+        self.assertEqual(options['ordering'], ['-id', '-!1', '!2'])

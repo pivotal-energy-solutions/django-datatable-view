@@ -159,8 +159,8 @@ class DatatableStructure(StrAndUnicode):
         self.model = model
 
         self.ordering = {}
-        if options.ordering:
-            for i, name in enumerate(options.ordering):
+        if options['ordering']:
+            for i, name in enumerate(options['ordering']):
                 plain_name = name.lstrip('-+')
                 index = options.get_column_index(plain_name)
                 if index == -1:
@@ -169,7 +169,7 @@ class DatatableStructure(StrAndUnicode):
                 self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
     def __unicode__(self):
-        return render_to_string(self.options.structure_template, {
+        return render_to_string(self.options['structure_template'], {
             'url': self.url,
             'result_counter_id': self.options['result_counter_id'],
             'column_info': self.get_column_info(),
@@ -200,7 +200,7 @@ class DatatableStructure(StrAndUnicode):
         else:
             model_fields = []
 
-        for column in self.options.columns:
+        for column in self.options['columns']:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
             column_name = column.pretty_name
@@ -220,8 +220,8 @@ class DatatableStructure(StrAndUnicode):
 
     def get_column_attributes(self, name):
         attributes = {
-            'data-sortable': _javascript_boolean[name not in self.options.unsortable_columns],
-            'data-visible': _javascript_boolean[name not in self.options.hidden_columns],
+            'data-sortable': _javascript_boolean[name not in self.options['unsortable_columns']],
+            'data-visible': _javascript_boolean[name not in self.options['hidden_columns']],
         }
 
         if name in self.ordering:
@@ -256,18 +256,12 @@ class DatatableOptions(UserDict):
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
 
         self._flat_column_names = []
-        for column in self.columns:
+        for column in self['columns']:
             column = get_field_definition(column)
             flat_name = column.pretty_name
             if column.fields:
                 flat_name = column.fields[0]
             self._flat_column_names.append(flat_name)
-
-    def __getattr__(self, k):
-        try:
-            return self.data[k]
-        except KeyError:
-            raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
 
     def _normalize_options(self, query, options):
         """ Validates incoming options in the request query parameters. """

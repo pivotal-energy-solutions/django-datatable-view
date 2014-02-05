@@ -211,12 +211,12 @@ class DatatableMixin(MultipleObjectMixin):
             # # This is broken until it searches all items in object_list previous to the database
             # # sort. That represents a runtime load that hits every row in code, rather than in the
             # # database. If enabled, this would cripple performance on large datasets.
-            # if options.i_walk_the_dangerous_line_between_genius_and_insanity:
+            # if options['i_walk_the_dangerous_line_between_genius_and_insanity']:
             #     length = len(object_list)
             #     for i, obj in enumerate(reversed(object_list)):
             #         keep = False
             #         for column_info in searches:
-            #             column_index = options.columns.index(column_info)
+            #             column_index = options['columns'].index(column_info)
             #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
             #             for term in search_terms:
             #                 if term.lower() in plain_data.lower():
