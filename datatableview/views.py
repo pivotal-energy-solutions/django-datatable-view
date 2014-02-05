@@ -123,8 +123,6 @@ class DatatableMixin(MultipleObjectMixin):
                                                      key=get_first_orm_bit)
             db_fields.extend(options['search_fields'])
 
-            print(">>> searches:", searches)
-
             queries = []  # Queries generated to search all fields for all terms
             search_terms = map(lambda q: q.strip("'\" "), smart_split(options['search']))
 
