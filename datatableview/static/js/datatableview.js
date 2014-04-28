@@ -103,7 +103,7 @@ var datatableview = {
                 "aoColumns": column_options,
                 "sAjaxSource": datatable.attr('data-source-url'),
                 "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
-                    $("#" + datatable.attr('data-result-counter-id')).html(iTotal);
+                    $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
                     var infoString = "Showing "+iStart +" to "+ iEnd+" of "+iTotal+" entries";
                     if (iMax != iTotal) {
                         infoString +=  " (filtered from "+iMax+" total entries)";
