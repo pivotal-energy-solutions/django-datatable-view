@@ -10,7 +10,16 @@ except ImportError:
 
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
-from django.utils.encoding import StrAndUnicode
+
+try:
+    from django.utils.encoding import StrAndUnicode
+except ImportError:
+    from django.utils.encoding import python_2_unicode_compatible
+    @python_2_unicode_compatible
+    class StrAndUnicode:
+        def __str__(self):
+            return self.code
+
 from django.forms.util import flatatt
 
 import six
