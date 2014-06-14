@@ -602,6 +602,46 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
 
 
+class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
+    """
+    Care must be taken to modify the options object on the View class: because it is defined as a
+    class attribute, there is only one copy of it in memory, and changing it is not thread safe.
+    
+    To safely change the options at runtime, copy the main options dictionary and then make a deep
+    of the columns list (copying the outer dictionary will not do this automatically).  The simplest
+    way to do this is via a call to the built-in ``copy.deepcopy`` function.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': [
+            'id',
+            'headline',
+        ],
+    }
+
+    def get_datatable_options(self):
+        from copy import deepcopy
+        options = deepcopy(self.datatable_options)
+        options['columns'].append("blog")
+        return options
+
+    implementation = u"""
+    class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': [
+                'id',
+                'headline',
+            ],
+        }
+
+        def get_datatable_options(self):
+            from copy import deepcopy
+            options = deepcopy(self.datatable_options)
+            options['columns'].append("blog")
+            return options
+    """
+
 class OrderingDatatableView(DemoMixin, DatatableView):
     """
     Default ordering is normally controlled by the model's Meta option ``ordering``, which is a list
