@@ -46,6 +46,7 @@ class IndexView(TemplateView):
         context.update({
             'datatableview_version': '.'.join(map(str, datatableview.__version_info__)),
             'django_version': django.get_version(),
+            'datatables_version': '1.10.0',
         })
 
         return context
