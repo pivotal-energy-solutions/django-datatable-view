@@ -836,20 +836,22 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     template!
 
     This gets the table itself looking better, but the rest of the controls added by dataTables.js
-    are a little lackluster by comparison.  To fix this, download the integration files from
-    <a href="https://github.com/DataTables/Plugins/tree/master/integration/bootstrap/">https://github.com/DataTables/Plugins/tree/master/integration/bootstrap/</a>
-    and then add them to the main template:
+    are a little lackluster by comparison.  To fix this, reference the latest integration helper CSS
+    and javascript support files in the template:
     
     <pre>
-    &lt;link href="{{ STATIC_URL }}css/dataTables.bootstrap.css" rel="stylesheet" /&gt;
+    &lt;link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" /&gt;
     </pre>
     <pre>
-    &lt;script src="{{ STATIC_URL }}js/dataTables.bootstrap.js"&gt;&lt;/script&gt;
+    &lt;script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"&gt;&lt;/script&gt;
     </pre>
 
-    Alternately, you can use the set of static resources from
-    <a href="https://github.com/Jowin/Datatables-Bootstrap3/">https://github.com/Jowin/Datatables-Bootstrap3/</a>,
-    which do the same thing with mild variances.
+    See <a href="https://datatables.net/examples/styling/bootstrap.html">the official datatables
+    documentation</a> on the subject for more information.
+
+    WARNING:
+    The pagination buttons are currently a bit strange with Bootstrap 3.1.1 and Datatables 1.10.0.
+    Please make sure you are using the latest integration files by checking the link just above.
     """
     model = Entry
     datatable_options = {
