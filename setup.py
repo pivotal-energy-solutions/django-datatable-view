@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 setup(name='django-datatable-view',
-      version='0.7.0',
+      version='0.7.1',
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
@@ -13,7 +13,7 @@ setup(name='django-datatable-view',
       author='Tim Valenta',
       author_email='tvalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
-      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.7.0',
+      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.7.1',
       license='Apache License (2.0)',
       classifiers=[
            'Development Status :: 2 - Pre-Alpha',

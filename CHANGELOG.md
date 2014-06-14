@@ -2,6 +2,19 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.7.1
+This release reverts a change to the Javascript that could cause errors in some cases.  A fix will be reintroduced at a later time to correct a potential issue with Chrome and Safari not updating the footer text when a filter is applied.
+
+The ``default_structure.html`` template has received a minor update to include the use of a CSS class ``"display"`` on the table, which how the datatables.js 1.10.0 version has begun to show examples on their documentation website, which gives the table a more modern default appearance.  The bootstrap template is unchanged.
+
+A fix from @michaeldjeffrey should allow the browser's locale setting to control how the number of results is rendered in the table footer.
+
+A fix from @danmac-uk has been merged that adds Django 1.7 support, because of our current use of Django's ``StrAndUnicode`` base class for the template-renderable datatable object.
+
+Various updates were made to the example project including a fix for "None" table headers in the embedded table demo.
+
+New issues are being tracked at the github repository and we're building our milestone goals for release 1.0.  We would like to include a streamlined strategy for column filters, an updated configuration strategy, and new callbacks to simplify support for datatables new ``"DT_RowData"`` key and modifying the internals of how special field types are handled for ORM querying.
+
 ## 0.7.0
 This release adds Python 3 support with the help of the [six](http://pythonhosted.org/six/) project.  We've taken some time to verify that unicode handling is handled correctly for both Python 2 and 3 simultaneously.
 
