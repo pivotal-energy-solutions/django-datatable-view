@@ -1145,8 +1145,9 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
         context = super(EmbeddedTableDatatableView, self).get_context_data(**kwargs)
 
         satellite_view = SatelliteDatatableView()
+        model = satellite_view.model
         options = satellite_view.get_datatable_options()
-        datatable = get_datatable_structure(reverse('satellite'), options)
+        datatable = get_datatable_structure(reverse('satellite'), options, model=model)
 
         context['datatable'] = datatable
         return context
@@ -1157,8 +1158,9 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
             context = super(EmbeddedTableDatatableView, self).get_context_data(**kwargs)
 
             satellite_view = SatelliteDatatableView()
+            model = satellite_view.model
             options = satellite_view.get_datatable_options()
-            datatable = get_datatable_structure(reverse('satellite'), options)
+            datatable = get_datatable_structure(reverse('satellite'), options, model=model)
 
             context['datatable'] = datatable
             return context
