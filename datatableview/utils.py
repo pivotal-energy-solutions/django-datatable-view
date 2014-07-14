@@ -248,7 +248,7 @@ class DatatableOptions(UserDict):
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
-            kwargs['columns'] = list(map(lambda f: (f.verbose_name, f.name), model_fields))
+            kwargs['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
 
         if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
             kwargs['hidden_columns'] = []
