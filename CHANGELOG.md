@@ -2,6 +2,10 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.7.2
+This release fixes an issue involving ``verbose_name`` values wrapped in a proxy function used by
+Django to defer instantiation of an underlying object.  These proxy values could not go through the ``re`` framework without raising errors about "expecting a string or buffer".
+
 ## 0.7.1
 This release reverts a change to the Javascript that could cause errors in some cases.  A fix will be reintroduced at a later time to correct a potential issue with Chrome and Safari not updating the footer text when a filter is applied.
 
