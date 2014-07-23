@@ -14,11 +14,24 @@ from django.template.loader import render_to_string
 try:
     from django.utils.encoding import StrAndUnicode
 except ImportError:
-    from django.utils.encoding import python_2_unicode_compatible
-    @python_2_unicode_compatible
-    class StrAndUnicode:
-        def __str__(self):
-            return self.code
+    from django.utils import six
+
+    class StrAndUnicode(object):
+        """
+        A class that derives __str__ from __unicode__.
+
+        On Python 2, __str__ returns the output of __unicode__ encoded as a UTF-8
+        bytestring. On Python 3, __str__ returns the output of __unicode__.
+
+        Useful as a mix-in. If you support Python 2 and 3 with a single code base,
+        you can inherit this mix-in and just define __unicode__.
+        """
+        if six.PY3:
+            def __str__(self):
+                return self.__unicode__()
+        else:
+            def __str__(self):
+                return self.__unicode__().encode('utf-8')
 
 from django.forms.util import flatatt
 
