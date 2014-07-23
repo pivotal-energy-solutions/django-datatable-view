@@ -2,6 +2,36 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.8.0
+This release modifies the way model fields are detected for ORM queries when submitting a search.  Previously, the approach was primarily hard-coded to support only the core Django fields that served as base classes for all others, but this approach failed to provide any value for third-party fields that were built from scratch.
+
+As of this release, ``datatableview.utils`` contains a dictionary ``FIELD_TYPES`` that contains keys for the major field categories, and maps each one to a list of fields that can be treated identically in ORM query terms.  This dictionary can be extended by importing it and appending new fields to a category.
+
+The default registration dictionary looks like this:
+
+```python
+FIELD_TYPES = {
+    'text': [models.CharField, models.TextField, models.FileField, models.GenericIPAddressField],
+    'date': [models.DateField],
+    'boolean': [models.BooleanField],
+    'integer': [models.IntegerField, models.AutoField],
+    'float': [models.FloatField, models.DecimalField],
+
+    # No direct search ORM queries make sense against these field types
+    'ignored': [models.ForeignKey],
+}
+```
+
+If a field type used in a table but isn't found in any of these categories, the old familiar exception will be raised stating that it is an unhandled field type.  The correct solution is to import this registry and append the field class:
+
+```python
+from datatableview.utils import FIELD_TYPES
+from netfields.fields import InetAddressField
+FIELD_TYPES['text'].append(InetAddressField)
+```
+
+In the future, looking towards the full 1.0 release, we would like to offer a more sophistocated field type registration that allows the new field to also declare what unique ORM extensions it offers, in the way that a ``CharField`` offers ``__icontains``, or ``InetAddressField`` offers ``__net_contains``, etc.  Until 1.0, we will be limited to offering this simple registration that limits the field categories to those already listed.
+
 ## 0.7.3
 This release fixes an exception that is raised when using Django 1.7 release candidate, involving the removal of the deprecated ``StrAndUnicode`` utility base class.
 
