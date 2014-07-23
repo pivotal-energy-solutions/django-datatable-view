@@ -136,8 +136,10 @@ class DatatableMixin(MultipleObjectMixin):
                         field_queries = []  # Queries generated to search this database field for the search term
 
                         field = resolve_orm_path(self.model, component_name)
-
-                        if isinstance(field, (models.CharField, models.TextField, models.FileField)):
+                        textual_fields = (models.CharField, models.TextField, models.FileField)
+                        if hasattr(models, 'GenericIPAddressField'):
+                            textual_fields += (getattr(models, 'GenericIPAddressField'),)
+                        if isinstance(field, textual_fields):
                             field_queries = [{component_name + '__icontains': term}]
                         elif isinstance(field, models.DateField):
                             try:
