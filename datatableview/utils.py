@@ -10,17 +10,12 @@ except ImportError:
 
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
+from django.forms.util import flatatt
 
 try:
-    from django.utils.encoding import StrAndUnicode
-except ImportError:
     from django.utils.encoding import python_2_unicode_compatible
-    @python_2_unicode_compatible
-    class StrAndUnicode:
-        def __str__(self):
-            return self.code
-
-from django.forms.util import flatatt
+except ImportError:
+    from .compat import python_2_unicode_compatible
 
 import six
 
@@ -155,7 +150,8 @@ def get_field_definition(field_definition):
     return FieldDefinitionTuple(*field)
 
 
-class DatatableStructure(StrAndUnicode):
+@python_2_unicode_compatible
+class DatatableStructure(object):
     """
     A class designed to be echoed directly to into template HTML to represent a skeleton table
     structure that datatables.js can use.
@@ -177,7 +173,7 @@ class DatatableStructure(StrAndUnicode):
                 sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
-    def __unicode__(self):
+    def __str__(self):
         return render_to_string(self.options['structure_template'], {
             'url': self.url,
             'result_counter_id': self.options['result_counter_id'],
