@@ -16,7 +16,7 @@ from django.forms.util import flatatt
 
 import six
 
-from .utils import resolve_orm_path, FIELD_TYPES
+from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES
 
 if get_version().split('.') >= ['1', '5']:
     from django.utils.timezone import localtime
@@ -231,7 +231,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             if field.choices:
                 field_type = 'select'
             else:
-                field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
+                field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), 'text')
         else:
             field_type = 'text'
         attrs['data-type'] = field_type

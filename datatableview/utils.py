@@ -8,6 +8,7 @@ try:
 except ImportError:
     from UserDict import UserDict
 
+from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.forms.util import flatatt
@@ -46,9 +47,27 @@ OPTION_NAME_MAP = {
     'sort_column_direction': 'sSortDir_%d',
 }
 
-# Mapping of Django's supported field types to their more generic type names.
-# These values are primarily used for the xeditable field type lookups
+# Mapping of Django field categories to the set of field classes falling into that category.
+# This is used during field searches to know which ORM language queries can be applied to a field,
+# such as "__icontains" or "__year".
 FIELD_TYPES = {
+    'text': [models.CharField, models.TextField, models.FileField],
+    'date': [models.DateField],
+    'boolean': [models.BooleanField],
+    'integer': [models.IntegerField, models.AutoField],
+    'float': [models.FloatField, models.DecimalField],
+
+    # This is a special type for fields that should be passed up, since there is no intuitive
+    # meaning for searches done agains the FK field directly.
+    'ignored': [models.ForeignKey],
+}
+if hasattr(models, 'GenericIPAddressField'):
+    FIELD_TYPES['text'].append(models.GenericIPAddressField)
+
+# Mapping of Django's supported field types to their more generic type names.
+# These values are primarily used for the xeditable field type lookups.
+# TODO: Would be nice if we can derive these from FIELD_TYPES so there's less repetition.
+XEDITABLE_FIELD_TYPES = {
     'AutoField': 'number',
     'BooleanField': 'text',
     'CharField': 'text',

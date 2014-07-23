@@ -22,7 +22,7 @@ import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
-from .utils import (ObjectListResult, DatatableOptions, split_real_fields,
+from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
         filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
         get_field_definition)
 
@@ -136,10 +136,9 @@ class DatatableMixin(MultipleObjectMixin):
                         field_queries = []  # Queries generated to search this database field for the search term
 
                         field = resolve_orm_path(self.model, component_name)
-
-                        if isinstance(field, (models.CharField, models.TextField, models.FileField)):
+                        if isinstance(field, tuple(FIELD_TYPES['text'])):
                             field_queries = [{component_name + '__icontains': term}]
-                        elif isinstance(field, models.DateField):
+                        elif isinstance(field, tuple(FIELD_TYPES['date'])):
                             try:
                                 date_obj = dateutil.parser.parse(term)
                             except ValueError:
@@ -163,7 +162,7 @@ class DatatableMixin(MultipleObjectMixin):
                                     field_queries.append({component_name + '__month': numerical_value})
                                 if 0 < numerical_value <= 31:
                                     field_queries.append({component_name + '__day': numerical_value})
-                        elif isinstance(field, models.BooleanField):
+                        elif isinstance(field, tuple(FIELD_TYPES['boolean'])):
                             if term.lower() in ('true', 'yes'):
                                 term = True
                             elif term.lower() in ('false', 'no'):
@@ -172,17 +171,17 @@ class DatatableMixin(MultipleObjectMixin):
                                 continue
 
                             field_queries = [{component_name: term}]
-                        elif isinstance(field, (models.IntegerField, models.AutoField)):
+                        elif isinstance(field, tuple(FIELD_TYPES['integer'])):
                             try:
                                 field_queries = [{component_name: int(term)}]
                             except ValueError:
                                 pass
-                        elif isinstance(field, (models.FloatField, models.DecimalField)):
+                        elif isinstance(field, tuple(FIELD_TYPES['float'])):
                             try:
                                 field_queries = [{component_name: float(term)}]
                             except ValueError:
                                 pass
-                        elif isinstance(field, models.ForeignKey):
+                        elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
                             pass
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
