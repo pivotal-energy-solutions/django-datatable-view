@@ -494,7 +494,9 @@ class DatatableMixin(MultipleObjectMixin):
                 value = None
             else:
                 if callable(value):
-                    if not hasattr(value, 'alters_data') or value.alters_data is not True:
+                    if isinstance(value, Manager):
+                        pass
+                    elif not hasattr(value, 'alters_data') or value.alters_data is not True:
                         value = value()
             return value
 
