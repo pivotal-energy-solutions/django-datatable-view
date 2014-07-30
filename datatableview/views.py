@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.utils.cache import add_never_cache_headers
+from django.utils.encoding import force_text
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
@@ -472,7 +473,7 @@ class DatatableMixin(MultipleObjectMixin):
         if not name:
             name = column.fields[0]
 
-        mangled_name = re.sub(r'[\W_]+', '_', name)
+        mangled_name = re.sub(r'[\W_]+', '_', force_text(name))
 
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
         if f:
