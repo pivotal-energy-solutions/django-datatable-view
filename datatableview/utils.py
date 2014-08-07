@@ -96,7 +96,7 @@ _javascript_boolean = {
     True: 'true',
     False: 'false',
 }
-FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
+FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback', 'search_fields'])
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
@@ -154,17 +154,20 @@ def get_field_definition(field_definition):
         field_definition = list(field_definition)
 
     if len(field_definition) == 1:
-        field = [None, field_definition, None]
+        field = [None, field_definition, None, None ]
     elif len(field_definition) == 2:
-        field = field_definition + [None]
+        field = field_definition + [None, None]
     elif len(field_definition) == 3:
+        field = field_definition + [None]
+    elif len( field_definition ) == 4:
         field = field_definition
     else:
         raise ValueError("Invalid field definition format.")
 
-    if not isinstance(field[1], (tuple, list)):
-        field[1] = (field[1],)
-    field[1] = tuple(name for name in field[1] if name is not None)
+    for i in ( 1,3 ):
+        if not isinstance(field[i], (tuple, list)):
+            field[i] = (field[i],)
+        field[i] = tuple(name for name in field[i] if name is not None)
 
     return FieldDefinitionTuple(*field)
 
@@ -289,6 +292,13 @@ class DatatableOptions(UserDict):
 
     def _normalize_options(self, query, options):
         """ Validates incoming options in the request query parameters. """
+        num_columns = len( options['columns'] )
+
+        column_searches = []
+        for i in xrange( num_columns ):
+            column_searches.append( query.get( '%s_%d' % ( OPTION_NAME_MAP['search'], i ) ) )
+        options['column_searches'] = column_searches
+
 
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
