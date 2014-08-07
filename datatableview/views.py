@@ -95,78 +95,6 @@ class DatatableMixin(MultipleObjectMixin):
             self._datatable_options = options
         return self._datatable_options
 
-    def _buildSearchQueries( self, db_fields, search_query ):
-        queries = []
-        search_terms = map( lambda q: q.strip( "'\" " ), smart_split( search_query ) )
-        for term in search_terms:
-            term_queries = [ ]  # Queries generated to search all fields for this term
-            # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
-            for column in db_fields:
-                column = get_field_definition( column )
-                for component_name in column.fields + column.search_fields:
-                    field_queries = [ ]  # Queries generated to search this database field for the search term
-                    field = resolve_orm_path( self.model, component_name )
-                    if isinstance( field, tuple( FIELD_TYPES[ 'text' ] ) ):
-                        field_queries = [ { component_name + '__icontains': term } ]
-                    elif isinstance( field, tuple( FIELD_TYPES[ 'date' ] ) ):
-                        try:
-                            date_obj = dateutil.parser.parse( term )
-                        except ValueError:
-                            # This exception is theoretical, but it doesn't seem to raise.
-                            pass
-                        except TypeError:
-                            # Failed conversions can lead to the parser adding ints to None.
-                            pass
-                        else:
-                            field_queries.append( { component_name: date_obj } )
-
-                        # Add queries for more granular date field lookups
-                        try:
-                            numerical_value = int( term )
-                        except ValueError:
-                            pass
-                        else:
-                            if 0 < numerical_value < 3000:
-                                field_queries.append( { component_name + '__year': numerical_value } )
-                            if 0 < numerical_value <= 12:
-                                field_queries.append( { component_name + '__month': numerical_value } )
-                            if 0 < numerical_value <= 31:
-                                field_queries.append( { component_name + '__day': numerical_value } )
-                    elif isinstance( field, tuple( FIELD_TYPES[ 'boolean' ] ) ):
-                        if term.lower( ) in ('true', 'yes'):
-                            term = True
-                        elif term.lower( ) in ('false', 'no'):
-                            term = False
-                        else:
-                            continue
-
-                        field_queries = [ { component_name: term } ]
-                    elif isinstance( field, tuple( FIELD_TYPES[ 'integer' ] ) ):
-                        try:
-                            field_queries = [ { component_name: int( term ) } ]
-                        except ValueError:
-                            pass
-                    elif isinstance( field, tuple( FIELD_TYPES[ 'float' ] ) ):
-                        try:
-                            field_queries = [ { component_name: float( term ) } ]
-                        except ValueError:
-                            pass
-                    elif isinstance( field, tuple( FIELD_TYPES[ 'ignored' ] ) ):
-                        pass
-                    else:
-                        raise ValueError(
-                            "Unhandled field type for %s (%r) in search." % (component_name, type( field )) )
-
-                    # print field_queries
-
-                    # Append each field inspection for this term
-                    term_queries.extend( map( lambda q: Q( **q ), field_queries ) )
-            # Append the logical OR of all field inspections for this term
-            if len( term_queries ):
-                queries.append( reduce( operator.or_, term_queries ) )
-
-        return queries
-
     def apply_queryset_options(self, queryset):
         """
         Interprets the datatable options.
@@ -191,24 +119,83 @@ class DatatableMixin(MultipleObjectMixin):
             db_fields, sort_fields = split_real_fields(self.model, options['ordering'])
             queryset = queryset.order_by(*db_fields)
 
-        if options['search'] or [ x for x in options['column_searches' ] if x ]:
-            org_db_fields, searches = filter_real_fields(self.model, options['columns'],
+        if options['search']:
+            db_fields, searches = filter_real_fields(self.model, options['columns'],
                                                      key=get_first_orm_bit)
-            db_fields = org_db_fields + options['search_fields']
+            db_fields.extend(options['search_fields'])
 
-            queries = []
-            global_search = options['search']
-            if global_search:
-                queries += self._buildSearchQueries( db_fields, global_search )
+            queries = []  # Queries generated to search all fields for all terms
+            search_terms = map(lambda q: q.strip("'\" "), smart_split(options['search']))
 
-            for db_field, col_search in zip( org_db_fields, options['column_searches'] ):
-                if not col_search:
-                    continue
+            for term in search_terms:
+                term_queries = []  # Queries generated to search all fields for this term
+                # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
+                for column in db_fields:
+                    column = get_field_definition(column)
+                    for component_name in column.fields:
+                        field_queries = []  # Queries generated to search this database field for the search term
 
-                queries += self._buildSearchQueries( [ db_field ], col_search )
+                        field = resolve_orm_path(self.model, component_name)
+                        if isinstance(field, tuple(FIELD_TYPES['text'])):
+                            field_queries = [{component_name + '__icontains': term}]
+                        elif isinstance(field, tuple(FIELD_TYPES['date'])):
+                            try:
+                                date_obj = dateutil.parser.parse(term)
+                            except ValueError:
+                                # This exception is theoretical, but it doesn't seem to raise.
+                                pass
+                            except TypeError:
+                                # Failed conversions can lead to the parser adding ints to None.
+                                pass
+                            else:
+                                field_queries.append({component_name: date_obj})
 
-            if len( queries ):
-                queryset = queryset.filter( reduce( operator.and_, queries ) )
+                            # Add queries for more granular date field lookups
+                            try:
+                                numerical_value = int(term)
+                            except ValueError:
+                                pass
+                            else:
+                                if 0 < numerical_value < 3000:
+                                    field_queries.append({component_name + '__year': numerical_value})
+                                if 0 < numerical_value <= 12:
+                                    field_queries.append({component_name + '__month': numerical_value})
+                                if 0 < numerical_value <= 31:
+                                    field_queries.append({component_name + '__day': numerical_value})
+                        elif isinstance(field, tuple(FIELD_TYPES['boolean'])):
+                            if term.lower() in ('true', 'yes'):
+                                term = True
+                            elif term.lower() in ('false', 'no'):
+                                term = False
+                            else:
+                                continue
+
+                            field_queries = [{component_name: term}]
+                        elif isinstance(field, tuple(FIELD_TYPES['integer'])):
+                            try:
+                                field_queries = [{component_name: int(term)}]
+                            except ValueError:
+                                pass
+                        elif isinstance(field, tuple(FIELD_TYPES['float'])):
+                            try:
+                                field_queries = [{component_name: float(term)}]
+                            except ValueError:
+                                pass
+                        elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
+                            pass
+                        else:
+                            raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
+
+                        # print field_queries
+
+                        # Append each field inspection for this term
+                        term_queries.extend(map(lambda q: Q(**q), field_queries))
+                # Append the logical OR of all field inspections for this term
+                if len(term_queries):
+                    queries.append(reduce(operator.or_, term_queries))
+            # Apply the logical AND of all term inspections
+            if len(queries):
+                queryset = queryset.filter(reduce(operator.and_, queries))
 
         # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
         if not sort_fields and not searches:
