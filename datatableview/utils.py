@@ -45,6 +45,7 @@ OPTION_NAME_MAP = {
     'num_sorting_columns': 'iSortingCols',
     'sort_column': 'iSortCol_%d',
     'sort_column_direction': 'sSortDir_%d',
+    'is_regex' : 'bRegex'
 }
 
 # Mapping of Django field categories to the set of field classes falling into that category.
@@ -299,6 +300,7 @@ class DatatableOptions(UserDict):
             column_searches.append( query.get( '%s_%d' % ( OPTION_NAME_MAP['search'], i ) ) )
         options['column_searches'] = column_searches
 
+        options['is_regex'] = True if 'true' == query.get( OPTION_NAME_MAP['is_regex'], 'false' ).lower() else False
 
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
