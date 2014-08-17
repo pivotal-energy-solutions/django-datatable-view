@@ -155,7 +155,7 @@ def get_field_definition(field_definition):
         field_definition = list(field_definition)
 
     if len(field_definition) == 1:
-        field = [None, field_definition, None, None ]
+        field = [field_definition[0], field_definition, None, None ]
     elif len(field_definition) == 2:
         field = field_definition + [None, None]
     elif len(field_definition) == 3:
@@ -242,6 +242,7 @@ class DatatableStructure(object):
                 ordering_name = pretty_name
 
             attributes = self.get_column_attributes(ordering_name)
+
             column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
 
         return column_info
