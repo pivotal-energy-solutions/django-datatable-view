@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 from collections import namedtuple
 try:
     from functools import reduce
@@ -100,6 +102,7 @@ FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'field
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -132,7 +135,7 @@ def get_model_at_related_field(model, attr):
         model = field.rel.to
     else:
         raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                field.__class__.__name__))
+                         field.__class__.__name__))
     return model
 
 
@@ -227,12 +230,10 @@ class DatatableStructure(object):
         for column in self.options['columns']:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
-            column_name = column.pretty_name
             if column.fields and column.fields[0] in model_fields:
                 ordering_name = column.fields[0]
                 if not pretty_name:
                     field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
                     pretty_name = field.verbose_name
             else:
                 ordering_name = pretty_name
@@ -459,4 +460,3 @@ def filter_real_fields(model, fields, key=None):
         else:
             virtual_fields.append(field)
     return db_fields, virtual_fields
-

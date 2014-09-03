@@ -1,9 +1,13 @@
+# -*- encoding: utf-8 -*-
+
 from .testcase import DatatableViewTestCase
 from .test_app import models
 from .. import utils
 
+
 def get_structure(columns, opts):
     return utils.get_datatable_structure('/', dict(opts, columns=columns), model=models.ExampleModel)
+
 
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
@@ -53,12 +57,12 @@ class UtilsTests(DatatableViewTestCase):
         real, fake = utils.split_real_fields(model, ['name', 'fake'])
         self.assertEqual(real, ['name'])
         self.assertEqual(fake, ['fake'])
-        
+
         # Fake first, real last
         real, fake = utils.split_real_fields(model, ['fake', 'name'])
         self.assertEqual(real, [])
         self.assertEqual(fake, ['fake', 'name'])
-        
+
     def test_filter_real_fields(self):
         model = models.ExampleModel
         fields = [
@@ -87,11 +91,11 @@ class UtilsTests(DatatableViewTestCase):
         columns = [
             'name',
         ]
-        structure = get_structure(columns, { 'ordering': ['name'] })
+        structure = get_structure(columns, {'ordering': ['name']})
         self.assertEqual(structure.ordering['name'].direction, 'asc')
-        structure = get_structure(columns, { 'ordering': ['+name'] })
+        structure = get_structure(columns, {'ordering': ['+name']})
         self.assertEqual(structure.ordering['name'].direction, 'asc')
-        structure = get_structure(columns, { 'ordering': ['-name'] })
+        structure = get_structure(columns, {'ordering': ['-name']})
         self.assertEqual(structure.ordering['name'].direction, 'desc')
 
         # Verify compound ordering is preserved
@@ -99,7 +103,7 @@ class UtilsTests(DatatableViewTestCase):
             'id',
             'name',
         ]
-        structure = get_structure(columns, { 'ordering': ['name', 'id'] })
+        structure = get_structure(columns, {'ordering': ['name', 'id']})
         self.assertEqual(structure.ordering['name'].order, 0)
         self.assertEqual(structure.ordering['id'].order, 1)
 
@@ -107,18 +111,18 @@ class UtilsTests(DatatableViewTestCase):
         columns = [
             'fake',
         ]
-        structure = get_structure(columns, { 'ordering': ['fake'] })
+        structure = get_structure(columns, {'ordering': ['fake']})
         self.assertEqual(structure.ordering['fake'].direction, 'asc')
-        structure = get_structure(columns, { 'ordering': ['+fake'] })
+        structure = get_structure(columns, {'ordering': ['+fake']})
         self.assertEqual(structure.ordering['fake'].direction, 'asc')
-        structure = get_structure(columns, { 'ordering': ['-fake'] })
+        structure = get_structure(columns, {'ordering': ['-fake']})
         self.assertEqual(structure.ordering['fake'].direction, 'desc')
 
         # Verify invalid ordering names are not included
         columns = [
             'name',
         ]
-        structure = get_structure(columns, { 'ordering': ['fake', 'name'] })
+        structure = get_structure(columns, {'ordering': ['fake', 'name']})
         self.assertIn('name', structure.ordering)
         self.assertNotIn('fake', structure.ordering)
 
@@ -134,16 +138,16 @@ class UtilsTests(DatatableViewTestCase):
         structure = get_structure(columns, {})
         self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'true')
         self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'true')
-        structure = get_structure(columns, { 'hidden_columns': ['name'] })
+        structure = get_structure(columns, {'hidden_columns': ['name']})
         self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'false')
         self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'true')
-        structure = get_structure(columns, { 'unsortable_columns': ['name'] })
+        structure = get_structure(columns, {'unsortable_columns': ['name']})
         self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'true')
         self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'false')
-        structure = get_structure(columns, { 'hidden_columns': ['name'], 'unsortable_columns': ['name'] })
+        structure = get_structure(columns, {'hidden_columns': ['name'], 'unsortable_columns': ['name']})
         self.assertEqual(structure.get_column_attributes('name')['data-visible'], 'false')
         self.assertEqual(structure.get_column_attributes('name')['data-sortable'], 'false')
-        structure = get_structure(columns, { 'ordering': ['-name', 'id'] })
+        structure = get_structure(columns, {'ordering': ['-name', 'id']})
         self.assertEqual(structure.get_column_attributes('id')['data-sorting'], '1,0,asc')
         self.assertEqual(structure.get_column_attributes('name')['data-sorting'], '0,1,desc')
 
@@ -196,20 +200,20 @@ class UtilsTests(DatatableViewTestCase):
         self.assertEqual(options['unsortable_columns'], [])
         self.assertEqual(options['hidden_columns'], [])
 
-        data = { utils.OPTION_NAME_MAP['start_offset']: -5 }
+        data = {utils.OPTION_NAME_MAP['start_offset']: -5}
         options = utils.DatatableOptions(model, data)
         self.assertEqual(options['start_offset'], 0)
-        data = { utils.OPTION_NAME_MAP['start_offset']: 'not a number' }
+        data = {utils.OPTION_NAME_MAP['start_offset']: 'not a number'}
         options = utils.DatatableOptions(model, data)
         self.assertEqual(options['start_offset'], 0)
 
-        data = { utils.OPTION_NAME_MAP['page_length']: -5 }
+        data = {utils.OPTION_NAME_MAP['page_length']: -5}
         options = utils.DatatableOptions(model, data)
         self.assertEqual(options['page_length'], utils.MINIMUM_PAGE_LENGTH)
-        data = { utils.OPTION_NAME_MAP['page_length']: -1 }  # special case for dataTables.js
+        data = {utils.OPTION_NAME_MAP['page_length']: -1}  # special case for dataTables.js
         options = utils.DatatableOptions(model, data)
         self.assertEqual(options['page_length'], -1)
-        data = { utils.OPTION_NAME_MAP['page_length']: 'not a number' }
+        data = {utils.OPTION_NAME_MAP['page_length']: 'not a number'}
         options = utils.DatatableOptions(model, data)
         self.assertEqual(options['page_length'], utils.DEFAULT_OPTIONS['page_length'])
 
@@ -227,7 +231,7 @@ class UtilsTests(DatatableViewTestCase):
         }
 
         # Invalid sort number means use default sorting
-        data = { utils.OPTION_NAME_MAP['num_sorting_columns']: 'not a number' }
+        data = {utils.OPTION_NAME_MAP['num_sorting_columns']: 'not a number'}
         options = utils.DatatableOptions(model, data, **opts)
         self.assertEqual(options['ordering'], ['name', 'id'])
 

@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import json
 
 from django.core.urlresolvers import reverse
@@ -7,6 +9,7 @@ import six
 from .testcase import DatatableViewTestCase
 from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
+
 
 class ViewsTests(DatatableViewTestCase):
     urls = 'datatableview.tests.example_project.example_project.example_app.urls'

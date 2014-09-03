@@ -1,6 +1,8 @@
+# -*- encoding: utf-8 -*-
+
 import re
 
-from django.conf.urls import patterns, include, url
+from django.conf.urls import patterns, url
 
 from . import views
 
