@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 """ Backports of code left behind by new versions of Django. """
 
 import six

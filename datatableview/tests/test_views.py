@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import json
 
 from django.core.urlresolvers import reverse
