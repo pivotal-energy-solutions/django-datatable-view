@@ -19,11 +19,10 @@ from django.conf import settings
 from django import get_version
 
 import six
-import dateutil.parser
 
 from .forms import XEditableUpdateForm
 from .utils import (
-    FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
+    FIELD_TYPES, FIELD_HANDLERS, ObjectListResult, DatatableOptions, split_real_fields,
     filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
     get_field_definition
 )
@@ -137,64 +136,21 @@ class DatatableMixin(MultipleObjectMixin):
                 for column in db_fields:
                     column = get_field_definition(column)
                     for component_name in column.fields:
-                        field_queries = []  # Queries generated to search this database field for the search term
-
                         field = resolve_orm_path(self.model, component_name)
-                        if isinstance(field, tuple(FIELD_TYPES['text'])):
-                            field_queries = [{component_name + '__icontains': term}]
-                        elif isinstance(field, tuple(FIELD_TYPES['date'])):
-                            try:
-                                date_obj = dateutil.parser.parse(term)
-                            except ValueError:
-                                # This exception is theoretical, but it doesn't seem to raise.
-                                pass
-                            except TypeError:
-                                # Failed conversions can lead to the parser adding ints to None.
-                                pass
-                            else:
-                                field_queries.append({component_name: date_obj})
-
-                            # Add queries for more granular date field lookups
-                            try:
-                                numerical_value = int(term)
-                            except ValueError:
-                                pass
-                            else:
-                                if 0 < numerical_value < 3000:
-                                    field_queries.append({component_name + '__year': numerical_value})
-                                if 0 < numerical_value <= 12:
-                                    field_queries.append({component_name + '__month': numerical_value})
-                                if 0 < numerical_value <= 31:
-                                    field_queries.append({component_name + '__day': numerical_value})
-                        elif isinstance(field, tuple(FIELD_TYPES['boolean'])):
-                            if term.lower() in ('true', 'yes'):
-                                term = True
-                            elif term.lower() in ('false', 'no'):
-                                term = False
-                            else:
-                                continue
-
-                            field_queries = [{component_name: term}]
-                        elif isinstance(field, tuple(FIELD_TYPES['integer'])):
-                            try:
-                                field_queries = [{component_name: int(term)}]
-                            except ValueError:
-                                pass
-                        elif isinstance(field, tuple(FIELD_TYPES['float'])):
-                            try:
-                                field_queries = [{component_name: float(term)}]
-                            except ValueError:
-                                pass
-                        elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
-                            pass
+                        for label, field_types in FIELD_TYPES.items():
+                            if isinstance(field, tuple(field_types)):
+                                # Queries generated to search this database field for the search term
+                                handler = FIELD_HANDLERS.get(label)
+                                if not handler:
+                                    raise ValueError("Unhandled field type %s. Please update FIELD_HANDLERS." % label)
+                                field_queries = handler(field, component_name, term)
+                                break
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (
                                              component_name, type(field)))
-
-                        # print field_queries
-
                         # Append each field inspection for this term
-                        term_queries.extend(map(lambda q: Q(**q), field_queries))
+                        if field_queries:
+                            term_queries.extend(map(lambda q: Q(**q), field_queries))
                 # Append the logical OR of all field inspections for this term
                 if len(term_queries):
                     queries.append(reduce(operator.or_, term_queries))
