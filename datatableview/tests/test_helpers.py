@@ -8,7 +8,7 @@ from datatableview import helpers
 import six
 
 from .testcase import DatatableViewTestCase
-from .test_app.models import ExampleModel, RelatedModel, RelatedM2MModel
+from .test_app.models import ExampleModel, RelatedM2MModel
 
 
 class HelpersTests(DatatableViewTestCase):

@@ -12,9 +12,7 @@ except ImportError:
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.db.models import Model, Manager, Q
-from django.utils.cache import add_never_cache_headers
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
