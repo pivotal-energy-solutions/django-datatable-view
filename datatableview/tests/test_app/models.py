@@ -2,6 +2,7 @@
 
 from django.db import models
 
+
 class ExampleModel(models.Model):
     name = models.CharField(max_length=15)
     date_created = models.DateTimeField(auto_now_add=True)

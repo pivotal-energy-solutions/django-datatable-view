@@ -102,6 +102,7 @@ FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'field
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -134,7 +135,7 @@ def get_model_at_related_field(model, attr):
         model = field.rel.to
     else:
         raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                field.__class__.__name__))
+                         field.__class__.__name__))
     return model
 
 
@@ -461,4 +462,3 @@ def filter_real_fields(model, fields, key=None):
         else:
             virtual_fields.append(field)
     return db_fields, virtual_fields
-

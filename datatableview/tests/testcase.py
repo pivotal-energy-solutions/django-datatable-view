@@ -5,6 +5,7 @@ from django.test.utils import override_settings
 from django.core.management import call_command
 from django.db.models import loading
 
+
 @override_settings(INSTALLED_APPS=[
     'datatableview',
     'datatableview.tests.test_app',

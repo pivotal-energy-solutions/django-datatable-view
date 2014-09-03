@@ -24,14 +24,16 @@ import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
-from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
-        filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
-        get_field_definition)
+from .utils import (
+    FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
+    filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
+    get_field_definition
+)
 
 log = logging.getLogger(__name__)
 
-
 CAN_UPDATE_FIELDS = get_version().split('.') >= ['1', '5']
+
 
 class DatatableMixin(MultipleObjectMixin):
     """
@@ -131,7 +133,9 @@ class DatatableMixin(MultipleObjectMixin):
 
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
-                # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
+                # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.
+                # For example, "subdivision__name" terminates in a CharField.
+                # The field type determines how it is probed for search.
                 for column in db_fields:
                     column = get_field_definition(column)
                     for component_name in column.fields:
@@ -186,7 +190,8 @@ class DatatableMixin(MultipleObjectMixin):
                         elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
                             pass
                         else:
-                            raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
+                            raise ValueError("Unhandled field type for %s (%r) in search." % (
+                                             component_name, type(field)))
 
                         # print field_queries
 
