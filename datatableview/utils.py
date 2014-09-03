@@ -22,6 +22,8 @@ except ImportError:
 
 import six
 
+from . import handlers
+
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
 
@@ -65,6 +67,15 @@ FIELD_TYPES = {
 }
 if hasattr(models, 'GenericIPAddressField'):
     FIELD_TYPES['text'].append(models.GenericIPAddressField)
+
+FIELD_HANDLERS = {
+    'text': handlers.text_field_handler,
+    'date': handlers.date_field_handler,
+    'boolean': handlers.boolean_field_handler,
+    'integer': handlers.integer_field_handler,
+    'float': handlers.float_field_handler,
+    'ignored': handlers.ignored_field_handler
+}
 
 # Mapping of Django's supported field types to their more generic type names.
 # These values are primarily used for the xeditable field type lookups.
