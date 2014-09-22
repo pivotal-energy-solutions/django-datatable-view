@@ -166,7 +166,7 @@ class DatatableMixin(MultipleObjectMixin):
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
-            object_list._dtv_unpaged_total = queryset.count()
+            object_list._dtv_unpaged_total = queryset.count() if options['search'] else total_initial_record_count
         else:
             object_list = ObjectListResult(queryset)
 
