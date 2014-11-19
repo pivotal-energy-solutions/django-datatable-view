@@ -89,6 +89,17 @@ def link_to_model(instance, text=None, *args, **kwargs):
 
 
 @keyed_helper
+def field_display(instance, *args, **kwargs):
+    """
+    Returns the display name of a field
+    """
+    field_name = kwargs.get('field_data')[1]
+    field_display_method_name = 'get_' + field_name + '_display'
+    method = getattr(instance, field_display_method_name)
+    return u"{}".format(method())
+
+
+@keyed_helper
 def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;", *args, **kwargs):
     value = kwargs.get('default_value', value)
     if value:
