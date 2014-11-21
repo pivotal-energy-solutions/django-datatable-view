@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 from datetime import datetime
 from functools import partial
 
@@ -6,7 +8,8 @@ from datatableview import helpers
 import six
 
 from .testcase import DatatableViewTestCase
-from .test_app.models import ExampleModel, RelatedModel, RelatedM2MModel
+from .test_app.models import ExampleModel, RelatedM2MModel
+
 
 class HelpersTests(DatatableViewTestCase):
     fixtures = ['test_data.json']
@@ -20,7 +23,7 @@ class HelpersTests(DatatableViewTestCase):
         with self.assertRaises(AttributeError) as cm:
             helper(related)
         self.assertEqual(str(cm.exception), "'RelatedM2MModel' object has no attribute 'get_absolute_url'")
-        
+
         # Verify simple use
         instance = ExampleModel.objects.get(pk=1)
         output = helper(instance)
@@ -125,7 +128,7 @@ class HelpersTests(DatatableViewTestCase):
         secondary_helper = helper(slice(0, 5), ellipsis=True)
         output = secondary_helper(data)
         self.assertEqual(output, data[:5] + "...")
-        
+
         # Verify ellipsis can be customized
         secondary_helper = helper(slice(0, 5), ellipsis="custom")
         output = secondary_helper(data)
@@ -156,7 +159,7 @@ class HelpersTests(DatatableViewTestCase):
     def test_make_xeditable(self):
         """ Verifies that make_xeditable works. """
         helper = helpers.make_xeditable
-        
+
         # Items that the helper normally expects in a callback context
         internals = {'field_data': ("Name", 'name', None)}
 
@@ -178,8 +181,8 @@ class HelpersTests(DatatableViewTestCase):
         self.assertEqual(str(cm.exception), "'make_xeditable' cannot determine a value for 'url'.")
 
         # Verify kwargs accumulate
-        kwargs1 = { 'type': 'textarea' }
-        kwargs2 = { 'other_arg': True }
+        kwargs1 = {'type': 'textarea'}
+        kwargs2 = {'other_arg': True}
         secondary_helper = helper(**kwargs1)
         expected_kwargs = dict(kwargs1, extra_attrs=[])
         self.assertEqual(secondary_helper.keywords, expected_kwargs)
@@ -196,7 +199,7 @@ class HelpersTests(DatatableViewTestCase):
             'source': "SOURCE DATA",
             'title': "TITLE DATA",
             'placeholder': "PLACEHOLDER DATA",
-            
+
             # Extra stuff not in anticipated to appear in rendered string
             'special': "SPECIAL DATA",
             'data_custom': "DATA-CUSTOM DATA",

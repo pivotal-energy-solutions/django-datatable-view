@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 """
 WSGI config for test_project project.
 
