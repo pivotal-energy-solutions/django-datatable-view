@@ -104,9 +104,9 @@ var datatableview = {
                 "sAjaxSource": datatable.attr('data-source-url'),
                 "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                     $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
-                    var infoString = "Showing "+iStart +" to "+ iEnd+" of "+iTotal+" entries";
+                    var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
                     if (iMax != iTotal) {
-                        infoString +=  " (filtered from "+iMax+" total entries)";
+                        infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
                     }
                     // /******************************************************************
                     //  * ##########       ###       ######         ###
