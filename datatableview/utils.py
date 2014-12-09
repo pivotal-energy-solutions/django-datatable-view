@@ -53,7 +53,7 @@ OPTION_NAME_MAP = {
 FIELD_TYPES = {
     'text': [models.CharField, models.TextField, models.FileField],
     'date': [models.DateField],
-    'boolean': [models.BooleanField],
+    'boolean': [models.BooleanField, models.NullBooleanField],
     'integer': [models.IntegerField, models.AutoField],
     'float': [models.FloatField, models.DecimalField],
 
