@@ -2,6 +2,11 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.8.1
+This release fixes a Django >=1.7 compatibility bug where ORM query lookups would traverse a m2m relationship and incorrectly discover the manager to be a callable value function.
+
+A small translation fix was provided, a wasteful ``count()`` query removed, ``NullBooleanField`` is now added to the 'boolean' FIELD_TYPES, and we fixed a documentation typo that referred users to the wrong javascript callback name.
+
 ## 0.8.0
 This release modifies the way model fields are detected for ORM queries when submitting a search.  Previously, the approach was primarily hard-coded to support only the core Django fields that served as base classes for all others, but this approach failed to provide any value for third-party fields that were built from scratch.
 
