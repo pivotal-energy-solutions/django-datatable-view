@@ -13,7 +13,7 @@ setup(name='django-datatable-view',
       author='Tim Valenta',
       author_email='tvalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
-      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.8.0',
+      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.8.1',
       license='Apache License (2.0)',
       classifiers=[
            'Development Status :: 2 - Pre-Alpha',
