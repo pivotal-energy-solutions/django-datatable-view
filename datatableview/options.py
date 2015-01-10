@@ -36,7 +36,7 @@ class DatatableMetaclass(type):
         return new_class
 
 
-class BaseDatatable(object, six.with_metaclass(DatatableMetaclass)):
+class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
     def __init__(self, object_list, url, view=None, model=None, query_config=None, **kwargs):
         self.object_list = object_list
         self.url = url
