@@ -16,6 +16,7 @@ from .utils import (normalize_config, apply_options, get_field_definition, Colum
 
 class DatatableOptions(object):
     def __init__(self, options=None):
+        self.model = getattr(options, 'model', None)
         self.columns = getattr(options, 'columns', None)  # table headers
         self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
         self.start_offset = getattr(options, 'start_offset', None)  # results to skip ahead
