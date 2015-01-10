@@ -44,7 +44,9 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
         self.object_list = object_list
         self.url = url
         self.view = view
-        self.model = model
+        self.model = self._meta.model or model
+        if self.model is None and hasattr(object_list, 'model'):
+            self.model = object_list.model
         self.configure(self._meta.__dict__, kwargs, query_config)
 
         self.total_initial_record_count = None
