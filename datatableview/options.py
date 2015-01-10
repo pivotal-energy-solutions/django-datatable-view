@@ -32,11 +32,13 @@ class DatatableOptions(object):
 class DatatableMetaclass(type):
     def __new__(cls, name, bases, attrs):
         new_class = super(DatatableMetaclass, cls).__new__(cls, name, bases, attrs)
-        new_class._meta = DatatableOptions(getattr(new_class, 'Meta', None))
+        new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
         return new_class
 
 
 class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
+    options_class = DatatableOptions
+
     def __init__(self, object_list, url, view=None, model=None, query_config=None, **kwargs):
         self.object_list = object_list
         self.url = url
