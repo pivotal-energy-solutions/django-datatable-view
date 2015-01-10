@@ -22,6 +22,7 @@ import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
+from .options import Datatable
 from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
         filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
         get_field_definition)
@@ -32,6 +33,124 @@ log = logging.getLogger(__name__)
 CAN_UPDATE_FIELDS = get_version().split('.') >= ['1', '5']
 
 class DatatableMixin(MultipleObjectMixin):
+    """
+    Adds a JSON AJAX response mechanism that can be used by the datatables.js code to load
+    server-side records.
+    """
+
+    datatable_class = None
+    context_datatable_name = 'datatable'
+
+    # Configuration getters
+    def get_datatable(self):
+        """ Gathers and returns applicable object for datatable processing """
+        datatable_class = self.get_datatable_class()
+        if datatable_class is None:
+            datatable_class = Datatable
+        return datatable_class(**self.get_datatable_kwargs())
+
+    def get_datatable_class(self):
+        return self.datatable_class
+
+    def get_datatable_kwargs(self):
+        kwargs = {
+            'object_list': self.get_queryset(),
+            'view': self,
+            'model': self.model,  # Potentially ``None``
+        }
+
+        # This is provided by default, but if the view is instantiated outside of the request cycle
+        # (such as for the purposes of embedding that view's datatable elsewhere), the request may
+        # not be required, so the user may not have a compelling reason to go through the trouble of
+        # putting it on self.
+        if hasattr(self, 'request'):
+            kwargs['url'] = self.request.path
+            kwargs['query_config'] = self.request.GET
+        else:
+            kwargs['query_config'] = {}
+
+        settings = ('columns', 'ordering', 'start_offset', 'page_length', 'search', 'search_fields',
+                    'unsortable_columns', 'hidden_columns', 'structure_template',
+                    'result_counter_id')
+        for k in settings:
+            if hasattr(self, k):
+                kwargs[k] = getattr(self, k)
+        return kwargs
+
+    # AJAX Response handler
+    def get(self, request, *args, **kwargs):
+        """
+        Detects AJAX access and returns appropriate serialized data.  Normal access to the view is
+        unmodified.
+
+        """
+
+        if request.is_ajax() or request.GET.get('ajax') == 'true':
+            return self.get_ajax(request, *args, **kwargs)
+        return super(DatatableMixin, self).get(request, *args, **kwargs)
+
+    def get_ajax(self, request, *args, **kwargs):
+        """
+        Called in place of normal ``get()`` when accessed via AJAX.
+
+        """
+
+        datatable = self.get_datatable()
+        response_data = self.get_json_response_object(datatable)
+        response = HttpResponse(self.serialize_to_json(response_data),
+                                content_type="application/json")
+
+        return response
+
+    def get_json_response_object(self, datatable):
+        """
+        Returns the JSON-compatible dictionary that will be serialized for an AJAX response.
+
+        The value names are in the form "s~" for strings, "i~" for integers, and "a~" for arrays,
+        if you're unfamiliar with the old C-style jargon used in dataTables.js.  "aa~" means
+        "array of arrays".  In some instances, the author uses "ao~" for "array of objects", an
+        object being a javascript dictionary.
+        """
+
+        datatable.populate_records()
+
+        response_data = {
+            'sEcho': self.request.GET.get('sEcho', None),
+            'iTotalRecords': datatable.total_initial_record_count,
+            'iTotalDisplayRecords': datatable.unpaged_record_count,
+            'aaData': [dict(record, **{
+                'DT_RowId': record['pk'],
+                'DT_RowData': record['_extra_data'],
+            }) for record in datatable.get_records()],
+        }
+        return response_data
+
+    def serialize_to_json(self, response_data):
+        """ Returns the JSON string for the compiled data object. """
+
+        indent = None
+        if settings.DEBUG:
+            indent = 4
+
+        return json.dumps(response_data, indent=indent)
+
+    # Extra getters
+    def get_datatable_context_name(self):
+        return self.context_datatable_name
+
+    def get_context_data(self, **kwargs):
+        context = super(DatatableMixin, self).get_context_data(**kwargs)
+
+        context[self.get_datatable_context_name()] = self.get_datatable()
+
+        return context
+
+
+class DatatableView(DatatableMixin, ListView):
+    pass
+
+
+class LegacyDatatableMixin(MultipleObjectMixin):
     """
     Converts a view into an AJAX interface for obtaining records.
 
@@ -57,7 +176,7 @@ class DatatableMixin(MultipleObjectMixin):
 
         if request.is_ajax() or request.GET.get('ajax') == 'true':
             return self.get_ajax(request, *args, **kwargs)
-        return super(DatatableMixin, self).get(request, *args, **kwargs)
+        return super(LegacyDatatableMixin, self).get(request, *args, **kwargs)
 
     def get_object_list(self):
         """ Gets the core queryset, but applies the datatable options to it. """
@@ -287,7 +406,7 @@ class DatatableMixin(MultipleObjectMixin):
         return get_datatable_structure(self.request.path, options, model=self.model)
 
     def get_context_data(self, **kwargs):
-        context = super(DatatableMixin, self).get_context_data(**kwargs)
+        context = super(LegacyDatatableMixin, self).get_context_data(**kwargs)
 
         context[self.get_datatable_context_name()] = self.get_datatable()
 
@@ -521,6 +640,10 @@ class DatatableMixin(MultipleObjectMixin):
         return value, value
 
 
+class LegacyDatatableView(LegacyDatatableMixin, ListView):
+    pass
+
+
 class XEditableMixin(object):
     xeditable_form_class = XEditableUpdateForm
 
@@ -630,10 +753,6 @@ class XEditableMixin(object):
         else:
             names = ['value', 'text']
         return [dict(zip(names, choice)) for choice in field.choices]
-
-
-class DatatableView(DatatableMixin, ListView):
-    pass
 
 
 class XEditableDatatableView(XEditableMixin, DatatableView):

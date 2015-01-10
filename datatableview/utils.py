@@ -1,4 +1,5 @@
 from collections import namedtuple
+import operator
 try:
     from functools import reduce
 except ImportError:
@@ -8,16 +9,19 @@ try:
 except ImportError:
     from UserDict import UserDict
 
+from django import get_version
 from django.db import models
+from django.db.models import Manager, Q
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.forms.util import flatatt
-
+from django.utils.text import smart_split
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
     from .compat import python_2_unicode_compatible
 
+import dateutil.parser
 import six
 
 # Sane boundary constants
@@ -169,6 +173,273 @@ def get_field_definition(field_definition):
     return FieldDefinitionTuple(*field)
 
 
+def normalize_config(config, query_config, model=None):
+    # Search
+    config['search'] = query_config.get(OPTION_NAME_MAP['search'], '').strip()
+
+    # Page start offset
+    try:
+        start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], DEFAULT_OPTIONS['start_offset'])
+        start_offset = int(start_offset)
+    except ValueError:
+        start_offset = DEFAULT_OPTIONS['start_offset']
+    else:
+        if start_offset < 0:
+            start_offset = 0
+    config['start_offset'] = start_offset
+
+    # Page length
+    try:
+        page_length = query_config.get(OPTION_NAME_MAP['page_length'], DEFAULT_OPTIONS['page_length'])
+        page_length = int(page_length)
+    except ValueError:
+        page_length = DEFAULT_OPTIONS['page_length']
+    else:
+        if page_length == -1:  # datatable's way of asking for all items, no pagination
+            pass
+        elif page_length < MINIMUM_PAGE_LENGTH:
+            page_length = MINIMUM_PAGE_LENGTH
+    config['page_length'] = page_length
+
+    # Ordering
+    # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
+    # column indices to check the values of sSortDir_X and bSortable_X
+    default_ordering = config.get('ordering')
+    config['ordering'] = []
+    try:
+        num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
+    except ValueError:
+        num_sorting_columns = 0
+
+    # Default sorting from view or model definition
+    if not num_sorting_columns:
+        config['ordering'] = default_ordering
+    else:
+        for sort_queue_i in range(num_sorting_columns):
+            try:
+                column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+            except ValueError:
+                continue
+            else:
+                # Reject out-of-range sort requests
+                if column_index >= len(config['columns']):
+                    continue
+
+                column = config['columns'][column_index]
+                column = get_field_definition(column)
+                is_local_field = False
+                if column.fields:
+                    base_field_name = column.fields[0].split('__')[0]
+                    if base_field_name in model._meta.get_all_field_names():
+                        is_local_field = True
+
+                if not column.fields or len(column.fields) > 1 or not is_local_field:
+                    field_name = '!{0}'.format(column_index)
+
+                if is_local_field:
+                    name = column.fields[0]
+                    field_name = name
+                else:
+                    name = column.pretty_name
+
+                # Reject requests for unsortable columns
+                if config['unsortable_columns'] and name in config['unsortable_columns']:
+                    continue
+
+                # Get the client's requested sort direction
+                sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+
+                sort_modifier = None
+                if sort_direction == 'asc':
+                    sort_modifier = ''
+                elif sort_direction == 'desc':
+                    sort_modifier = '-'
+                else:
+                    continue
+
+                config['ordering'].append('%s%s' % (sort_modifier, field_name))
+    if not config['ordering'] and model:
+        config['ordering'] = model._meta.ordering
+
+    return config
+
+def apply_options(object_list, spec):
+    """
+    Interprets the datatable options.
+
+    Options requiring manual massaging of the queryset are handled here.  The output of this
+    method should be treated as a list, since complex options might convert it out of the
+    original queryset form.
+
+    """
+
+    config = spec.config
+
+    # These will hold residue queries that cannot be handled in at the database level.  Anything
+    # in these variables by the end will be handled manually (read: less efficiently)
+    sort_fields = []
+    searches = []
+
+    # This count is for the benefit of the frontend datatables.js
+    total_initial_record_count = len(object_list)
+
+    if config['ordering']:
+        db_fields, sort_fields = split_real_fields(spec.model, config['ordering'])
+        object_list = object_list.order_by(*db_fields)
+
+    if config['search']:
+        db_fields, searches = filter_real_fields(spec.model, config['columns'],
+                                                 key=get_first_orm_bit)
+        db_fields.extend(config['search_fields'])
+
+        queries = []  # Queries generated to search all fields for all terms
+        search_terms = map(lambda q: q.strip("'\" "), smart_split(config['search']))
+
+        for term in search_terms:
+            term_queries = []  # Queries generated to search all fields for this term
+            # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
+            for column in db_fields:
+                column = get_field_definition(column)
+                for component_name in column.fields:
+                    field_queries = []  # Queries generated to search this database field for the search term
+
+                    field = resolve_orm_path(spec.model, component_name)
+                    if isinstance(field, tuple(FIELD_TYPES['text'])):
+                        field_queries = [{component_name + '__icontains': term}]
+                    elif isinstance(field, tuple(FIELD_TYPES['date'])):
+                        try:
+                            date_obj = dateutil.parser.parse(term)
+                        except ValueError:
+                            # This exception is theoretical, but it doesn't seem to raise.
+                            pass
+                        except TypeError:
+                            # Failed conversions can lead to the parser adding ints to None.
+                            pass
+                        else:
+                            field_queries.append({component_name: date_obj})
+
+                        # Add queries for more granular date field lookups
+                        try:
+                            numerical_value = int(term)
+                        except ValueError:
+                            pass
+                        else:
+                            if 0 < numerical_value < 3000:
+                                field_queries.append({component_name + '__year': numerical_value})
+                            if 0 < numerical_value <= 12:
+                                field_queries.append({component_name + '__month': numerical_value})
+                            if 0 < numerical_value <= 31:
+                                field_queries.append({component_name + '__day': numerical_value})
+                    elif isinstance(field, tuple(FIELD_TYPES['boolean'])):
+                        if term.lower() in ('true', 'yes'):
+                            term = True
+                        elif term.lower() in ('false', 'no'):
+                            term = False
+                        else:
+                            continue
+
+                        field_queries = [{component_name: term}]
+                    elif isinstance(field, tuple(FIELD_TYPES['integer'])):
+                        try:
+                            field_queries = [{component_name: int(term)}]
+                        except ValueError:
+                            pass
+                    elif isinstance(field, tuple(FIELD_TYPES['float'])):
+                        try:
+                            field_queries = [{component_name: float(term)}]
+                        except ValueError:
+                            pass
+                    elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
+                        pass
+                    else:
+                        raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
+
+                    # Append each field inspection for this term
+                    term_queries.extend(map(lambda q: Q(**q), field_queries))
+            # Append the logical OR of all field inspections for this term
+            if len(term_queries):
+                queries.append(reduce(operator.or_, term_queries))
+        # Apply the logical AND of all term inspections
+        if len(queries):
+            object_list = object_list.filter(reduce(operator.and_, queries))
+
+    # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
+    if not sort_fields and not searches:
+        # We can shortcut and speed up the process if all operations are database-backed.
+        object_list = object_list
+        if config['search']:
+            spec.unpaged_record_count = object_list.count()
+        else:
+            spec.unpaged_record_count = total_initial_record_count
+    else:
+        object_list = ObjectListResult(object_list)
+
+        # # Manual searches
+        # # This is broken until it searches all items in object_list previous to the database
+        # # sort. That represents a runtime load that hits every row in code, rather than in the
+        # # database. If enabled, this would cripple performance on large datasets.
+        # if config['i_walk_the_dangerous_line_between_genius_and_insanity']:
+        #     length = len(object_list)
+        #     for i, obj in enumerate(reversed(object_list)):
+        #         keep = False
+        #         for column_info in searches:
+        #             column_index = config['columns'].index(column_info)
+        #             rich_data, plain_data = spec.get_column_data(column_index, column_info, obj)
+        #             for term in search_terms:
+        #                 if term.lower() in plain_data.lower():
+        #                     keep = True
+        #                     break
+        #             if keep:
+        #                 break
+        #
+        #         if not keep:
+        #             removed = object_list.pop(length - 1 - i)
+        #             # print column_info
+        #             # print data
+        #             # print '===='
+
+        # Sort the results manually for whatever remaining sort config are left over
+        def data_getter_orm(field_name):
+            def key(obj):
+                try:
+                    return reduce(getattr, [obj] + field_name.split('__'))
+                except (AttributeError, ObjectDoesNotExist):
+                    return None
+            return key
+
+        def data_getter_custom(i):
+            def key(obj):
+                rich_value, plain_value = spec.get_column_data(i, config['columns'][i], obj)
+                return plain_value
+            return key
+
+        # Sort the list using the manual sort fields, back-to-front.  `sort` is a stable
+        # operation, meaning that multiple passes can be made on the list using different
+        # criteria.  The only catch is that the passes must be made in reverse order so that
+        # the "first" sort field with the most priority ends up getting applied last.
+        for sort_field in sort_fields[::-1]:
+            if sort_field.startswith('-'):
+                reverse = True
+                sort_field = sort_field[1:]
+            else:
+                reverse = False
+
+            if sort_field.startswith('!'):
+                key_function = data_getter_custom
+                sort_field = int(sort_field[1:])
+            else:
+                key_function = data_getter_orm
+
+            try:
+                object_list.sort(key=key_function(sort_field), reverse=reverse)
+            except TypeError as err:
+                log.error("Unable to sort on {0} - {1}".format(sort_field, err))
+
+        spec.unpaged_record_count = len(object_list)
+
+    spec.total_initial_record_count = total_initial_record_count
+    return object_list
+
 @python_2_unicode_compatible
 class DatatableStructure(object):
     """
@@ -289,95 +560,7 @@ class DatatableOptions(UserDict):
 
     def _normalize_options(self, query, options):
         """ Validates incoming options in the request query parameters. """
-
-        # Search
-        options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
-
-        # Page start offset
-        try:
-            start_offset = query.get(OPTION_NAME_MAP['start_offset'], DEFAULT_OPTIONS['start_offset'])
-            start_offset = int(start_offset)
-        except ValueError:
-            start_offset = DEFAULT_OPTIONS['start_offset']
-        else:
-            if start_offset < 0:
-                start_offset = 0
-        options['start_offset'] = start_offset
-
-        # Page length
-        try:
-            page_length = query.get(OPTION_NAME_MAP['page_length'], DEFAULT_OPTIONS['page_length'])
-            page_length = int(page_length)
-        except ValueError:
-            page_length = DEFAULT_OPTIONS['page_length']
-        else:
-            if page_length == -1:  # datatable's way of asking for all items, no pagination
-                pass
-            elif page_length < MINIMUM_PAGE_LENGTH:
-                page_length = MINIMUM_PAGE_LENGTH
-        options['page_length'] = page_length
-
-        # Ordering
-        # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
-        # column indices to check the values of sSortDir_X and bSortable_X
-        default_ordering = options.get('ordering')
-        options['ordering'] = []
-        try:
-            num_sorting_columns = int(query.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
-        except ValueError:
-            num_sorting_columns = 0
-
-        # Default sorting from view or model definition
-        if not num_sorting_columns:
-            options['ordering'] = default_ordering
-        else:
-            for sort_queue_i in range(num_sorting_columns):
-                try:
-                    column_index = int(query.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
-                except ValueError:
-                    continue
-                else:
-                    # Reject out-of-range sort requests
-                    if column_index >= len(options['columns']):
-                        continue
-
-                    column = options['columns'][column_index]
-                    column = get_field_definition(column)
-                    is_local_field = False
-                    if column.fields:
-                        base_field_name = column.fields[0].split('__')[0]
-                        if base_field_name in self._model._meta.get_all_field_names():
-                            is_local_field = True
-
-                    if not column.fields or len(column.fields) > 1 or not is_local_field:
-                        field_name = '!{0}'.format(column_index)
-
-                    if is_local_field:
-                        name = column.fields[0]
-                        field_name = name
-                    else:
-                        name = column.pretty_name
-
-                    # Reject requests for unsortable columns
-                    if name in options['unsortable_columns']:
-                        continue
-
-                    # Get the client's requested sort direction
-                    sort_direction = query.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
-
-                    sort_modifier = None
-                    if sort_direction == 'asc':
-                        sort_modifier = ''
-                    elif sort_direction == 'desc':
-                        sort_modifier = '-'
-                    else:
-                        continue
-
-                    options['ordering'].append('%s%s' % (sort_modifier, field_name))
-        if not options['ordering'] and self._model:
-            options['ordering'] = self._model._meta.ordering
-
-        return options
+        return normalize_config(options, query, model=self._model)
 
     def get_column_index(self, name):
         if name.startswith('!'):
