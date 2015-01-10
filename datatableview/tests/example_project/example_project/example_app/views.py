@@ -115,7 +115,6 @@ class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
     """
 
     model = Entry
-    datatable_options = {}
 
     implementation = u"""
     class ZeroConfigurationDatatableView(DatatableView):
