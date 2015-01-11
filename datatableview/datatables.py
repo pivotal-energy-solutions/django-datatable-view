@@ -40,10 +40,12 @@ class DatatableMetaclass(type):
 class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
     options_class = DatatableOptions
 
-    def __init__(self, object_list, url, view=None, model=None, query_config=None, **kwargs):
+    def __init__(self, object_list, url, view=None, callback_target=None, model=None,
+                 query_config=None, **kwargs):
         self.object_list = object_list
         self.url = url
         self.view = view
+        self.fallback_callback_target = callback_target
         self.model = self._meta.model or model
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
@@ -247,6 +249,15 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
         f = getattr(self, 'get_column_%d_data' % i, None)
         if f:
             return True, f
+
+        if self.fallback_callback_target:
+            f = getattr(self.fallback_callback_target, 'get_column_%s_data' % mangled_name, None)
+            if f:
+                return True, f
+
+            f = getattr(self.fallback_callback_target, 'get_column_%d_data' % i, None)
+            if f:
+                return True, f
 
         return False, self._get_column_data_default
 
