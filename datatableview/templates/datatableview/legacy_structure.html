@@ -1,0 +1,11 @@
+<table class="display datatable" data-source-url="{{ url }}"
+       data-result-counter-id="{{ result_counter_id }}"
+       data-page-length="{{ page_length }}">
+    <thead>
+        <tr>
+            {% for name, attributes in column_info %}
+            <th data-name="{{ name|slugify }}"{{ attributes|safe }}>{{ name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table>

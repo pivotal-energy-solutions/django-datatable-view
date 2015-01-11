@@ -4,41 +4,16 @@ try:
     from functools import reduce
 except ImportError:
     pass
-try:
-    from collections import UserDict
-except ImportError:
-    from UserDict import UserDict
 
-from django import get_version
 from django.db import models
-from django.db.models import Manager, Q
+from django.db.models import Q
 from django.db.models.fields import FieldDoesNotExist
-from django.template.loader import render_to_string
-from django.forms.util import flatatt
 from django.utils.text import smart_split
-try:
-    from django.utils.encoding import python_2_unicode_compatible
-except ImportError:
-    from .compat import python_2_unicode_compatible
 
 import dateutil.parser
-import six
 
-# Sane boundary constants
-MINIMUM_PAGE_LENGTH = 5
-
-DEFAULT_OPTIONS = {
-    'columns': [],  # table headers
-    'ordering': [],  # override to Model._meta.ordering
-    'start_offset': 0,  # results to skip ahead
-    'page_length': 25,  # length of a single result page
-    'search': '',  # client search string
-    'search_fields': [],  # extra ORM paths to search; not displayed
-    'unsortable_columns': [],  # table headers not allowed to be sorted
-    'hidden_columns': [],  # table headers to be generated, but hidden by the client
-    'structure_template': "datatableview/default_structure.html",
-    'result_counter_id': 'id_count',  # HTML element ID to display the total results
-}
+MINIMUM_PAGE_LENGTH = 1
+DEFAULT_PAGE_LENGTH = 25
 
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
@@ -96,10 +71,6 @@ XEDITABLE_FIELD_TYPES = {
 }
 
 # Private utilities
-_javascript_boolean = {
-    True: 'true',
-    False: 'false',
-}
 FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
@@ -190,10 +161,11 @@ def normalize_config(config, query_config, model=None):
 
     # Page length
     try:
-        page_length = query_config.get(OPTION_NAME_MAP['page_length'], config['page_length'])
+        page_length = query_config.get(OPTION_NAME_MAP['page_length'],
+                                       config.get('page_length', DEFAULT_PAGE_LENGTH))
         page_length = int(page_length)
     except ValueError:
-        page_length = config['page_length']
+        page_length = config.get('page_length', DEFAULT_PAGE_LENGTH)
     else:
         if page_length == -1:  # datatable's way of asking for all items, no pagination
             pass
@@ -440,154 +412,6 @@ def apply_options(object_list, spec):
     spec.total_initial_record_count = total_initial_record_count
     return object_list
 
-@python_2_unicode_compatible
-class DatatableStructure(object):
-    """
-    A class designed to be echoed directly to into template HTML to represent a skeleton table
-    structure that datatables.js can use.
-
-    """
-
-    def __init__(self, ajax_url, options, model=None):
-        self.url = ajax_url
-        self.options = options
-        self.model = model
-
-        self.ordering = {}
-        if options['ordering']:
-            for i, name in enumerate(options['ordering']):
-                plain_name = name.lstrip('-+')
-                index = options.get_column_index(plain_name)
-                if index == -1:
-                    continue
-                sort_direction = 'desc' if name[0] == '-' else 'asc'
-                self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
-
-    def __str__(self):
-        return render_to_string(self.options['structure_template'], {
-            'url': self.url,
-            'result_counter_id': self.options['result_counter_id'],
-            'column_info': self.get_column_info(),
-        })
-
-    def __iter__(self):
-        """
-        Yields the column information suitable for rendering HTML.
-
-        Each time is returned as a 2-tuple in the form ("Column Name", "data-attribute='asdf'"),
-
-        """
-
-        for column_info in self.get_column_info():
-            yield column_info
-
-    def get_column_info(self):
-        """
-        Returns an iterable of 2-tuples in the form
-
-            ("Pretty name", ' data-bSortable="true"',)
-
-        """
-
-        column_info = []
-        if self.model:
-            model_fields = self.model._meta.get_all_field_names()
-        else:
-            model_fields = []
-
-        for column in self.options['columns']:
-            column = get_field_definition(column)
-            pretty_name = column.pretty_name
-            column_name = column.pretty_name
-            if column.fields and column.fields[0] in model_fields:
-                ordering_name = column.fields[0]
-                if not pretty_name:
-                    field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
-                    pretty_name = field.verbose_name
-            else:
-                ordering_name = pretty_name
-
-            attributes = self.get_column_attributes(ordering_name)
-            column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
-
-        return column_info
-
-    def get_column_attributes(self, name):
-        attributes = {
-            'data-sortable': _javascript_boolean[name not in self.options['unsortable_columns']],
-            'data-visible': _javascript_boolean[name not in self.options['hidden_columns']],
-        }
-
-        if name in self.ordering:
-            attributes['data-sorting'] = ','.join(map(six.text_type, self.ordering[name]))
-
-        return attributes
-
-
-class DatatableOptions(UserDict):
-    """ Normalizes all options to values that are guaranteed safe. """
-
-    def __init__(self, model, query_parameters, *args, **kwargs):
-        self._model = model
-
-        # Core options, not modifiable by client updates
-        if 'columns' not in kwargs:
-            model_fields = model._meta.local_fields
-            kwargs['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
-
-        if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
-            kwargs['hidden_columns'] = []
-
-        if 'search_fields' not in kwargs or kwargs['search_fields'] is None:
-            kwargs['search_fields'] = []
-
-        if 'unsortable_columns' not in kwargs or kwargs['unsortable_columns'] is None:
-            kwargs['unsortable_columns'] = []
-
-        # Absorb query GET params
-        kwargs = self._normalize_options(query_parameters, kwargs)
-
-        UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
-
-        self._flat_column_names = []
-        for column in self['columns']:
-            column = get_field_definition(column)
-            flat_name = column.pretty_name
-            if column.fields:
-                flat_name = column.fields[0]
-            self._flat_column_names.append(flat_name)
-
-    def _normalize_options(self, query, options):
-        """ Validates incoming options in the request query parameters. """
-        return normalize_config(options, query, model=self._model)
-
-    def get_column_index(self, name):
-        if name.startswith('!'):
-            return int(name[1:])
-        try:
-            return self._flat_column_names.index(name)
-        except ValueError:
-            return -1
-
-
-class ObjectListResult(list):
-    _dtv_total_initial_record_count = None
-    _dtv_unpaged_total = None
-
-
-def get_datatable_structure(ajax_url, options, model=None):
-    """
-    Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
-
-    """
-
-    if not isinstance(options, DatatableOptions):
-        options = DatatableOptions(model, {}, **options)
-
-    return DatatableStructure(ajax_url, options, model=model)
-
-
 def split_real_fields(model, field_list):
     """
     Splits a list of field names on the first name that isn't in the model's concrete fields.  This
@@ -643,3 +467,14 @@ def filter_real_fields(model, fields, key=None):
             virtual_fields.append(field)
     return db_fields, virtual_fields
 
+
+# Legacy
+def get_datatable_structure(ajax_url, options, model=None):
+    """
+    Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.
+    """
+    from .views.legacy import DatatableOptions, DatatableStructure
+    if not isinstance(options, DatatableOptions):
+        options = DatatableOptions(model, {}, **options)
+
+    return DatatableStructure(ajax_url, options, model=model)
