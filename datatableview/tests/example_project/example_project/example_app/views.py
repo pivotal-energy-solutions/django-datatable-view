@@ -53,6 +53,10 @@ class IndexView(TemplateView):
         return context
 
 
+class MigrationGuideView(TemplateView):
+    template_name = "migration_guide.html"
+
+
 class JavascriptInitializationView(TemplateView):
     template_name = "javascript_initialization.html"
 

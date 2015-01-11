@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Migration checklist for moving up to release 0.9</h2>
+
+    <p>
+        The jump from the 0.8.x series to 0.9 is covered in sections below.
+    </p>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="list-group">
+                <a class="list-group-item" href="#configuration-style">Update configuration style</a>
+                <a class="list-group-item" href="#default-structure-template">Double check any structure templates</a>
+                <a class="list-group-item" href="#complex-columns">Update complex column definitions</a>
+                <a class="list-group-item" href="#values-datatable">Experiment with the new <code>ValuesDatatable</code></a>
+            </div>
+        </div>
+    </div>
+
+    <br><br>
+    <h3>
+        <a id="configuration-style" name="configuration-style" href="#configuration-style">
+            Update configuration style
+        </a>
+    </h3>
+    <h6>See <a href="{% url "configure-datatable-object" %}">Datatable object and <code>Meta</code></a> for examples.</h6>
+    <p>
+        The preferred way to configure columns for a view is now to use the
+        <code>datatableview.Datatable</code> class.  It has similarities to the Django
+        <code>ModelForm</code>: the class uses an inner <code>Meta</code> class to specify all of
+        the options we used to specify in your view's <code>View.datatable_options</code> dict.
+    </p>
+    <p>
+        You're essentially looking to just unpack the keys and values from your existing
+        <code>datatable_options</code> dict and set those as attributes on a
+        <code>Datatable.Meta</code>.  Then just assign this Datatable subclass on your view:
+    </p>
+    <pre class="brush: python">
+class MyDatatable(Datatable):
+    class Meta:
+        columns = [ ... ]
+        search_fields = [ ... ]
+        # etc
+
+class MyDatatableView(DatatableView):
+    datatable_class = MyDatatable
+    </pre>
+    <p>
+        An alternate abbreviated style is available by setting these attributes directly on the
+        view, <a href="{% url "configure-inline" %}">shown in more detail here</a>, but if you're
+        declaring anything fancier than simple model fields or methods as columns (typically
+        anything that would have required the 2-tuple or 3-tuple column syntax), please use the new
+        <code>Datatable</code> object strategy.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="default-structure-template" name="default-structure-template" href="#default-structure-template">
+            Double check your default structure template
+        </a>
+    </h3>
+    <h6>See <a href="{% url "customized-template" %}">Custom render template</a> for examples.</h6>
+    <p>
+        If you haven't gone out of your way to override the default structure template or create
+        your own template, this shouldn't apply to you.
+    </p>
+    <p>
+        The 0.9 default structure template at <code>datatableview/default_structure.html</code> has
+        been modified to include a reference to a
+        <code>{% templatetag openvariable %} config {% templatetag closevariable %}</code> variable,
+        which holds all of the configuration values for the table.  The render context for this
+        template previously held a few select loose values for putting <code>data-*</code>
+        attributes on the main <code>&lt;table&gt;</code> tag, but the template should now read
+        from the following values (note the leading <code>config.</code>:
+    </p>
+    <ul>
+        <li><code>{% templatetag openvariable %} config.result_counter_id {% templatetag closevariable %}</code></li>
+        <li><code>{% templatetag openvariable %} config.page_length {% templatetag closevariable %}</code></li>
+    </ul>
+
+
+    <br><br>
+    <h3>
+        <a id="complex-columns" name="complex-columns" href="#complex-columns">
+            Update complex column definitions
+        </a>
+    </h3>
+    <h6>See <a href="#FIXME">FILL IN LATER</a> for examples.</h6>
+
+
+    <br><br>
+    <h3>
+        <a id="values-datatable" name="values-datatable" href="#values-datatable">
+            Experiment with the new <code>ValuesDatatable</code>
+        </a>
+    </h3>
+    <h6>See <a href="#FIXME">FILL IN LATER</a> for examples.</h6>
+{% endblock content %}
