@@ -7,8 +7,7 @@
 {% endblock static %}
 
 {% block content %}
-    <h2>Automatic initialization</h2>
-    
+    <h2>Initialization</h2>
     <p>
         The easiest way to get going is to include the <code>datatableview.js</code> (or
         <code>datatableview.min.js</code>) file bundled with the app:
@@ -18,21 +17,9 @@
     </pre>
 
     <p>
-        This file introduces a global ``datatableview`` object that wraps the utilities and
-        initialization function.  A jQuery <code>document.ready</code> handler is also provided,
-        which by default will initialize any <code>.datatable</code> elements on the page. Tables
-        rendered into a template using the tools provided by this app will automatically meet this
-        criteria.
+        This file introduces a global ``datatableview`` object that wraps the provided
+        initialization function and internal and public utilities.
     </p>
-
-    <p>
-        To disable automatic initialization, you can include the script, and then set a property
-        on the global object:
-    </p>
-
-    <pre class="brush: javascript">
-datatableview.auto_initialize = false;
-    </pre>
 
     <p>
         To easily initialize datatables in Javascript, you can select your elements and send them
@@ -44,21 +31,48 @@ $(function(){
     datatableview.initialize($('.mytable'));
     
     // Or, if there are common options that should be given to all select elements,
-    // you can specify them now.  data-* API attributes will override these options.
+    // you can specify them now.  data-* API attributes on the table columns will potentially
+    // override the individual options.
     var common_options = {};
     datatableview.initialize($('.mytable'), common_options);
 });
     </pre>
 
+    <h2>Automatic no-configuration Initialization</h2>
     <p>
-        Global <code>dataTables.js</code> default options can be specified normally, but if the page
-        requires specific options for its datatable(s) and you are using automatic initialization
-        (i.e., you didn't have an opportunity to set special options in advance), you can specify a
-        global function hook that will be given the <code>options</code> object that will be sent
-        to the dataTable constructor. Including this hook somewhere in the global namespace will
-        ensure that you have control over custom options:
+        Before version 0.9, automatic initialzation was on by default.  Although it now defaults to
+        off, you can enable it by changing the setting on the global <code>datatableview</code>
+        javascript variable:
     </p>
-    
+
+    <pre class="brush: javascript">
+datatableview.auto_initialize = true;
+    </pre>
+
+    <p>
+        You can do this on a per-page basis, or make this part of your site's global javascript
+        configuration.  Make sure you set the flag before the <code>jQuery(document).ready()</code>
+        handler is finished.
+    </p>
+
+    <p>
+        Automatic initialization doesn't allow for easy per-table javascript configuration.  To work
+        around this quirk, you can use the <strong>now-deprecated</strong> global javascript
+        function hook <code>confirm_datatable_options(options, datatable)</code>, which is run
+        against every table that initialized (the value of
+        <code>datatableview.auto_initialization</code> doesn't matter!) in order to provide an
+        opportunity to modify the options about to be sent to the underlying call to the real
+        <code>$(table).dataTable(options)</code>.
+    </p>
+
+    <p>
+        Make sure you return the options object in the global hook!
+    </p>
+
+    <p>
+        An example of how to declare this global hook follows:
+    </p>
+
     <pre class="brush: javascript">
 function confirm_datatable_options(options, datatable) {
     // "datatable" variable is the jQuery object, not the oTable, since it

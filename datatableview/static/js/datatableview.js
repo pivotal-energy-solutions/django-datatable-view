@@ -1,7 +1,7 @@
 /* For datatable view */
 
 var datatableview = {
-    auto_initialize: true,
+    auto_initialize: false,
     defaults: {
         "bServerSide": true
     },

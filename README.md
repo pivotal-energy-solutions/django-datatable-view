@@ -30,7 +30,7 @@ Dependencies:
 * Customizable table templates
 * Easy Bootstrap integration
 * Allows all normal dataTables.js and x-editable Javascript options
-* Javascript global object to do automatic or late initialization for tables
+* Optional automatic javascript initialization for tables
 * Library of common column markup options
 * Full test suite
 
@@ -47,7 +47,7 @@ $ mkvirtualenv datatableview
 (datatableview)$ datatableview/tests/example_project/manage.py runserver
 ```
 
-The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware but the ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
+The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware except for ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
 
 A public online version of the example project can be found here:
 
