@@ -179,10 +179,10 @@ def normalize_config(config, query_config, model=None):
 
     # Page start offset
     try:
-        start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], DEFAULT_OPTIONS['start_offset'])
+        start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], 0)
         start_offset = int(start_offset)
     except ValueError:
-        start_offset = DEFAULT_OPTIONS['start_offset']
+        start_offset = 0
     else:
         if start_offset < 0:
             start_offset = 0
