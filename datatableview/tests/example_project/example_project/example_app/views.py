@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
-from datatableview.views import LegacyDatatableView, DatatableView, XEditableDatatableView
+from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
 from datatableview.options import Datatable
 from datatableview.utils import get_datatable_structure
 from datatableview import helpers
@@ -948,44 +948,58 @@ class CSSStylingDatatableView(DemoMixin, DatatableView):
     """
 
 
-class MultipleTablesDatatableView(DemoMixin, DatatableView):
+class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     """
-    ``DatatableView`` makes the initial assumption that it will power just one queryset.  You can
-    implement ``get_queryset()``, ``get_datatable_options()``, and ``get_datatable()`` methods that
-    use switching behavior depending on which table is asking for updates. (More on how to flag
-    that fact farther down.)
+    ``MultipleDatatableView`` uses a slightly different configuration mechanism to allow the view to
+    carry on it a dynamic set of Datatable classes that it will send to the context.  The primary
+    feature of this version of the view is that it will dynamically route all AJAX requests to the
+    correct datatable class, even though they are all living on the same URL.
+
+    Another way to accomplish this effect would be to declare separate views and just pull their
+    datatable specifications into the context of the one master view.  (See
+    <a href="/embedded-table/">Embdeeded on another view</a> for an example of that pattern.)
+
+    To get started, instead of declaring a ``datatable_class`` attribute on the view, you will
+    instead declare a ``datatable_classes`` dict.  This is a map of names to classes.  These names
+    will have ``"_datatable"`` added to the end when the datatable objects are added to the template
+    rendering context.  Consequently, you do not need to declare the normal
+    ``context_datatable_name`` setting on the view.
+
+    This version of the view does not behave exactly like a ListView, specifically in the case of
+    referencing the ``get_queryset()`` method you're accustomed to using.  Instead, you will need
+    to declare methods that match each of the names you gave each class, such as
+    ``get_FOO_datatable_queryset()``.
+
+    If you need to modify the kwargs sent into the datatable class initialization, follow the same
+    pattern: define a ``get_FOO_datatable_kwargs(**kwargs)`` method for any specific table that
+    requires deviation from the default kwargs.
 
     WARNING:
-    If more than one model class type might end up getting returned via the ``get_queryset()``
-    method, as is the case in the following scenario, you should avoid setting the class attribute
-    ``model``.  Instead, you can let the standard ``ListView`` mechanics that ``DatatableView`` uses
-    automatically read the model class from the returned queryset from ``get_queryset()``.
+    Declaring a custom kwargs getter like ``get_FOO_datatable_kwargs(**kwargs)`` will require you to
+    manually grab a copy of the default kwargs via a call to
+    ``get_default_datatable_kwargs(**kwargs)``, which is provided for you to use.  Think of this
+    like a call to super().
 
-    See the following examples for how to handle certain scenarios.
-    
-    The principle of the process is that you can override ``get_datatable_options()`` and
-    ``get_datatable()`` to modify the structural objects that get returned by the view based on
-    certain URL kwargs, GET data, etc.  If you examine the implementation code at the bottom of the
-    page, you will see how these two methods have been customized to accept a ``type`` argument.
-    This is used when the context data is originally fetched, so that we can request each table
-    structure object.
+    INFO:
+    ``MultipleDatatableView`` does not support the configuration strategy where you declare options
+    as class attributes on the view.  Having multiple datatables on the view makes this unwieldy.
+    These settings are just kwargs that are sent to the Datatable object anyway, so if you would
+    like to perform view-level manipulation of the settings sent to a Datatable, provide a
+    ``get_FOO_datatable_kwargs(**kwargs)`` method using the instructions just above, and just put
+    the settings in those kwargs to accomplish the same effect.
 
-    Once AJAX calls start happening on the page, each table structure needs to identify itself so
-    that the view can deal with each one separately.  To accomplish this, our ``get_datatable()``
-    implementation adds a GET parameter in the AJAX url for each table to distinguish them.  This
-    parameter is fed back to us during AJAX calls.
+    In order to respond to AJAX queries, the view will modify the ``url`` value of each datatable to
+    append a GET parameter hint in the format ``?datatable=FOO``, where FOO is the datatable name.
+    This will cause queries that come back to the view to carry this hint so that it can
+    transparently respond to the query with the right server-side Datatable object.
 
-    Finally, we can modify the ``get_queryset()`` method on the same principle; depending on the GET
-    flag we've set up, the method should perhaps return customized content.
-
-    Demo #1 in this series of examples is the default code path, where no modifications of any kind
-    are at play.  Demo #2 slices off the ``"Header"`` column from the options of #1.  Demo #3 uses
-    its own separate model and options.  All are identified separately in their AJAX queries by the
-    variable we planted in each table's structure in ``get_context_data()``.
+    Demo #1 in this series of examples is just a standard table with no fanciness added to it.
+    Demo #2 shares the same Datatable options as demo #1, but slices off the ``"Header"`` column in
+    a custom implementation of ``get_demo2_datatable_kwargs()``.  Demo #3 uses a separate Datatable
+    object that targets a completely different model.
     """
 
     # Demo #1 and Demo # 2 will use variations of the same options.
-    # Note that we're not setting the model here as usually.  See the warning above.
     class datatable_class(Datatable):
         class Meta:
             columns = [
@@ -1002,160 +1016,57 @@ class MultipleTablesDatatableView(DemoMixin, DatatableView):
                 'tagline',
             ]
 
-    def get_queryset(self, type=None):
-        """
-        Customized implementation of the queryset getter.  The custom argument ``type`` is managed
-        by us, and is used in the context and GET parameters to control which table we return.
-        """
+    datatable_classes = {
+        'demo1': datatable_class,
+        'demo2': datatable_class,
+        'demo3': blog_datatable_class,
+    }
 
-        if type is None:
-            type = self.request.GET.get('datatable-type', None)
-
-        if type == "demo3":
-            return Blog.objects.all()
+    def get_demo1_datatable_queryset(self):
         return Entry.objects.all()
 
-    def get_datatable_options(self, type=None):
-        """
-        Customized implementation of the options getter.  The custom argument ``type`` is managed
-        by us, and is used in the context and GET parameters to control which table we return.
-        """
+    def get_demo2_datatable_queryset(self):
+        return Entry.objects.all()
 
-        if type is None:
-            type = self.request.GET.get('datatable-type', None)
+    def get_demo3_datatable_queryset(self):
+        return Blog.objects.all()
 
-        options = self.datatable_options
-
-        if type == "demo2":
-            # If modifying the options, be sure make copies of the pieces you are changing, or else
-            # you'll end up changing class-level definitions that are not thread-safe!
-            options = self.datatable_options.copy()
-            options['columns'] = options['columns'][1:]
-        elif type == "demo3":
-            # Return separate options settings
-            options = self.blog_datatable_options
-
-        return options
-
-    def get_datatable(self, type=None):
-        """
-        Customized implementation of the structure getter.  The custom argument ``type`` is managed
-        by us, and is used in the context and GET parameters to control which table we return.
-        """
-        if type is None:
-            type = self.request.GET.get('datatable-type', None)
-
-        if type is not None:
-            datatable_options = self.get_datatable_options(type=type)
-            # Put a marker variable in the AJAX GET request so that the table identity is known
-            ajax_url = self.request.path + "?datatable-type={type}".format(type=type)
-
-        if type == "demo2":
-            datatable = get_datatable_structure(ajax_url, datatable_options, model=Entry)
-        elif type == "demo3":
-            # Change the reference model to Blog, instead of Entry
-            datatable = get_datatable_structure(ajax_url, datatable_options, model=Blog)
-        else:
-            return super(MultipleTablesDatatableView, self).get_datatable()
-
-        return datatable
-        
-
-    def get_context_data(self, **kwargs):
-        context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
-    
-        # Get the other structure objects for the initial context
-        context['modified_columns_datatable'] = self.get_datatable(type="demo2")
-        context['blog_datatable'] = self.get_datatable(type="demo3")
-        return context
+    def get_demo2_datatable_kwargs(self, **kwargs):
+        kwargs = self.get_default_datatable_kwargs(**kwargs)
+        kwargs['columns'] = self.datatable_class._meta.columns[1:]
+        return kwargs
 
     implementation = u"""
-    from .models import Entry, Blog
-    class MultipleTablesDatatableView(DatatableView):
-        # Demo #1 and Demo # 2 will use variations of the same options
-        model = Entry
-        datatable_options = {
-            'columns': [
-                'id',
-                'headline',
-            ],
+    # Demo #1 and Demo #2 will use variations of the same options.
+    class EntryDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline']
+
+    # Demo #3 will use completely separate options.
+    class BlogDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'name', 'tagline']
+
+    class MultipleTablesDatatableView(MultipleDatatableView):
+        datatable_classes = {
+            'demo1': EntryDatatable,
+            'demo2': EntryDatatable,
+            'demo3': BlogDatatable,
         }
 
-        # Demo #3 will use completely separate options
-        blog_datatable_options = {
-            'columns': [
-                'id',
-                'name',
-                'tagline',
-            ],
-        }
+        def get_demo1_datatable_queryset(self):
+            return Entry.objects.all()
 
-        def get_queryset(self, type=None):
-            \"\"\"
-            Customized implementation of the queryset getter.  The custom argument ``type`` is managed
-            by us, and is used in the context and GET parameters to control which table we return.
-            \"\"\"
+        def get_demo2_datatable_queryset(self):
+            return Entry.objects.all()
 
-            if type is None:
-                type = self.request.GET.get('datatable-type', None)
+        def get_demo3_datatable_queryset(self):
+            return Blog.objects.all()
 
-            if type == "demo3":
-                return Blog.objects.all()
-            return super(MultipleTablesDatatableView, self).get_queryset()
-
-        def get_datatable_options(self, type=None):
-            \"\"\"
-            Customized implementation of the options getter.  The custom argument ``type`` is managed
-            by us, and is used in the context and GET parameters to control which table we return.
-            \"\"\"
-
-            if type is None:
-                type = self.request.GET.get('datatable-type', None)
-
-            options = self.datatable_options
-
-            if type == "demo2":
-                # If modifying the options, be sure make copies of the pieces you are changing, or else
-                # you'll end up changing class-level definitions that are not thread-safe!
-                options = self.datatable_options.copy()
-                options['columns'] = options['columns'][1:]
-            elif type == "demo3":
-                # Return separate options settings
-                options = self.blog_datatable_options
-
-            return options
-
-        def get_datatable(self, type=None):
-            \"\"\"
-            Customized implementation of the structure getter.  The custom argument ``type`` is managed
-            by us, and is used in the context and GET parameters to control which table we return.
-            \"\"\"
-            if type is None:
-                type = self.request.GET.get('datatable-type', None)
-
-            if type is not None:
-                datatable_options = self.get_datatable_options(type=type)
-                # Put a marker variable in the AJAX GET request so that the table identity is known
-                ajax_url = self.request.path + "?datatable-type={type}".format(type=type)
-
-            if type == "demo2":
-                datatable = get_datatable_structure(ajax_url, datatable_options, model=Blog)
-            elif type == "demo3":
-                # Change the reference model to Blog, instead of Entry
-                datatable = get_datatable_structure(ajax_url, datatable_options, model=Entry)
-            else:
-                return super(MultipleTablesDatatableView, self).get_datatable()
-
-            return datatable
-        
-
-        def get_context_data(self, **kwargs):
-            context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
-
-            # Get the other structure objects for the initial context
-            context['modified_columns_datatable'] = self.get_datatable(type="demo2")
-            context['blog_datatable'] = self.get_datatable(type="demo3")
-            return context
+        def get_demo2_datatable_kwargs(self, **kwargs):
+            kwargs = self.get_default_datatable_kwargs(**kwargs)
+            kwargs['columns'] = EntryDatatable._meta.columns[1:]
+            return kwargs
     """
 
 
