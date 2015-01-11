@@ -1,0 +1,25 @@
+<h3>
+    <a id="hidden_columns" name="hidden_columns" href="#hidden_columns">
+        <code>hidden_columns</code>
+    </a>
+</h3>
+<h6>Columns from demo: <em>n pingbacks (not shown)</em></h6>
+
+<p>
+    A list of column names that should not be hidden from the frontend.
+</p>
+<p>
+    The use case for this option is that a column might need to be generated and communicated during
+    AJAX requests, but stripped out for that specific page.  This might allow for reusable data
+    sources where the page is modifying what is being seen.  Because new data sources are easy to
+    make, however, we recommend avoiding too much funny business.
+</p>
+<p class="alert alert-warning">
+    The "hidden" data is still going across the wire anyway, and is inspectable by prying eyes.
+    Don't rely on this for sensitive data.
+</p>
+<p>
+    Another use for this feature in dataTables.js is for plugins.  Exporters like the CSV one have
+    access to the "hidden" fields and can export them to a file even if they are not visible on the
+    web page.
+</p>

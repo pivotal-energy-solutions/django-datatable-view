@@ -60,6 +60,11 @@
             <div class="col-md-3">
                 <ul class="nav nav-list sidebar">
                     <li class="nav-list-item"><a href="{% url "index" %}">Main index</a></li>
+                    <li class="divider"></li>
+                    <li class="nav-list-item dropdown-header">Configuration strategies</li>
+                    <li class="nav-list-item"><a href="{% url "configure-datatable-object" %}">Datatable object and <code>Meta</code></a></li>
+                    <li class="nav-list-item"><a href="{% url "configure-inline" %}">Inline on the view</a></li>
+                    <li class="nav-list-item"><a href="{% url "configure-datatable-options" %}">Deprecated</a></li>
                     <li class="nav-list-item"><a href="{% url "column-formats" %}">Valid column formats</a></li>
                     <li class="divider"></li>
                     <li class="nav-list-item dropdown-header">Column configurations</li>
@@ -75,19 +80,15 @@
                     <li class="nav-list-item"><a href="{% url "default-callback-names" %}">Implicit optional callbacks</a></li>
                     <li class="nav-list-item"><a href="{% url "x-editable-columns" %}">x-editable columns</a></li>
                     <li class="nav-list-item"><a href="{% url "helpers-reference" %}"><code>helpers</code> reference</a></li>
-                    <li class="nav-list-item"><a href="{% url "per-request-options" %}">Per-request configuration</a></li>
                     <li class="divider"></li>
-                    <li class="nav-list-item dropdown-header">Other options</li>
-                    <li class="nav-list-item"><a href="{% url "ordering" %}">Default ordering</a></li>
-                    <li class="nav-list-item"><a href="{% url "unsortable-columns" %}">Unsortable columns</a></li>
-                    <li class="nav-list-item"><a href="{% url "hidden-columns" %}">Hidden columns</a></li>
-                    <li class="nav-list-item"><a href="{% url "search-fields" %}">Extra search fields</a></li>
+                    <li class="nav-list-item dropdown-header">Advanced configuration</li>
+                    <li class="nav-list-item"><a href="{% url "per-request-options" %}">Per-request configuration</a></li>
+                    <li class="nav-list-item"><a href="{% url "multiple-tables" %}">Multiple tables on a page</a></li>
+                    <li class="nav-list-item"><a href="{% url "embedded-table" %}">Embedded on another view</a></li>
                     <li class="divider"></li>
                     <li class="nav-list-item dropdown-header">Template rendering</li>
                     <li class="nav-list-item"><a href="{% url "js-init" %}">Javascript initialization</a></li>
                     <li class="nav-list-item"><a href="{% url "customized-template" %}">Custom render template</a></li>
-                    <li class="nav-list-item"><a href="{% url "multiple-tables" %}">Multiple tables on a page</a></li>
-                    <li class="nav-list-item"><a href="{% url "embedded-table" %}">Embedded on another view</a></li>
                     <li class="nav-list-item"><a href="{% url "bootstrap-template" %}">Bootstrap support</a></li>
                     <li class="nav-list-item"><a href="{% url "css-styling" %}">CSS support</a></li>
                 </ul>

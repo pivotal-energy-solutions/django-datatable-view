@@ -11,6 +11,7 @@ from django.template.defaultfilters import timesince
 import datatableview
 from datatableview import Datatable
 from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
+from datatableview.views.legacy import LegacyDatatableView, LegacyConfigurationDatatableView
 from datatableview import helpers
 
 from .models import Entry, Blog
@@ -98,6 +99,123 @@ class DemoMixin(object):
 
         return context
 
+
+# Configuration strategies
+class ConfigureDatatableObject(DemoMixin, DatatableView):
+    """
+    Like the built-in Django forms framework, configuration can be wrapped up into a subclass of
+    ``Datatable``, using class attributes to configure the columns (fields), while an inner ``Meta``
+    class manages the options that aren't the column declarations themselves.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            model = Entry
+            columns = ['id', 'headline', 'pub_date', 'n_comments', 'n_pingbacks']
+            ordering = ['-id']
+            page_length = 5
+            search_fields = ['blog__name']
+            unsortable_columns = ['n_comments']
+            hidden_columns = ['n_pingbacks']
+            structure_template = 'datatableview/default_structure.html'
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            model = Entry
+            columns = ['id', 'headline', 'pub_date', 'n_comments', 'n_pingbacks']
+            ordering = ['-id']
+            page_length = 5
+            search_fields = ['blog__name']
+            unsortable_columns = ['n_comments']
+            hidden_columns = ['n_pingbacks']
+            structure_template = 'datatableview/default_structure.html'
+
+    class ConfigureDatatableObjectDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+class ConfigureInline(DemoMixin, DatatableView):
+    """
+    Someone making a view that requires little configuration might reasonably find it midly
+    cumbersome to declare a full ``Datatable`` class just to specify a single setting.  In the style
+    of the built-in Django generic class-based views, ``DatatableView`` will inspect its own
+    attributes before automatically constructing a plain Datatable object to power the view.
+
+    All of the available settings can be given in this format, and can even be combined with the use
+    of the ``datatable_class`` setting.  Attributes on the view will override the settings from a
+    Datatable instance during instantiation, which makes simple tweaks to generic Datatable objects
+    very easy.
+    """
+    model = Entry
+    columns = ['id', 'headline', 'pub_date']
+
+    implementation = u"""
+    class ConfigureInlineDatatableView(DatatableView):
+        model = Entry
+        columns = ['id', 'headline', 'pub_date']
+
+
+    # Specifying a datatable_class does not harm the configuration, but combines them
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'pub_date']
+    class ConfigureCombinedDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+        columns = ['headline', 'pub_date']
+    """
+
+    
+class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
+    """
+    WARNING:
+    Avoid using this configuration strategy, as it will be removed in the 1.0 release.
+
+    Before version 0.9, the configuration strategy resembled that of the inline style using the
+    view's class attributes, except that all of the available settings were put inside of one
+    dictionary called ``datatable_options``.
+
+    This strategy is still made available for migration purposes by importing and subclassing your
+    view from one of ``LegacyConfigurationDatatableView`` or ``LegacyDatatableView`` from
+    ``datatableview.views.legacy``.
+
+    INFO:
+    Use ``LegacyConfigurationDatatableView`` if all you want is to allow your ``datatable_options``
+    dict to be discovered, but use ``LegacyDatatableView`` if you were hacking the old view up and
+    crying like it was onions.
+
+    ``LegacyDatatableView`` not only uses the legacy configuration style but also preserves the
+    method structure of the old DatatableView. A few private imports were moved from
+    ``datatableview.utils`` into ``datatableview.views.legacy``, but aside from that, method
+    overrides on the old view should work the same on this one.
+    """
+    model = Entry
+    datatable_options = {
+        'columns': ['id', 'headline', 'pub_date'],
+    }
+
+    implementation = u"""
+    # If all you need is old-style configuration:
+    from datatableview.views.legacy import LegacyConfigurationDatatableView
+    class LegacyConfigDatatableView(LegacyConfigurationDatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': ['id', 'headline', 'pub_date'],
+        }
+
+    # If you need an ambulance:
+    from datatableview.views.legacy import LegacyDatatableView
+    class LegacyEverythingDatatableView(LegacyDatatableView):
+        model = Entry
+        datatable_options = {
+            'columns': ['id', 'headline', 'pub_date'],
+        }
+    """
+
+
+# Column configurations
 class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
     """
     If no columns are specified in the view's ``datatable_options`` attribute, ``DatatableView``
@@ -119,7 +237,6 @@ class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
     implementation = u"""
     class ZeroConfigurationDatatableView(DatatableView):
         model = Entry
-        datatable_class = MyDatatable
     """
 
 
@@ -620,6 +737,7 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
 
 
+# Advanced configuration
 class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
     Care must be taken to modify the options object on the View class: because it is defined as a
@@ -663,287 +781,6 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
             columns_copy.append('blog')
             kwargs['columns'] = columns_copy
             return kwargs
-    """
-
-
-class OrderingDatatableView(DemoMixin, DatatableView):
-    """
-    Default ordering is normally controlled by the model's Meta option ``ordering``, which is a list
-    of field names (possibly with a prefix ``"-"`` character to denote reverse order).
-    
-    ``datatable_options["ordering"]`` is the same kind of list, with the exception that it should
-    target virtual and compound fields by their "pretty name", which is the first item in the column
-    definition tuple.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-            ]
-            ordering = ['-id']
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-            ]
-            ordering = ['-id']
-
-    class OrderingDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class UnsortableColumnsDatatableView(DemoMixin, DatatableView):
-    """
-    Columns that should be blocked from sorting (on the frontend and also by the backend) can be
-    enumerated in the ``datatable_options['unsortable_columns']`` key.
-
-    When the table structure is initially rendered onto the page, the ``&lt;th&gt;`` elements are
-    given attributes in a ``data-*`` API fashion.  (dataTables.js does not actually support this
-    API, but it greatly simplifies the legwork required to get a table automatically initialized.)
-    For sorting, the data attribute is ``data-sortable``, the value being ``"true"`` by default,
-    but ``"false"`` if the column name is given in the unsortable columns list.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-            unsortable_columns = ['headline', 'blog', 'pub_date']
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-            unsortable_columns = ['headline', 'blog', 'pub_date']
-
-    class UnsortableColumnsDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class HiddenColumnsDatatableView(DemoMixin, DatatableView):
-    """
-    Columns may be marked for being hidden.  This is a client-side tweak that has no benefit to
-    server performance.  When dataTables.js sees a column marked for being hidden, it removes it
-    from the DOM, but retains traces of it in memory.  Some of the dataTables.js plugins have used
-    this to allow you to send columns that are invisible on the main website, but if exported to
-    CSV by the client, are included and visible as usual.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-            hidden_columns = ['id']
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-            hidden_columns = ['id']
-
-    class HiddenColumnsDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class SearchFieldsDatatableView(DemoMixin, DatatableView):
-    """
-    When a user searches a datatable, the server will query all of the concrete fields in the
-    displayed columns.  You can enable extra search fields that are not shown on the table, but are
-    consulted during a search query, by adding ``datatable_options["search_fields"]``.
-    
-    ``search_fields`` is a simple list of fields using the normal query language.  In this case,
-    ``"blog__name"`` has been added to the list of fields, and so you can search the above table
-    for the term ``First`` or ``Second`` and see the table filter the results, even though that
-    field is not included as a real column.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'pub_date',
-            ]
-            search_fields = ['blog__name']
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'pub_date',
-            ]
-            search_fields = ['blog__name']
-
-    class SearchFieldsDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
-    """
-    When the ``datatable`` context variable is rendered, it looks for a template named
-    ``"datatableview/default_structure.html"``.  This template is pretty generic, but lacks special
-    styles for UI frameworks like Twitter Bootstrap and others.
-
-    The default template renders special ``data-*`` attributes on the ``table`` and ``th`` tags,
-    which helps make initializing the tables more seamless when using the ``datatableview.js`` tool.
-
-    Alternately, you can specify a custom template on a per-view basis using
-    ``datatable_options["structure_template"]``, which is a normal template path that will be put
-    through the Django discovery process.
-
-    WARNING:
-    When overriding this template, take care to render the ``data-*`` attributes if you want easy
-    table initialization!
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            structure_template = "custom_table_template.html"
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            structure_template = "custom_table_template.html"
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-
-    class CustomizedTemplateDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
-    """
-    The easiest way to get Bootstrap datatables is to use the alternate structural template
-    ``datatableview/bootstrap_structure.html``, which simply adds the
-    ``table``, ``table-striped``, and ``table-bordered`` classes to the main table tag.  You can
-    specify the template directly in ``datatable_options["structure_template"]``, or you can create
-    your own ``datatableview/default_structure.html`` template and simply paste the contents of the
-    bootstrap version into it.
-    
-    WARNING:
-    Overriding ``datatableview/default_structure.html`` will affect all datatables using the default
-    template!
-
-    This gets the table itself looking better, but the rest of the controls added by dataTables.js
-    are a little lackluster by comparison.  To fix this, reference the latest integration helper CSS
-    and javascript support files in the template:
-    
-    <pre>
-    &lt;link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" /&gt;
-    </pre>
-    <pre>
-    &lt;script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"&gt;&lt;/script&gt;
-    </pre>
-
-    See <a href="https://datatables.net/examples/styling/bootstrap.html">the official datatables
-    documentation</a> on the subject for more information.
-
-    WARNING:
-    The pagination buttons are currently a bit strange with Bootstrap 3.1.1 and Datatables 1.10.0.
-    Please make sure you are using the latest integration files by checking the link just above.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            structure_template = "datatableview/bootstrap_structure.html",
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            structure_template = "datatableview/bootstrap_structure.html",
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
-
-    class BootstrapTemplateOfficialDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class CSSStylingDatatableView(DemoMixin, DatatableView):
-    """
-    The default template used by the datatable context variable when you render it will include
-    ``data-name`` attributes on the ``&lt;th&gt;`` column headers, which is the ``slugify``'d
-    version of the column's label.  This makes sizing the columns very easy.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                ("Publication date", 'pub_date'),
-            ]
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                ("Publication date", 'pub_date'),
-            ]
-
-    class CSSStylingDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
     """
 
 
@@ -1139,3 +976,142 @@ class SatelliteDatatableView(DatatableView):
         kwargs = super(SatelliteDatatableView, self).get_datatable_kwargs()
         kwargs['url'] = reverse('satellite')
         return kwargs
+
+
+# Template rendering
+class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
+    """
+    When the ``datatable`` context variable is rendered, it looks for a template named
+    ``"datatableview/default_structure.html"``.  This template is pretty generic, but lacks special
+    styles for UI frameworks like Twitter Bootstrap and others.
+
+    The default template renders special ``data-*`` attributes on the ``table`` and ``th`` tags,
+    which helps make initializing the tables more seamless when using the ``datatableview.js`` tool.
+
+    Alternately, you can specify a custom template on a per-view basis using
+    ``datatable_options["structure_template"]``, which is a normal template path that will be put
+    through the Django discovery process.
+
+    WARNING:
+    When overriding this template, take care to render the ``data-*`` attributes if you want easy
+    table initialization!
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            structure_template = "custom_table_template.html"
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ]
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            structure_template = "custom_table_template.html"
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ]
+
+    class CustomizedTemplateDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+
+class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
+    """
+    The easiest way to get Bootstrap datatables is to use the alternate structural template
+    ``datatableview/bootstrap_structure.html``, which simply adds the
+    ``table``, ``table-striped``, and ``table-bordered`` classes to the main table tag.  You can
+    specify the template directly in ``datatable_options["structure_template"]``, or you can create
+    your own ``datatableview/default_structure.html`` template and simply paste the contents of the
+    bootstrap version into it.
+    
+    WARNING:
+    Overriding ``datatableview/default_structure.html`` will affect all datatables using the default
+    template!
+
+    This gets the table itself looking better, but the rest of the controls added by dataTables.js
+    are a little lackluster by comparison.  To fix this, reference the latest integration helper CSS
+    and javascript support files in the template:
+    
+    <pre>
+    &lt;link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" /&gt;
+    </pre>
+    <pre>
+    &lt;script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"&gt;&lt;/script&gt;
+    </pre>
+
+    See <a href="https://datatables.net/examples/styling/bootstrap.html">the official datatables
+    documentation</a> on the subject for more information.
+
+    WARNING:
+    The pagination buttons are currently a bit strange with Bootstrap 3.1.1 and Datatables 1.10.0.
+    Please make sure you are using the latest integration files by checking the link just above.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            structure_template = "datatableview/bootstrap_structure.html",
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ]
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            structure_template = "datatableview/bootstrap_structure.html",
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                'pub_date',
+            ]
+
+    class BootstrapTemplateOfficialDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+
+class CSSStylingDatatableView(DemoMixin, DatatableView):
+    """
+    The default template used by the datatable context variable when you render it will include
+    ``data-name`` attributes on the ``&lt;th&gt;`` column headers, which is the ``slugify``'d
+    version of the column's label.  This makes sizing the columns very easy.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                ("Publication date", 'pub_date'),
+            ]
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = [
+                'id',
+                'headline',
+                'blog',
+                ("Publication date", 'pub_date'),
+            ]
+
+    class CSSStylingDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+
