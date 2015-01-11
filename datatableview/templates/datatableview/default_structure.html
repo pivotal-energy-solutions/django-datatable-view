@@ -1,4 +1,6 @@
-<table class="display datatable" data-source-url="{{ url }}" data-result-counter-id="{{ config.result_counter_id }}">
+<table class="display datatable" data-source-url="{{ url }}"
+       data-result-counter-id="{{ config.result_counter_id }}"
+       data-page-length="{{ config.page_length }}">
     <thead>
         <tr>
             {% for name, attributes in column_info %}

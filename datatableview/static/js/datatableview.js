@@ -102,6 +102,7 @@ var datatableview = {
                 "aaSorting": sorting_options,
                 "aoColumns": column_options,
                 "sAjaxSource": datatable.attr('data-source-url'),
+                "iDisplayLength": datatable.attr('data-page-length'),
                 "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                     $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
                     var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
