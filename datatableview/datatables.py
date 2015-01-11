@@ -290,7 +290,7 @@ class Datatable(BaseDatatable):
     def __str__(self):
         context = {
             'url': self.url,
-            'result_counter_id': self.config['result_counter_id'],
+            'config': self.config,
             'column_info': self.get_column_info(),
         }
         return render_to_string(self.config['structure_template'], context)
