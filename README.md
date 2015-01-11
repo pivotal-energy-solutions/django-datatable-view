@@ -10,6 +10,7 @@ Dependencies:
 # Features at a glance
 
 * ``DatatableView``, a drop-in replacement for ``ListView`` that allows options to be specified for the datatable that will be rendered on the page.
+* ``MultipleDatatableView`` for configurating multiple Datatable specifications on a single view
 * Verbose names as column headers
 * Customizable table headers
 * Compound columns (columns representing more than one model field)
