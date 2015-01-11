@@ -19,7 +19,7 @@ class DatatableOptions(object):
         self.model = getattr(options, 'model', None)
         self.columns = getattr(options, 'columns', None)  # table headers
         self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
-        self.start_offset = getattr(options, 'start_offset', None)  # results to skip ahead
+        # self.start_offset = getattr(options, 'start_offset', None)  # results to skip ahead
         self.page_length = getattr(options, 'page_length', 25)  # length of a single result page
         self.search = getattr(options, 'search', None)  # client search string
         self.search_fields = getattr(options, 'search_fields', None)  # extra searchable ORM fields
