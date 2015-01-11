@@ -23,7 +23,7 @@ import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
-from .options import Datatable
+from .datatables import Datatable
 from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, split_real_fields,
         filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
         get_field_definition)
