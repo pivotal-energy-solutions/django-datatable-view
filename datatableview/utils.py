@@ -190,10 +190,10 @@ def normalize_config(config, query_config, model=None):
 
     # Page length
     try:
-        page_length = query_config.get(OPTION_NAME_MAP['page_length'], DEFAULT_OPTIONS['page_length'])
+        page_length = query_config.get(OPTION_NAME_MAP['page_length'], config['page_length'])
         page_length = int(page_length)
     except ValueError:
-        page_length = DEFAULT_OPTIONS['page_length']
+        page_length = config['page_length']
     else:
         if page_length == -1:  # datatable's way of asking for all items, no pagination
             pass
