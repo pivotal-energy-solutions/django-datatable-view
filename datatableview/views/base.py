@@ -6,7 +6,7 @@ from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
 
-from ..datatables import Datatable
+from ..datatables import Datatable, DatatableOptions
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +90,12 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
                 model = self.model or self.get_queryset().model
             datatable_class = type('%sDatatable' % (self.__class__.__name__,), (Datatable,), {
                 'Meta': AutoMeta,
+            })
+        elif datatable_class._meta.model is None:
+            opts = datatable_class.options_class(datatable_class._meta)
+            opts.model = self.model or self.get_queryset().model
+            datatable_class = type('%s_WithModel' % (datatable_class.__name__,), (datatable_class,), {
+                'Meta': opts,
             })
         default_kwargs = {}
         return datatable_class(**self.get_datatable_kwargs(**default_kwargs))
