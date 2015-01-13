@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
-from datatableview import Datatable
+from datatableview import Datatable, columns
 from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
 from datatableview.views.legacy import LegacyDatatableView, LegacyConfigurationDatatableView
 from datatableview import helpers

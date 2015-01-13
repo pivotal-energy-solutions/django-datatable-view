@@ -3,8 +3,8 @@
        data-page-length="{{ config.page_length }}">
     <thead>
         <tr>
-            {% for name, attributes in column_info %}
-            <th data-name="{{ name|slugify }}"{{ attributes|safe }}>{{ name }}</th>
+            {% for column in columns %}
+            <th data-name="{{ column.label|slugify }}"{{ column.attributes|safe }}>{{ column.label }}</th>
             {% endfor %}
         </tr>
     </thead>

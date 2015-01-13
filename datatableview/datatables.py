@@ -1,7 +1,8 @@
 import re
+import copy
+from collections import OrderedDict
 
-from django.db.models import Model, Manager
-from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 try:
@@ -11,13 +12,94 @@ except ImportError:
 
 import six
 
+from .exceptions import ColumnError
+from . import columns
 from .utils import (normalize_config, apply_options, get_field_definition, ColumnInfoTuple,
                     ColumnOrderingTuple)
+
+COLUMN_TYPES = {
+    columns.TextColumn: [models.CharField, models.TextField, models.FileField],
+    columns.DateColumn: [models.DateField],
+    columns.BooleanColumn: [models.BooleanField, models.NullBooleanField],
+    columns.IntegerColumn: [models.IntegerField, models.AutoField],
+    columns.FloatColumn: [models.FloatField, models.DecimalField],
+
+    # This is a special type for fields that should be passed up, since there is no intuitive
+    # meaning for searches done agains the FK field directly.
+    columns.ForeignKeyColumn: [models.ForeignKey],
+}
+
+def pretty_name(name):
+    if not name:
+        return ''
+    return name[0].capitalize() + name[1:]
+
+def get_column_for_modelfield(model_field):
+    for ColumnClass, modelfield_classes in COLUMN_TYPES.items():
+        if isinstance(model_field, tuple(modelfield_classes)):
+            return ColumnClass
+
+# Borrowed from the Django forms implementation 
+def columns_for_model(model, fields=None, exclude=None):
+    field_list = []
+    opts = model._meta
+    for f in sorted(opts.fields):
+        if fields is not None and f.name not in fields:
+            continue
+        if exclude and f.name in exclude:
+            continue
+
+        column_class = get_column_for_modelfield(f)
+        column = column_class(sources=[f.name], label=pretty_name(f.verbose_name))
+        column.name = f.name
+        field_list.append((f.name, column))
+
+    field_dict = OrderedDict(field_list)
+    if fields:
+        field_dict = OrderedDict(
+            [(f, field_dict.get(f)) for f in fields
+                if ((not exclude) or (exclude and f not in exclude))]
+        )
+    return field_dict
+
+# Borrowed from the Django forms implementation 
+def get_declared_columns(bases, attrs, with_base_columns=True):
+    """
+    Create a list of form field instances from the passed in 'attrs', plus any
+    similar fields on the base classes (in 'bases'). This is used by both the
+    Form and ModelForm metclasses.
+
+    If 'with_base_columns' is True, all fields from the bases are used.
+    Otherwise, only fields in the 'declared_fields' attribute on the bases are
+    used. The distinction is useful in ModelForm subclassing.
+    Also integrates any additional media definitions
+    """
+    local_columns = [
+        (column_name, attrs.pop(column_name)) \
+                for column_name, obj in list(six.iteritems(attrs)) \
+                if isinstance(obj, columns.Column)
+    ]
+    local_columns.sort(key=lambda x: x[1].creation_counter)
+
+    # If this class is subclassing another Form, add that Form's columns.
+    # Note that we loop over the bases in *reverse*. This is necessary in
+    # order to preserve the correct order of columns.
+    if with_base_columns:
+        for base in bases[::-1]:
+            if hasattr(base, 'base_columns'):
+                local_columns = list(six.iteritems(base.base_columns)) + local_columns
+    else:
+        for base in bases[::-1]:
+            if hasattr(base, 'declared_columns'):
+                local_columns = list(six.iteritems(base.declared_columns)) + local_columns
+
+    return OrderedDict(local_columns)
 
 class DatatableOptions(object):
     def __init__(self, options=None):
         self.model = getattr(options, 'model', None)
         self.columns = getattr(options, 'columns', None)  # table headers
+        self.exclude = getattr(options, 'exclude', None)
         self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
         # self.start_offset = getattr(options, 'start_offset', None)  # results to skip ahead
         self.page_length = getattr(options, 'page_length', 25)  # length of a single result page
@@ -32,12 +114,38 @@ class DatatableOptions(object):
 
 class DatatableMetaclass(type):
     def __new__(cls, name, bases, attrs):
+        declared_columns = get_declared_columns(bases, attrs, with_base_columns=False)
         new_class = super(DatatableMetaclass, cls).__new__(cls, name, bases, attrs)
-        new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
+
+        opts = new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
+        if opts.model:
+            columns = columns_for_model(opts.model, opts.columns, opts.exclude)
+            none_model_columns = [k for k, v in six.iteritems(columns) if not v]
+            missing_columns = set(none_model_columns) - set(declared_columns.keys())
+
+            if missing_columns:
+                # TODO: Inspect for method handler, etc
+                raise ColumnError("Unknown column name(s): %r" % (list(missing_columns),))
+
+            for name, column in declared_columns.items():
+                column.name = name
+                if not column.sources:
+                    column.sources = [name]
+                if not column.label:
+                    field, _, _, _ = opts.model._meta.get_field_by_name(name)
+                    column.label = pretty_name(field.verbose_name)
+
+            columns.update(declared_columns)
+        else:
+            columns = declared_columns
+
+        new_class.declared_columns = declared_columns
+        new_class.base_columns = columns
         return new_class
 
 
-class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
+@python_2_unicode_compatible
+class Datatable(six.with_metaclass(DatatableMetaclass)):
     options_class = DatatableOptions
 
     def __init__(self, object_list, url, view=None, callback_target=None, model=None,
@@ -49,6 +157,7 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
         self.model = self._meta.model or model
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
+        self.columns = copy.deepcopy(self.base_columns)
         self.configure(self._meta.__dict__, kwargs, query_config)
 
         self.total_initial_record_count = None
@@ -59,21 +168,21 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
         self.config = normalize_config(declared_config, query_config, model=self.model)
 
         # Core options, not modifiable by client updates
-        if self.config.get('columns') is None:
-            model_fields = self.model._meta.local_fields
-            self.config['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
+        # if self.config.get('columns') is None:
+        #     model_fields = self.model._meta.local_fields
+        #     self.config['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
 
-        if self.config.get('hidden_columns') is None:
-            self.config['hidden_columns'] = []
+        if self._meta.hidden_columns is None:
+            self._meta.hidden_columns = []
 
-        if self.config.get('search_fields') is None:
-            self.config['search_fields'] = []
+        if self._meta.search_fields is None:
+            self._meta.search_fields = []
 
-        if self.config.get('unsortable_columns') is None:
-            self.config['unsortable_columns'] = []
+        if self._meta.unsortable_columns is None:
+            self._meta.unsortable_columns = []
 
         self._flat_column_names = []
-        for column in self.config['columns']:
+        for column in self.columns:
             column = get_field_definition(column)
             flat_name = column.pretty_name
             if column.fields:
@@ -125,38 +234,12 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
     def preload_record_data(self, instance):
         """
         An empty hook for letting the view do something with ``instance`` before column lookups are
-        called against the object.  The tuple of items returned will be passed as positional
-        arguments to any of the ``get_column_FIELD_NAME_data()`` methods.
+        called against the object. The tuple of items returned will be passed as keyword arguments
+        to any of the ``get_column_FIELD_NAME_data()`` methods.
 
         """
 
-        return ()
-
-    def _get_preloaded_data(self, instance):
-        """
-        Fetches value from ``preload_record_data()``.
-
-        If a single value is returned and it is not a dict, list or tuple, it is made into a tuple.
-        The tuple will be supplied to the resolved method as ``*args``.
-
-        If the returned value is already a list/tuple, it will also be sent as ``*args``.
-
-        If the returned value is a dict, it will be sent as ``**kwargs``.
-
-        The two types cannot be mixed.
-
-        """
-        preloaded_data = self.preload_record_data(instance)
-        if isinstance(preloaded_data, dict):
-            preloaded_args = ()
-            preloaded_kwargs = preloaded_data
-        elif isinstance(preloaded_data, (tuple, list)):
-            preloaded_args = preloaded_data
-            preloaded_kwargs = {}
-        else:
-            preloaded_args = (preloaded_data,)
-            preloaded_kwargs = {}
-        return preloaded_args, preloaded_kwargs
+        return {}
 
     def get_record_data(self, obj):
         """
@@ -172,40 +255,28 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
             'pk': obj.pk,
             '_extra_data': {},  # TODO: callback structure for user access to this field
         }
-        for i, name in enumerate(self.config['columns']):
-            column_data = self.get_column_data(i, name, obj)[0]
-            if six.PY2 and isinstance(column_data, str):  # not unicode
-                column_data = column_data.decode('utf-8')
-            data[str(i)] = six.text_type(column_data)
+        for i, (name, column) in enumerate(self.columns.items()):
+            kwargs = self.preload_record_data(obj)
+            kwargs.update({
+                'datatable': self,
+                'view': self.view,
+            })
+            value = column.value(obj, **kwargs)[1]
+            processor = self._get_processor_method(i, column)
+            if processor:
+                value = processor(default_value=value)
+            if isinstance(value, (tuple, list)):
+                value = value[0]
+
+            if six.PY2 and isinstance(value, str):  # not unicode
+                value = value.decode('utf-8')
+            data[str(i)] = six.text_type(value)
         return data
 
-    def get_column_data(self, i, name, instance):
-        """ Finds the backing method for column ``name`` and returns the generated data. """
-        column = get_field_definition(name)
-        is_custom, f = self._get_resolver_method(i, column)
-        if is_custom:
-            args, kwargs = self._get_preloaded_data(instance)
-            try:
-                kwargs['default_value'] = self._get_column_data_default(instance, column)[1]
-            except AttributeError:
-                kwargs['default_value'] = None
-            kwargs['field_data'] = name
-            kwargs['view'] = self.view
-            values = f(instance, *args, **kwargs)
-        else:
-            values = f(instance, column)
+    def process_value(self, obj, **kwargs):
+        return kwargs['default_value']
 
-        if not isinstance(values, (tuple, list)):
-            if six.PY2:
-                if isinstance(values, str):  # not unicode
-                    values = values.decode('utf-8')
-                else:
-                    values = unicode(values)
-            values = (values, re.sub(r'<[^>]+>', '', six.text_type(values)))
-
-        return values
-
-    def _get_resolver_method(self, i, column):
+    def _get_processor_method(self, i, column):
         """
         Using a slightly mangled version of the column's name (explained below) each column's value
         is derived.
@@ -229,80 +300,42 @@ class BaseDatatable(six.with_metaclass(DatatableMetaclass)):
 
         """
 
-        callback = column.callback
+        callback = column.processor
         if callback:
             if callable(callback):
-                return True, callback
-            return True, getattr(self, callback)
+                return callback
+            return getattr(self, callback)
 
         # Treat the 'nice name' as the starting point for looking up a method
-        name = column.pretty_name
-        if not name:
-            name = column.fields[0]
+        name = column.label or column.name
 
         mangled_name = re.sub(r'[\W_]+', '_', name)
 
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
         if f:
-            return True, f
+            return f
 
         f = getattr(self, 'get_column_%d_data' % i, None)
         if f:
-            return True, f
+            return f
 
         if self.fallback_callback_target:
             f = getattr(self.fallback_callback_target, 'get_column_%s_data' % mangled_name, None)
             if f:
-                return True, f
+                return f
 
             f = getattr(self.fallback_callback_target, 'get_column_%d_data' % i, None)
             if f:
-                return True, f
-
-        return False, self._get_column_data_default
-
-    def _get_column_data_default(self, instance, column, *args, **kwargs):
-        """ Default mechanism for resolving ``column`` through the model instance ``instance``. """
-
-        def chain_lookup(obj, bit):
-            try:
-                value = getattr(obj, bit)
-            except (AttributeError, ObjectDoesNotExist):
-                value = None
-            else:
-                if callable(value):
-                    if isinstance(value, Manager):
-                        pass
-                    elif not hasattr(value, 'alters_data') or value.alters_data is not True:
-                        value = value()
-            return value
-
-        values = []
-        for field_name in column.fields:
-            value = reduce(chain_lookup, [instance] + field_name.split('__'))
-
-            if isinstance(value, Model):
-                value = six.text_type(value)
-
-            if value is not None:
-                values.append(value)
-
-        if len(values) == 1:
-            value = values[0]
-        else:
-            value = u' '.join(map(six.text_type, values))
-
-        return value, value
+                return f
+        return None
 
 
-@python_2_unicode_compatible
-class Datatable(BaseDatatable):
     # Template rendering features
     def __str__(self):
         context = {
             'url': self.url,
             'config': self.config,
-            'column_info': self.get_column_info(),
+            'columns': self.columns.values(),
         }
         return render_to_string(self.config['structure_template'], context)
 
@@ -311,49 +344,18 @@ class Datatable(BaseDatatable):
         Yields a 2-tuple for each column in the form ("Column Name", " data-attribute='asdf'"),
         """
 
-        for column_info in self.get_column_info():
-            yield column_info
+        for column in self.columns.values():
+            yield column
 
-    def get_column_info(self):
-        """
-        Returns an iterable of 2-tuples in the form
-
-            ("Pretty name", ' data-bSortable="true"',)
-
-        """
-
-        column_info = []
-        if self.model:
-            model_fields = self.model._meta.get_all_field_names()
-        else:
-            model_fields = []
-
-        for column in self.config['columns']:
-            column = get_field_definition(column)
-            pretty_name = column.pretty_name
-            column_name = column.pretty_name
-            if column.fields and column.fields[0] in model_fields:
-                ordering_name = column.fields[0]
-                if not pretty_name:
-                    field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
-                    pretty_name = field.verbose_name
-            else:
-                ordering_name = pretty_name
-
-            attributes = self.get_column_attributes(ordering_name)
-            column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
-
-        return column_info
-
-    def get_column_attributes(self, name):
+    @property
+    def attributes(self):
         javascript_boolean = {
             True: 'true',
             False: 'false',
         }
         attributes = {
-            'data-sortable': javascript_boolean[name not in self.config['unsortable_columns']],
-            'data-visible': javascript_boolean[name not in self.config['hidden_columns']],
+            'data-sortable': javascript_boolean[name not in self._meta.unsortable_columns],
+            'data-visible': javascript_boolean[name not in self._meta.hidden_columns],
         }
 
         if name in self.ordering:

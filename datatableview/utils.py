@@ -14,6 +14,7 @@ import dateutil.parser
 
 MINIMUM_PAGE_LENGTH = 1
 DEFAULT_PAGE_LENGTH = 25
+DEFAULT_EMPTY_VALUE = ""
 
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
@@ -260,7 +261,7 @@ def apply_options(object_list, spec):
         object_list = object_list.order_by(*db_fields)
 
     if config['search']:
-        db_fields, searches = filter_real_fields(spec.model, config['columns'],
+        db_fields, searches = filter_real_fields(spec.model, spec.columns,
                                                  key=get_first_orm_bit)
         db_fields.extend(config['search_fields'])
 
@@ -381,7 +382,7 @@ def apply_options(object_list, spec):
 
         def data_getter_custom(i):
             def key(obj):
-                rich_value, plain_value = spec.get_column_data(i, config['columns'][i], obj)
+                rich_value, plain_value = spec.get_column_data(i, spec.columns.values()[i], obj)
                 return plain_value
             return key
 
