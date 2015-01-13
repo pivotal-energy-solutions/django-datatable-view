@@ -86,7 +86,11 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         """ Gathers and returns applicable object for datatable processing """
         datatable_class = self.get_datatable_class()
         if datatable_class is None:
-            datatable_class = Datatable
+            class AutoMeta:
+                model = self.model or self.get_queryset().model
+            datatable_class = type('%sDatatable' % (self.__class__.__name__,), (Datatable,), {
+                'Meta': AutoMeta,
+            })
         default_kwargs = {}
         return datatable_class(**self.get_datatable_kwargs(**default_kwargs))
 
