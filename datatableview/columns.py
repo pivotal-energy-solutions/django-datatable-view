@@ -58,6 +58,9 @@ class Column(object):
         self.creation_counter = Column.creation_counter
         Column.creation_counter += 1
 
+    def __repr__(self):
+        return '<%s.%s "%s">' % (self.__class__.__module__, self.__class__.__name__, self.label)
+
     def value(self, obj, **kwargs):
         """
         Returns the 2-tuple of (rich_value, plain_value) for the inspection and serialization phases
