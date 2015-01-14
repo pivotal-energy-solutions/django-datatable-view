@@ -40,7 +40,7 @@ def get_column_for_modelfield(model_field):
             return ColumnClass
 
 # Borrowed from the Django forms implementation 
-def columns_for_model(model, fields=None, exclude=None):
+def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None):
     field_list = []
     opts = model._meta
     for f in sorted(opts.fields):
@@ -50,7 +50,16 @@ def columns_for_model(model, fields=None, exclude=None):
             continue
 
         column_class = get_column_for_modelfield(f)
-        column = column_class(sources=[f.name], label=pretty_name(f.verbose_name))
+        if labels and f.name in labels:
+            label = labels[f.name]
+        else:
+            label = f.verbose_name
+        if processors and f.name in processors:
+            processor = processors[f.name]
+        else:
+            processor = None
+        label = (labels or {}).get(f.name, pretty_name(f.verbose_name))
+        column = column_class(sources=[f.name], label=label, processor=processor)
         column.name = f.name
         field_list.append((f.name, column))
 
@@ -111,6 +120,9 @@ class DatatableOptions(object):
 
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
 
+        self.labels = getattr(options, 'labels', None)
+        self.processors = getattr(options, 'processors', None)
+
 
 class DatatableMetaclass(type):
     def __new__(cls, name, bases, attrs):
@@ -119,7 +131,8 @@ class DatatableMetaclass(type):
 
         opts = new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
         if opts.model:
-            columns = columns_for_model(opts.model, opts.columns, opts.exclude)
+            columns = columns_for_model(opts.model, opts.columns, opts.exclude, opts.labels,
+                                        opts.processors)
             none_model_columns = [k for k, v in six.iteritems(columns) if not v]
             missing_columns = set(none_model_columns) - set(declared_columns.keys())
 
