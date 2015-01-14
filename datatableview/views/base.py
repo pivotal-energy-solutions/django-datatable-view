@@ -184,8 +184,23 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                 if queryset_getter is None:
                     raise ValueError("%r must declare a method %r." % (self.__class__.__name__,
                                                                        queryset_getter_name))
+
+                queryset = queryset_getter()
+                if datatable_class is None:
+                    class AutoMeta:
+                        model = queryset.model
+                    datatable_class = type('%sDatatable' % (self.__class__.__name__,), (Datatable,), {
+                        'Meta': AutoMeta,
+                    })
+                elif datatable_class._meta.model is None:
+                    opts = datatable_class.options_class(datatable_class._meta)
+                    opts.model = queryset.model
+                    datatable_class = type('%s_WithModel' % (datatable_class.__name__,), (datatable_class,), {
+                        'Meta': opts,
+                    })
+
                 default_kwargs = {
-                    'object_list': queryset_getter(),
+                    'object_list': queryset,
                 }
                 kwargs_getter_name = 'get_%s_datatable_kwargs' % (name,)
                 kwargs_getter = getattr(self, kwargs_getter_name, self.get_default_datatable_kwargs)
