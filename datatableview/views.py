@@ -136,7 +136,22 @@ class DatatableMixin(MultipleObjectMixin):
                         field_queries = []  # Queries generated to search this database field for the search term
 
                         field = resolve_orm_path(self.model, component_name)
-                        if isinstance(field, tuple(FIELD_TYPES['text'])):
+                        if field.choices:
+                            # Query the database for the database value rather than display value
+                            choices = field.get_flatchoices()
+                            length = len(choices)
+                            database_values = []
+                            display_values = []
+
+                            for choice in choices:
+                                database_values.append(choice[0])
+                                display_values.append(choice[1].lower())
+
+                            for i in range(length):
+                                if term.lower() in display_values[i]:
+                                    field_queries = [{component_name + '__iexact': database_values[i]}]
+
+                        elif isinstance(field, tuple(FIELD_TYPES['text'])):
                             field_queries = [{component_name + '__icontains': term}]
                         elif isinstance(field, tuple(FIELD_TYPES['date'])):
                             try:
