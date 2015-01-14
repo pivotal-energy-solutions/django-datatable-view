@@ -197,7 +197,11 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     """
     model = Entry
     datatable_options = {
-        'columns': ['id', 'headline', 'pub_date'],
+        'columns': [
+            'id',
+            ("Publication Date", 'pub_date'),
+            'headline',
+        ],
     }
 
     implementation = u"""
@@ -206,7 +210,7 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     class LegacyConfigDatatableView(LegacyConfigurationDatatableView):
         model = Entry
         datatable_options = {
-            'columns': ['id', 'headline', 'pub_date'],
+            'columns': ['id', ("Publication Date", 'pub_date'), 'headline'],
         }
 
     # If you need an ambulance:
@@ -214,7 +218,7 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     class LegacyEverythingDatatableView(LegacyDatatableView):
         model = Entry
         datatable_options = {
-            'columns': ['id', 'headline', 'pub_date'],
+            'columns': ['id', ("Publication Date", 'pub_date'), 'headline'],
         }
     """
 
@@ -280,24 +284,18 @@ class PrettyNamesDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'pub_date'),
-                'n_comments',
-                'rating',
-            ]
+            columns = ['blog', 'headline', 'pub_date', 'n_comments', 'rating']
+            labels = {
+                'pub_date': "Publication date",
+            }
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'pub_date'),
-                'n_comments',
-                'rating',
-            ]
+            columns = ['blog', 'headline', 'pub_date', 'n_comments', 'rating']
+            labels = {
+                'pub_date': "Publication date",
+            }
 
     class PrettyNamesDatatableView(DatatableView):
         model = Entry
@@ -319,30 +317,30 @@ class PresentationalChangesDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'pub_date'),
-                ("Age", 'pub_date', 'get_entry_age'),
-            ]
+        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
 
-        def get_entry_age(self, instance, *args, **kwargs):
+        class Meta:
+            columns = ['blog', 'headline', 'pub_date', 'age']
+            labels = {
+                'pub_date': "Publication date",
+            }
+
+        def get_entry_age(self, instance, **kwargs):
             return timesince(instance.pub_date)
 
     implementation = u"""
     from django.template.defaultfilters import timesince
 
     class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'pub_date'),
-                ("Age", 'pub_date', 'get_entry_age'),
-            ]
+        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
 
-        def get_entry_age(self, instance, *args, **kwargs):
+        class Meta:
+            columns = ['blog', 'headline', 'pub_date', 'age']
+            labels = {
+                'pub_date': "Publication date",
+            }
+
+        def get_entry_age(self, instance, **kwargs):
             return timesince(instance.pub_date)
 
     class PresentationalChangesDatatableView(DatatableView):
@@ -368,28 +366,24 @@ class VirtualColumnDefinitionsDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
-        class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Age", None, 'get_entry_age'),
-            ]
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
-        def get_entry_age(self, instance, *args, **kwargs):
+        class Meta:
+            columns = ['blog', 'headline', 'age']
+
+        def get_entry_age(self, instance, **kwargs):
             return timesince(instance.pub_date)
 
     implementation = u"""
     from django.template.defaultfilters import timesince
 
     class MyDatatable(Datatable):
-        class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Age", None, 'get_entry_age'),
-            ]
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
-        def get_entry_age(self, instance, *args, **kwargs):
+        class Meta:
+            columns = ['blog', 'headline', 'age']
+
+        def get_entry_age(self, instance, **kwargs):
             return timesince(instance.pub_date)
 
     class VirtualColumnDefinitionsDatatableView(DatatableView):
@@ -414,21 +408,17 @@ class ColumnBackedByMethodDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
+        pub_date = columns.DateColumn("Publication date", sources=['get_pub_date'])
+
         class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'get_pub_date'),
-            ]
+            columns = ['blog', 'headline', 'pub_date']
 
     implementation = u"""
     class MyDatatable(Datatable):
+        pub_date = columns.DateColumn("Publication date", sources=['get_pub_date'])
+
         class Meta:
-            columns = [
-                'blog',
-                'headline',
-                ("Publication date", 'get_pub_date'),
-            ]
+            columns = ['blog', 'headline', 'pub_date]
 
     class ColumnBackedByMethodDatatableView(DatatableView):
         model = Entry
@@ -457,25 +447,22 @@ class CompoundColumnsDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
+        headline = columns.TextColumn("Headline", sources=['headline', 'blog__name'],
+                                      processor='get_headline_data')
         class Meta:
-            columns = [
-                'id',
-                ("Headline", ['headline', 'blog__name'], 'get_headline_data'),
-            ]
+            columns = ['id', 'headline']
 
-        def get_headline_data(self, instance, *args, **kwargs):
+        def get_headline_data(self, instance, **kwargs):
             return "%s (%s)" % (instance.headline, instance.blog.name)
-
 
     implementation = u"""
     class MyDatatable(Datatable):
+        headline = columns.TextColumn("Headline", sources=['headline', 'blog__name'],
+                                      processor='get_headline_data')
         class Meta:
-            columns = [
-                'id',
-                ("Headline", ['headline', 'blog__name'], 'get_headline_data'),
-            ]
+            columns = ['id', 'headline']
 
-        def get_headline_data(self, instance, *args, **kwargs):
+        def get_headline_data(self, instance, **kwargs):
             return "%s (%s)" % (instance.headline, instance.blog.name)
 
     class CompoundColumnDatatableView(DatatableView):
@@ -498,25 +485,19 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
+        blog_name = columns.TextColumn("Blog name", ["blog__name"])
+        blog_id = columns.TextColumn("Blog ID", ["blog__id"])
+
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                ("Blog name", 'blog__name'),
-                ("Blog ID", 'blog__id'),
-                'pub_date',
-            ]
+            columns = ['id', 'headline', 'blog_name', 'blog_id', 'pub_date']
     
     implementation = u"""
     class MyDatatable(Datatable):
+        blog_name = columns.TextColumn("Blog name", ["blog__name"])
+        blog_id = columns.TextColumn("Blog ID", ["blog__id"])
+
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                ("Blog name", 'blog__name'),
-                ("Blog ID", 'blog__id'),
-                'pub_date',
-            ]
+            columns = ['id', 'headline', 'blog_name', 'blog_id', 'pub_date']
 
     class RelatedFieldsDatatableView(DatatableView):
         model = Entry
@@ -536,13 +517,11 @@ class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
+        author_names_text = columns.TextColumn("Author Names", sources=['authors__name'], processor='get_author_names')
+        author_names_links = columns.TextColumn("Author Links", sources=['authors__name'], processor='get_author_names_as_links')
+
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                ("Authors", 'authors__name', 'get_author_names'),
-                ("Authors", 'authors__name', 'get_author_names_as_links'),
-            ]
+            columns = ['id', 'headline', 'author_names_text', 'author_names_links']
 
         def get_author_names(self, instance, *args, **kwargs):
             return ", ".join([author.name for author in instance.authors.all()])
@@ -552,14 +531,12 @@ class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
 
     implementation = u"""
     class MyDatatable(Datatable):
+        author_names_text = columns.TextColumn("Author Names", sources=['authors__name'], processor='get_author_names')
+        author_names_links = columns.TextColumn("Author Links", sources=['authors__name'], processor='get_author_names_as_links')
+
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                ("Authors", 'authors__name', 'get_author_names'),
-                ("Authors", 'authors__name', 'get_author_names_as_links'),
-            ]
-            
+            columns = ['id', 'headline', 'author_names_text', 'author_names_links']
+
         def get_author_names(self, instance, *args, **kwargs):
             return ", ".join([author.name for author in instance.authors.all()])
 
@@ -598,35 +575,23 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'body_text',
-                'blog',
-                ("Publication Date", 'pub_date'),
-            ]
+            columns = ['id', 'headline', 'body_text', 'blog', 'pub_date']
 
         def get_column_body_text_data(self, instance, *args, **kwargs):
             return instance.body_text[:30]
 
-        def get_column_Publication_Date_data(self, instance, *args, **kwargs):
+        def get_column_pub_date_data(self, instance, *args, **kwargs):
             return instance.pub_date.strftime("%m/%d/%Y")
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'body_text',
-                'blog',
-                ("Publication Date", 'pub_date'),
-            ]
+            columns = ['id', 'headline', 'body_text', 'blog', 'pub_date']
 
         def get_column_body_text_data(self, instance, *args, **kwargs):
             return instance.body_text[:30]
 
-        def get_column_Publication_Date_data(self, instance, *args, **kwargs):
+        def get_column_pub_date_data(self, instance, *args, **kwargs):
             return instance.pub_date.strftime("%m/%d/%Y")
 
     class DefaultCallbackNamesDatatableView(DatatableView):
@@ -663,22 +628,22 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                ("Headline", 'headline', helpers.make_xeditable),
-                ("Blog", 'blog', helpers.make_xeditable),
-                ("Published date", 'pub_date', helpers.make_xeditable),
-            ]
+            columns = ['id', 'headline', 'blog', 'pub_date']
+            processors = {
+                'headline': helpers.make_xeditable,
+                'blog': helpers.make_xeditable,
+                'pub_date': helpers.make_xeditable,
+            }
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'id',
-                ("Headline", 'headline', helpers.make_xeditable),
-                ("Blog", 'blog', helpers.make_xeditable),
-                ("Published date", 'pub_date', helpers.make_xeditable),
-            ]
+            columns = ['id', 'headline', 'blog', 'pub_date']
+            processors = {
+                'headline': helpers.make_xeditable,
+                'blog': helpers.make_xeditable,
+                'pub_date': helpers.make_xeditable,
+            }
 
     class XEditableColumnsDatatableView(XEditableDatatableView):
         model = Entry
@@ -686,7 +651,6 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
     </pre>
     <pre class="brush: javascript">
     // Page javascript
-    datatableview.auto_initialize = false;
     $(function(){
         var xeditable_options = {};
         datatableview.initialize($('.datatable'), {
@@ -705,19 +669,22 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
+        blog_name = columns.TextColumn("Blog name", sources=['blog__name'], processor=helpers.link_to_model)
+        age = columns.TextColumn("Age", sources=['pub_date'], processor=helpers.through_filter(timesince))
+        interaction = columns.IntegerColumn("Interaction", sources=['get_interaction_total'], processor=helpers.make_boolean_checkmark)
+
         class Meta:
-            columns = [
-                ("ID", 'id', helpers.link_to_model),
-                ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
-                ("Headline", 'headline', helpers.make_xeditable),
-                ("Body Text", 'body_text', helpers.itemgetter(slice(0, 30))),
-                ("Publication Date", 'pub_date', helpers.format_date('%A, %b %d, %Y')),
-                ("Modified Date", 'mod_date'),
-                ("Age", 'pub_date', helpers.through_filter(timesince)),
-                ("Interaction", 'get_interaction_total', helpers.make_boolean_checkmark),
-                ("Comments", 'n_comments', helpers.format("{0:,}")),
-                ("Pingbacks", 'n_pingbacks', helpers.format("{0:,}")),
-            ]
+            columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
+                       'interaction', 'n_comments', 'n_pingbacks']
+            processors = {
+                'id': helpers.link_to_model,
+                'blog_name': helpers.link_to_model(key=lambda obj: obj.blog),
+                'headline': helpers.make_xeditable,
+                'body_text': helpers.itemgetter(slice(0, 30)),
+                'pub_date': helpers.format_date('%A, %b %d, %Y'),
+                'n_comments': helpers.format("{0:,}"),
+                'n_pingbacks': helpers.format("{0:,}"),
+            }
 
     implementation = u"""
     class MyDatatable(Datatable):
@@ -842,19 +809,12 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     # Demo #1 and Demo # 2 will use variations of the same options.
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-            ]
+            columns = ['id', 'headline']
 
     # Demo #3 will use completely separate options.
     class blog_datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'name',
-                'tagline',
-            ]
+            columns = ['id', 'name', 'tagline']
 
     datatable_classes = {
         'demo1': datatable_class,
