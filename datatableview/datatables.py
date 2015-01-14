@@ -277,13 +277,13 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         include HTML in [1], for example.
         """
 
+        preloaded_kwargs = self.preload_record_data(obj)
         data = {
             'pk': obj.pk,
             '_extra_data': self.get_extra_record_data(obj),
         }
         for i, (name, column) in enumerate(self.columns.items()):
-            kwargs = self.preload_record_data(obj)
-            kwargs.update({
+            kwargs = dict(preloaded_kwargs, **{
                 'datatable': self,
                 'view': self.view,
             })
