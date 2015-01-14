@@ -136,10 +136,6 @@ class DatatableMetaclass(type):
             none_model_columns = [k for k, v in six.iteritems(columns) if not v]
             missing_columns = set(none_model_columns) - set(declared_columns.keys())
 
-            if missing_columns:
-                # TODO: Inspect for method handler, etc
-                raise ColumnError("Unknown column name(s): %r" % (list(missing_columns),))
-
             for name, column in declared_columns.items():
                 column.name = name
                 if not column.sources:
@@ -151,9 +147,11 @@ class DatatableMetaclass(type):
             columns.update(declared_columns)
         else:
             columns = declared_columns
+            missing_columns = []
 
         new_class.declared_columns = declared_columns
         new_class.base_columns = columns
+        new_class.missing_columns = missing_columns
         return new_class
 
 
@@ -178,21 +176,29 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def configure(self, meta_config, view_config, query_config):
         declared_config = dict(meta_config, **view_config)
+
+        # View-supplied columns should replace the ones brought by the Datatable
+        if self.extra_columns is not None:
+            declared_config['columns'] = self._meta.columns = self.extra_columns
+            replacement_columns = columns_for_model(self.model, fields=self.extra_columns)
+            self.missing_columns = set()
+            for name, column in tuple(replacement_columns.items()):
+                if column is None:
+                    self.missing_columns.add(name)
+                    replacement_columns.pop(name)
+            self.columns = replacement_columns
+
         self.config = normalize_config(declared_config, query_config, model=self.model)
 
+        self.resolve_virtual_columns(*tuple(self.missing_columns))
+
         # Core options, not modifiable by client updates
-        # if self.config.get('columns') is None:
-        #     model_fields = self.model._meta.local_fields
-        #     self.config['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
-
-        if self._meta.hidden_columns is None:
-            self._meta.hidden_columns = []
-
-        if self._meta.search_fields is None:
-            self._meta.search_fields = []
-
-        if self._meta.unsortable_columns is None:
-            self._meta.unsortable_columns = []
+        if self.config['hidden_columns'] is None:
+            self.config['hidden_columns'] = []
+        if self.config['search_fields'] is None:
+            self.config['search_fields'] = []
+        if self.config['unsortable_columns'] is None:
+            self.config['unsortable_columns'] = []
 
         self._flat_column_names = []
         for column in self.columns:
@@ -211,6 +217,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                     continue
                 sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
+
+    def resolve_virtual_columns(self, *names):
+        if names:
+            raise ColumnError("Unknown column name(s): %r" % (names,))
 
     # Data retrieval
     def get_column_index(self, name):
