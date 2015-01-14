@@ -341,20 +341,20 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             return getattr(self, callback)
                 
 
-        # Treat the 'nice name' as the starting point for looking up a method
-        name = column.label or column.name
         if self.forward_callback_target:
             f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column.name,), None)
             if f:
                 return f
 
-        mangled_name = re.sub(r'[\W_]+', '_', name)
+            f = getattr(self.forward_callback_target, 'get_column_%d_data' % (i,), None)
+            if f:
+                return f
 
-        f = getattr(self, 'get_column_%s_data' % mangled_name, None)
+        f = getattr(self, 'get_column_%s_data' % (column.name,), None)
         if f:
             return f
 
-        f = getattr(self, 'get_column_%d_data' % i, None)
+        f = getattr(self, 'get_column_%d_data' % (i,), None)
         if f:
             return f
 
