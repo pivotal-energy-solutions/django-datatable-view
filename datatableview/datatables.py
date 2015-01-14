@@ -362,3 +362,21 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             attributes['data-sorting'] = ','.join(map(six.text_type, self.ordering[name]))
 
         return attributes
+
+class LegacyDatatable(Datatable):
+    def resolve_virtual_columns(self, *names):
+        virtual_columns = {}
+        for name in names:
+            field = get_field_definition(name)
+            column = columns.TextColumn(sources=field.fields, label=field.pretty_name,
+                                        processor=field.callback)
+            virtual_columns[name] = column
+
+        # Make sure it's in the same order as originally defined
+        new_columns = OrderedDict()
+        for name in self._meta.columns:
+            if name in self.columns:
+                new_columns[name] = self.columns[name]
+            else:
+                new_columns[name] = virtual_columns[name]
+        self.columns = new_columns

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .datatables import Datatable
+from .datatables import Datatable, LegacyDatatable
 
 __name__ = 'datatableview'
 __author__ = 'Tim Valenta'
