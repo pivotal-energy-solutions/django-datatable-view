@@ -24,7 +24,7 @@ except ImportError:
 import six
 
 from .base import DatatableMixin
-from ..datatables import Datatable
+from ..datatables import Datatable, LegacyDatatable
 from ..utils import (apply_options, normalize_config, get_field_definition, get_datatable_structure,
                      ColumnInfoTuple, ColumnOrderingTuple)
 
@@ -286,7 +286,7 @@ class LegacyDatatableMixin(MultipleObjectMixin):
             'callback_target': self,
         }
         kwargs.update(self._get_datatable_options())
-        self._modern_datatable = Datatable(**kwargs)
+        self._modern_datatable = LegacyDatatable(**kwargs)
 
         return apply_options(self._modern_datatable.object_list, self._modern_datatable)
 
@@ -528,6 +528,7 @@ class LegacyConfigurationDatatableMixin(DatatableMixin):
     """
 
     datatable_options = None
+    datatable_class = LegacyDatatable
 
     def get_datatable_options(self):
         return self.datatable_options
