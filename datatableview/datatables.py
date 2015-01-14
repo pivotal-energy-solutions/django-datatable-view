@@ -275,7 +275,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         Each column generates a 2-tuple of data. [0] is the data meant to be displayed to the client
         and [1] is the data in plain-text form, meant for manual searches.  One wouldn't want to
         include HTML in [1], for example.
-
         """
 
         data = {
