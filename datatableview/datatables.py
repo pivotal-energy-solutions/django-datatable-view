@@ -168,6 +168,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.model = model or self._meta.model
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
+
+        self.extra_columns = kwargs.get('columns', None)
         self.columns = copy.deepcopy(self.base_columns)
         self.configure(self._meta.__dict__, kwargs, query_config)
 
