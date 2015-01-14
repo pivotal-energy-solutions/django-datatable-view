@@ -291,7 +291,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             value = column.value(obj, **kwargs)[1]
             processor = self._get_processor_method(i, column)
             if processor:
-                value = processor(default_value=value)
+                value = processor(obj, default_value=value, **kwargs)
             if isinstance(value, (tuple, list)):
                 value = value[0]
 
