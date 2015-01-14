@@ -264,6 +264,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         return {}
 
+    def get_extra_record_data(self, obj):
+        """ Returns a dictionary of JSON-friendly data sent to the client as ``"DT_RowData"``. """
+        return {}
+
     def get_record_data(self, obj):
         """
         Returns a list of column data intended to be passed directly back to dataTables.js.
@@ -276,7 +280,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         data = {
             'pk': obj.pk,
-            '_extra_data': {},  # TODO: callback structure for user access to this field
+            '_extra_data': self.get_extra_record_data(obj),
         }
         for i, (name, column) in enumerate(self.columns.items()):
             kwargs = self.preload_record_data(obj)
