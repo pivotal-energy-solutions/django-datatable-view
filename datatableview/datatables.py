@@ -164,8 +164,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.object_list = object_list
         self.url = url
         self.view = view
-        self.model = self._meta.model or model
         self.forward_callback_target = callback_target
+        self.model = model or self._meta.model
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
         self.columns = copy.deepcopy(self.base_columns)
