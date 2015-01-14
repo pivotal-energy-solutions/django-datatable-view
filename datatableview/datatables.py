@@ -254,7 +254,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     def populate_records(self):
         self._records = apply_options(self.object_list, self)
 
-    def preload_record_data(self, instance):
+    def preload_record_data(self, obj):
         """
         An empty hook for letting the view do something with ``instance`` before column lookups are
         called against the object. The tuple of items returned will be passed as keyword arguments
