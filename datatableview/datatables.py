@@ -286,6 +286,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             kwargs = dict(preloaded_kwargs, **{
                 'datatable': self,
                 'view': self.view,
+                'field_name': column.name,
             })
             value = column.value(obj, **kwargs)[1]
             processor = self._get_processor_method(i, column)

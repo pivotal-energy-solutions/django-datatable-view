@@ -60,7 +60,6 @@ class Column(object):
         of serialization.
         """
 
-        kwargs['field_name'] = self.name
         kwargs = self.get_processor_kwargs(**kwargs)
         values = self.process_value(obj, **kwargs)
 
