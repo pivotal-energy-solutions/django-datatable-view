@@ -46,6 +46,8 @@ class Column(object):
         if label is not None:
             label = smart_text(label)
         self.sources = sources or []  # TODO: Process for real/virtual
+        if not isinstance(self.sources, (tuple, list)):
+            self.sources = [self.sources]
         self.separator = separator
         self.label = label
         self.empty_value = smart_text(empty_value)
