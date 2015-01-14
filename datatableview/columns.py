@@ -11,7 +11,7 @@ from django.utils.encoding import smart_text
 
 import six
 
-from .utils import DEFAULT_EMPTY_VALUE
+from .utils import DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
 def get_attribute_value(obj, bit):
     try:
@@ -36,8 +36,9 @@ class Column(object):
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
 
-    def __init__(self, model_field_class=None, sources=None, label=None,
-                 empty_value=DEFAULT_EMPTY_VALUE, localize=False, processor=None):
+    def __init__(self, label=None, sources=None, model_field_class=None,
+                 separator=DEFAULT_MULTIPLE_SEPARATOR, empty_value=DEFAULT_EMPTY_VALUE,
+                 localize=False, processor=None):
         if model_field_class:
             self.model_field_class = model_field_class
 
@@ -45,6 +46,7 @@ class Column(object):
         if label is not None:
             label = smart_text(label)
         self.sources = sources or []  # TODO: Process for real/virtual
+        self.separator = separator
         self.label = label
         self.empty_value = smart_text(empty_value)
         self.localize = localize
@@ -91,7 +93,7 @@ class Column(object):
             if value is None and self.empty_value is not None:
                 value = self.empty_value
         elif len(values) > 0:
-            value = u' '.join(map(six.text_type, values))
+            value = self.separator.join(map(six.text_type, values))
         else:
             value = self.empty_value
 
@@ -131,5 +133,3 @@ class FloatColumn(Column):
 
 class ForeignKeyColumn(Column):
     model_field_class = models.ForeignKey
-
-

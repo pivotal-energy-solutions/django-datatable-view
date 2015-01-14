@@ -15,6 +15,7 @@ import dateutil.parser
 MINIMUM_PAGE_LENGTH = 1
 DEFAULT_PAGE_LENGTH = 25
 DEFAULT_EMPTY_VALUE = ""
+DEFAULT_MULTIPLE_SEPARATOR = u" "
 
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
