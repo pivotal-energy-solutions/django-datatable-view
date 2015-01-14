@@ -164,8 +164,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.object_list = object_list
         self.url = url
         self.view = view
-        self.fallback_callback_target = callback_target
         self.model = self._meta.model or model
+        self.forward_callback_target = callback_target
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
         self.columns = copy.deepcopy(self.base_columns)
@@ -297,6 +297,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return data
 
     def process_value(self, obj, **kwargs):
+        """ Returns whatever the column derived as the source value. """
         return kwargs['default_value']
 
     def _get_processor_method(self, i, column):
@@ -327,10 +328,21 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if callback:
             if callable(callback):
                 return callback
+            if self.forward_callback_target:
+                f = getattr(self.forward_callback_target, callback, None)
+            else:
+                f = None
+            if f:
+                return f
             return getattr(self, callback)
+                
 
         # Treat the 'nice name' as the starting point for looking up a method
         name = column.label or column.name
+        if self.forward_callback_target:
+            f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column.name,), None)
+            if f:
+                return f
 
         mangled_name = re.sub(r'[\W_]+', '_', name)
 
@@ -342,14 +354,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if f:
             return f
 
-        if self.fallback_callback_target:
-            f = getattr(self.fallback_callback_target, 'get_column_%s_data' % mangled_name, None)
-            if f:
-                return f
-
-            f = getattr(self.fallback_callback_target, 'get_column_%d_data' % i, None)
-            if f:
-                return f
         return None
 
 
