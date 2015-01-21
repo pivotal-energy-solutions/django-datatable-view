@@ -162,6 +162,9 @@ class DatatableMixin(MultipleObjectMixin):
                             except TypeError:
                                 # Failed conversions can lead to the parser adding ints to None.
                                 pass
+                            except OverflowError:
+                                # Catches OverflowError: signed integer is greater than maximum
+                                pass
                             else:
                                 field_queries.append({component_name: date_obj})
 
