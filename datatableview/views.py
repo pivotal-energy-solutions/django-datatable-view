@@ -60,6 +60,11 @@ class DatatableMixin(MultipleObjectMixin):
             return self.get_ajax(request, *args, **kwargs)
         return super(DatatableMixin, self).get(request, *args, **kwargs)
 
+    def get_model(self):
+        if self.model is None:
+            self.model = self.get_queryset().model
+        return self.model
+
     def get_object_list(self):
         """ Gets the core queryset, but applies the datatable options to it. """
         return self.apply_queryset_options(self.get_queryset())
@@ -82,16 +87,15 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         if not hasattr(self, '_datatable_options'):
-            if self.model is None:
-                self.model = self.get_queryset().model
+            model = self.get_model()
 
             options = self.get_datatable_options()
             if options:
                 # Options are defined, but probably in a raw dict format
-                options = DatatableOptions(self.model, self.request.GET, **dict(options))
+                options = DatatableOptions(model, self.request.GET, **dict(options))
             else:
                 # No options defined on the view
-                options = DatatableOptions(self.model, self.request.GET)
+                options = DatatableOptions(model, self.request.GET)
 
             self._datatable_options = options
         return self._datatable_options
@@ -104,7 +108,7 @@ class DatatableMixin(MultipleObjectMixin):
             for column in db_fields:
                 column = get_field_definition( column )
                 for component_name in column.fields + column.search_fields:
-                    field = resolve_orm_path( self.model, component_name )
+                    field = resolve_orm_path( self.get_model(), component_name )
                     if isinstance( field, tuple( FIELD_TYPES['text'] ) ):
                         field_queries.append( Q( **{ component_name + u'__iregex' : search_query } ) )
             queries.append( reduce( operator.or_, field_queries ) )
@@ -117,7 +121,7 @@ class DatatableMixin(MultipleObjectMixin):
                     column = get_field_definition( column )
                     for component_name in column.fields + column.search_fields:
                         field_queries = [ ]  # Queries generated to search this database field for the search term
-                        field = resolve_orm_path( self.model, component_name )
+                        field = resolve_orm_path( self.get_model(), component_name )
                         if field.choices:
                             # Query the database for the database value rather than display value
                             choices = field.get_flatchoices()
@@ -217,11 +221,11 @@ class DatatableMixin(MultipleObjectMixin):
         total_initial_record_count = queryset.count()
 
         if options['ordering']:
-            db_fields, sort_fields = split_real_fields(self.model, options['ordering'])
+            db_fields, sort_fields = split_real_fields(self.get_model(), options['ordering'])
             queryset = queryset.order_by(*db_fields)
 
         if options['search'] or [ x for x in options['column_searches' ] if x ]:
-            org_db_fields, searches = filter_real_fields(self.model, options['columns'],
+            org_db_fields, searches = filter_real_fields(self.get_model(), options['columns'],
                                                      key=get_first_orm_bit)
             db_fields = org_db_fields + options['search_fields']
 
@@ -346,7 +350,7 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         options = self._get_datatable_options()
-        return get_datatable_structure(self.request.path, options, model=self.model)
+        return get_datatable_structure(self.request.path, options, model=self.get_model())
 
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
