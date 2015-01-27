@@ -137,7 +137,11 @@ class DatatableMixin(MultipleObjectMixin):
                         field_queries = []  # Queries generated to search this database field for the search term
 
                         field = resolve_orm_path(self.model, component_name)
-                        if field.choices:
+                        field_method_name = 'search_' + field.name
+                        if hasattr(self, field_method_name):
+                            # Call field specific method to get the field query
+                            field_queries.append(getattr(self, field_method_name)(field, term, component_name))
+                        elif field.choices:
                             # Query the database for the database value rather than display value
                             choices = field.get_flatchoices()
                             length = len(choices)
