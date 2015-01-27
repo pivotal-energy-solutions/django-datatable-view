@@ -45,6 +45,7 @@ OPTION_NAME_MAP = {
     'num_sorting_columns': 'iSortingCols',
     'sort_column': 'iSortCol_%d',
     'sort_column_direction': 'sSortDir_%d',
+    'is_regex' : 'bRegex'
 }
 
 # Mapping of Django field categories to the set of field classes falling into that category.
@@ -96,7 +97,7 @@ _javascript_boolean = {
     True: 'true',
     False: 'false',
 }
-FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
+FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback', 'search_fields'])
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
@@ -154,17 +155,20 @@ def get_field_definition(field_definition):
         field_definition = list(field_definition)
 
     if len(field_definition) == 1:
-        field = [None, field_definition, None]
+        field = [field_definition[0], field_definition, None, None ]
     elif len(field_definition) == 2:
-        field = field_definition + [None]
+        field = field_definition + [None, None]
     elif len(field_definition) == 3:
+        field = field_definition + [None]
+    elif len( field_definition ) == 4:
         field = field_definition
     else:
         raise ValueError("Invalid field definition format.")
 
-    if not isinstance(field[1], (tuple, list)):
-        field[1] = (field[1],)
-    field[1] = tuple(name for name in field[1] if name is not None)
+    for i in ( 1,3 ):
+        if not isinstance(field[i], (tuple, list)):
+            field[i] = (field[i],)
+        field[i] = tuple(name for name in field[i] if name is not None)
 
     return FieldDefinitionTuple(*field)
 
@@ -238,6 +242,7 @@ class DatatableStructure(object):
                 ordering_name = pretty_name
 
             attributes = self.get_column_attributes(ordering_name)
+
             column_info.append(ColumnInfoTuple(pretty_name, flatatt(attributes)))
 
         return column_info
@@ -289,6 +294,14 @@ class DatatableOptions(UserDict):
 
     def _normalize_options(self, query, options):
         """ Validates incoming options in the request query parameters. """
+        num_columns = len( options['columns'] )
+
+        column_searches = []
+        for i in xrange( num_columns ):
+            column_searches.append( query.get( '%s_%d' % ( OPTION_NAME_MAP['search'], i ) ) )
+        options['column_searches'] = column_searches
+
+        options['is_regex'] = True if 'true' == query.get( OPTION_NAME_MAP['is_regex'], 'false' ).lower() else False
 
         # Search
         options['search'] = query.get(OPTION_NAME_MAP['search'], '').strip()
