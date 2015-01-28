@@ -346,14 +346,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             raise ColumnError("Unknown column name(s): %r" % (names,))
 
     # Data retrieval
-    def get_column_index(self, name):
-        if name.startswith('!'):
-            return int(name[1:])
-        try:
-            return self._flat_column_names.index(name)
-        except ValueError:
-            return -1
-
     def _get_current_page(self):
         """
         If page_length is specified in the options or AJAX request, the result list is shortened to
