@@ -214,9 +214,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                     replacement_columns.pop(name)
             self.columns = replacement_columns
 
-        self.config = normalize_config(declared_config, query_config, model=self.model)
-
         self.resolve_virtual_columns(*tuple(self.missing_columns))
+
+        self.config = normalize_config(declared_config, query_config, model=self.model)
 
         # Core options, not modifiable by client updates
         if self.config['hidden_columns'] is None:
