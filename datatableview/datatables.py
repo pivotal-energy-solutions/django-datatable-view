@@ -35,6 +35,7 @@ def pretty_name(name):
     return name[0].capitalize() + name[1:]
 
 def get_column_for_modelfield(model_field):
+    """ Return the built-in Column class for a model field class. """
     for ColumnClass, modelfield_classes in COLUMN_TYPES.items():
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
@@ -125,6 +126,13 @@ class DatatableOptions(object):
 
 
 class DatatableMetaclass(type):
+    """
+    Each declared Datatable object inspects its declared "fields" in order to facilitate an
+    inheritance system resembling the django.forms system.  Except for our custom Meta options that
+    offer field options ('labels', 'processors', etc), this code is essentially a clone of the
+    django.forms strategy.
+    """
+
     def __new__(cls, name, bases, attrs):
         declared_columns = get_declared_columns(bases, attrs, with_base_columns=False)
         new_class = super(DatatableMetaclass, cls).__new__(cls, name, bases, attrs)
@@ -157,6 +165,18 @@ class DatatableMetaclass(type):
 
 @python_2_unicode_compatible
 class Datatable(six.with_metaclass(DatatableMetaclass)):
+    """
+    Declaration container for a clientside datatable, containing an optional Meta inner class,
+    class-level field declarations, and callbacks for filtering and post-processing values requested
+    by the client.
+
+    Client options sent over AJAX GET parameters will override the settings given in the inner Meta
+    class.
+
+    This object can be sent to a template context and rendered there in order to generate an
+    annotated HTML frame for the javascript to initialize.
+    """
+
     options_class = DatatableOptions
 
     def __init__(self, object_list, url, view=None, callback_target=None, model=None,
@@ -177,6 +197,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.unpaged_record_count = None
 
     def configure(self, meta_config, view_config, query_config):
+        """
+        Combines (in order) the declared/inherited inner Meta, any view options, and finally any
+        valid AJAX GET parameters from client modifications to the data they see.
+        """
         declared_config = dict(meta_config, **view_config)
 
         # View-supplied columns should replace the ones brought by the Datatable
@@ -221,6 +245,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
     def resolve_virtual_columns(self, *names):
+        """
+        Called with ``*args`` from the Meta.columns declaration that don't match the model's known
+        fields.  This method can inspect these names and decide what to do with them in special
+        scenarios, but by default, they are simply raised in an exception to notify the developer of
+        an apparent configuration error.
+        """
         if names:
             raise ColumnError("Unknown column name(s): %r" % (names,))
 
@@ -261,7 +291,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         An empty hook for letting the view do something with ``instance`` before column lookups are
         called against the object. The tuple of items returned will be passed as keyword arguments
         to any of the ``get_column_FIELD_NAME_data()`` methods.
-
         """
 
         return {}
