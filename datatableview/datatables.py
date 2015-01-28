@@ -121,6 +121,7 @@ class DatatableOptions(object):
 
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
 
+        # Dictionaries of column names to values
         self.labels = getattr(options, 'labels', None)
         self.processors = getattr(options, 'processors', None)
 
@@ -201,6 +202,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         Combines (in order) the declared/inherited inner Meta, any view options, and finally any
         valid AJAX GET parameters from client modifications to the data they see.
         """
+        # Overwriting with **view_config is safe because unspecified view-level settings do not come
+        # through as None.
         declared_config = dict(meta_config, **view_config)
 
         # View-supplied columns should replace the ones brought by the Datatable
