@@ -14,8 +14,8 @@ import six
 
 from .exceptions import ColumnError
 from . import columns
-from .utils import (normalize_config, apply_options, get_field_definition, ColumnInfoTuple,
-                    ColumnOrderingTuple)
+from .utils import (apply_options, get_field_definition, ColumnOrderingTuple, OPTION_NAME_MAP,
+                    MINIMUM_PAGE_LENGTH)
 
 COLUMN_TYPES = {
     columns.TextColumn: [models.CharField, models.TextField, models.FileField],
@@ -221,33 +221,119 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
-        self.config = normalize_config(declared_config, query_config, model=self.model)
-
-        # Core options, not modifiable by client updates
-        if self.config['hidden_columns'] is None:
-            self.config['hidden_columns'] = []
-        if self.config['search_fields'] is None:
-            self.config['search_fields'] = []
-        if self.config['unsortable_columns'] is None:
-            self.config['unsortable_columns'] = []
-
-        self._flat_column_names = []
-        for column in self.columns:
-            column = get_field_definition(column)
-            flat_name = column.pretty_name
-            if column.fields:
-                flat_name = column.fields[0]
-            self._flat_column_names.append(flat_name)
+        self.config = self.normalize_config(declared_config, query_config)
 
         self.ordering = {}
+        column_order = list(self.columns.keys())
         if self.config['ordering']:
             for i, name in enumerate(self.config['ordering']):
-                plain_name = name.lstrip('-+')
-                index = self.get_column_index(plain_name)
-                if index == -1:
+                column_name = name.lstrip('-+')
+                try:
+                    index = column_order.index(column_name)
+                except ValueError:
+                    # It is important to ignore a bad ordering name, since the model.Meta may
+                    # specify a field name that is not present on the datatable columns list.
                     continue
                 sort_direction = 'desc' if name[0] == '-' else 'asc'
-                self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
+                self.ordering[column_name] = ColumnOrderingTuple(i, index, sort_direction)
+
+    def normalize_config(self, config, query_config):
+        """
+        Merge the declared configuration with whatever valid query parameters are found from the
+        client's AJAX request.
+        """
+
+        # Core options, not modifiable by client updates
+        if config['hidden_columns'] is None:
+            config['hidden_columns'] = []
+        if config['search_fields'] is None:
+            config['search_fields'] = []
+        if config['unsortable_columns'] is None:
+            config['unsortable_columns'] = []
+
+        for option in ['search', 'start_offset', 'page_length', 'ordering']:
+            normalizer_f = getattr(self, 'normalize_config_{}'.format(option))
+            config[option] = normalizer_f(config, query_config)
+
+        return config
+
+    # Client request configuration mergers
+    def normalize_config_search(self, config, query_config):
+        return query_config.get(OPTION_NAME_MAP['search'], '').strip()
+
+    def normalize_config_start_offset(self, config, query_config):
+        try:
+            start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], 0)
+            start_offset = int(start_offset)
+        except ValueError:
+            start_offset = 0
+        else:
+            if start_offset < 0:
+                start_offset = 0
+        return start_offset
+
+    def normalize_config_page_length(self, config, query_config):
+        try:
+            page_length = query_config.get(OPTION_NAME_MAP['page_length'], config['page_length'])
+            page_length = int(page_length)
+        except ValueError:
+            page_length = config['page_length']
+        else:
+            if page_length == -1:  # dataTables' way of asking for all items, no pagination
+                pass
+            elif page_length < MINIMUM_PAGE_LENGTH:
+                page_length = MINIMUM_PAGE_LENGTH
+        return page_length
+
+    def normalize_config_ordering(self, config, query_config):
+        # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
+        # column indices to check the values of sSortDir_X and bSortable_X
+
+        default_ordering = config['ordering']
+        ordering = []
+        columns_list = list(self.columns.values())
+
+        try:
+            num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
+        except ValueError:
+            num_sorting_columns = 0
+
+        # Default sorting from view or model definition
+        if num_sorting_columns == 0:
+            return default_ordering
+
+        for sort_queue_i in range(num_sorting_columns):
+            try:
+                column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+            except ValueError:
+                continue
+
+            # Reject out-of-range sort requests
+            if column_index >= len(columns_list):
+                continue
+
+            column = columns_list[column_index]
+
+            # Reject requests for unsortable columns
+            if column.name in config['unsortable_columns']:
+                continue
+
+            sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+
+            sort_modifier = None
+            if sort_direction == 'asc':
+                sort_modifier = ''
+            elif sort_direction == 'desc':
+                sort_modifier = '-'
+            else:
+                # Aggressively skip invalid specification
+                continue
+
+            ordering.append('%s%s' % (sort_modifier, column.name))
+
+        if not ordering and model:
+            return model._meta.ordering
+        return ordering
 
     def resolve_virtual_columns(self, *names):
         """
