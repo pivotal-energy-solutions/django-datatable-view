@@ -1,8 +1,10 @@
-<table class="table table-striped table-bordered datatable" data-source-url="{{ url }}" data-result-counter-id="{{ result_counter_id }}">
+<table class="display datatable table table-striped table-bordered" data-source-url="{{ url }}"
+       data-result-counter-id="{{ config.result_counter_id }}"
+       data-page-length="{{ config.page_length }}">
     <thead>
         <tr>
-            {% for name, attributes in column_info %}
-            <th data-name="{{ name|slugify }}"{{ attributes|safe }}>{{ name }}</th>
+            {% for column in columns %}
+            <th data-name="{{ column.label|slugify }}"{{ column.attributes|safe }}>{{ column.label }}</th>
             {% endfor %}
         </tr>
     </thead>
