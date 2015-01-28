@@ -361,19 +361,40 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return object_list
 
     def get_records(self):
+        """
+        Returns the fully processed list of records for the given set of options.
+
+        After ensuring that the records are populated from the underlying object_list and
+        configuration options, the records will finally have paging applied before the list is sent
+        to the column data getters.
+
+        Paging has been performed at this stage!
+        """
         if not hasattr(self, '_records'):
             self.populate_records()
 
         return [self.get_record_data(obj) for obj in self._get_current_page()]
 
     def populate_records(self):
+        """
+        Applies the final normalized configuration on the object_list to get the final list of
+        records.  Note that there is no memoization here; calling this method means work will be
+        performed.
+
+        The if ``self.object_list`` is a queryset instead of a list, the queryset will lazily avoid
+        executing any queries as long as the operations requested by the configuration are call
+        database-backed operations.  If they are not, the queryset will be evaluated and then
+        converted to a list for clarity about what has taken place.
+
+        No paging will take place at this stage!
+        """
         self._records = apply_options(self.object_list, self)
 
     def preload_record_data(self, obj):
         """
-        An empty hook for letting the view do something with ``instance`` before column lookups are
-        called against the object. The tuple of items returned will be passed as keyword arguments
-        to any of the ``get_column_FIELD_NAME_data()`` methods.
+        An empty hook for doing something with ``instance`` before column lookups are called
+        against the object. The dict of items returned will be passed as keyword arguments to any
+        of the ``get_column_FIELD_NAME_data()`` methods.
         """
 
         return {}
