@@ -126,6 +126,8 @@ class DatatableOptions(object):
         self.processors = getattr(options, 'processors', None)
 
 
+default_options = DatatableOptions()
+
 class DatatableMetaclass(type):
     """
     Each declared Datatable object inspects its declared "fields" in order to facilitate an
