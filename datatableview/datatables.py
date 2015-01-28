@@ -427,6 +427,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
 class LegacyDatatable(Datatable):
     def resolve_virtual_columns(self, *names):
+        """
+        Assume that all ``names`` are legacy-style declarations and generate columns accordingly.
+        """
         virtual_columns = {}
         for name in names:
             field = get_field_definition(name)
@@ -436,7 +439,7 @@ class LegacyDatatable(Datatable):
 
         # Make sure it's in the same order as originally defined
         new_columns = OrderedDict()
-        for name in self._meta.columns:
+        for name in self._meta.columns:  # Can't use self.config yet, hasn't been generated
             if name in self.columns:
                 new_columns[name] = self.columns[name]
             else:
