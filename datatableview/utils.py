@@ -346,7 +346,7 @@ def apply_options(object_list, spec):
         else:
             spec.unpaged_record_count = total_initial_record_count
     else:
-        object_list = ObjectListResult(object_list)
+        object_list = list(object_list)
 
         # # Manual searches
         # # This is broken until it searches all items in object_list previous to the database
