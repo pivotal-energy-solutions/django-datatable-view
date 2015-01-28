@@ -25,8 +25,9 @@ import six
 
 from .base import DatatableMixin
 from ..datatables import Datatable, LegacyDatatable
-from ..utils import (apply_options, normalize_config, get_field_definition, get_datatable_structure,
-                     ColumnInfoTuple, ColumnOrderingTuple)
+from ..utils import (apply_options, get_field_definition, get_datatable_structure,
+                     ColumnInfoTuple, ColumnOrderingTuple, OPTION_NAME_MAP, DEFAULT_PAGE_LENGTH,
+                     MINIMUM_PAGE_LENGTH)
 
 log = logging.getLogger(__name__)
 
@@ -173,9 +174,100 @@ class DatatableOptions(UserDict):
                 flat_name = column.fields[0]
             self._flat_column_names.append(flat_name)
 
-    def _normalize_options(self, query, options):
+    def _normalize_options(self, query_config, config):
         """ Validates incoming options in the request query parameters. """
-        return normalize_config(options, query, model=self._model)
+
+        model = self._model
+
+        # Search
+        config['search'] = query_config.get(OPTION_NAME_MAP['search'], '').strip()
+
+        # Page start offset
+        try:
+            start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], 0)
+            start_offset = int(start_offset)
+        except ValueError:
+            start_offset = 0
+        else:
+            if start_offset < 0:
+                start_offset = 0
+        config['start_offset'] = start_offset
+
+        # Page length
+        try:
+            page_length = query_config.get(OPTION_NAME_MAP['page_length'],
+                                           config.get('page_length', DEFAULT_PAGE_LENGTH))
+            page_length = int(page_length)
+        except ValueError:
+            page_length = config.get('page_length', DEFAULT_PAGE_LENGTH)
+        else:
+            if page_length == -1:  # datatable's way of asking for all items, no pagination
+                pass
+            elif page_length < MINIMUM_PAGE_LENGTH:
+                page_length = MINIMUM_PAGE_LENGTH
+        config['page_length'] = page_length
+
+        # Ordering
+        # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
+        # column indices to check the values of sSortDir_X and bSortable_X
+        default_ordering = config.get('ordering')
+        config['ordering'] = []
+        try:
+            num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
+        except ValueError:
+            num_sorting_columns = 0
+
+        # Default sorting from view or model definition
+        if not num_sorting_columns:
+            config['ordering'] = default_ordering
+        else:
+            for sort_queue_i in range(num_sorting_columns):
+                try:
+                    column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+                except ValueError:
+                    continue
+                else:
+                    # Reject out-of-range sort requests
+                    if column_index >= len(config['columns']):
+                        continue
+
+                    column = config['columns'][column_index]
+                    column = get_field_definition(column)
+                    is_local_field = False
+                    if column.fields:
+                        base_field_name = column.fields[0].split('__')[0]
+                        if base_field_name in model._meta.get_all_field_names():
+                            is_local_field = True
+
+                    if not column.fields or len(column.fields) > 1 or not is_local_field:
+                        field_name = '!{0}'.format(column_index)
+
+                    if is_local_field:
+                        name = column.fields[0]
+                        field_name = name
+                    else:
+                        name = column.pretty_name
+
+                    # Reject requests for unsortable columns
+                    if config['unsortable_columns'] and name in config['unsortable_columns']:
+                        continue
+
+                    # Get the client's requested sort direction
+                    sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+
+                    sort_modifier = None
+                    if sort_direction == 'asc':
+                        sort_modifier = ''
+                    elif sort_direction == 'desc':
+                        sort_modifier = '-'
+                    else:
+                        continue
+
+                    config['ordering'].append('%s%s' % (sort_modifier, field_name))
+        if not config['ordering'] and model:
+            config['ordering'] = model._meta.ordering
+
+        return config
 
     def get_column_index(self, name):
         if name.startswith('!'):
