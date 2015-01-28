@@ -8,6 +8,7 @@ except ImportError:
 from django.db import models
 from django.db.models import Q
 from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import smart_split
 
 import dateutil.parser
