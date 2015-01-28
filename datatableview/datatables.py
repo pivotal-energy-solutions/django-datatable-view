@@ -416,8 +416,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             False: 'false',
         }
         attributes = {
-            'data-sortable': javascript_boolean[name not in self._meta.unsortable_columns],
-            'data-visible': javascript_boolean[name not in self._meta.hidden_columns],
+            'data-sortable': javascript_boolean[name not in self.config['unsortable_columns']],
+            'data-visible': javascript_boolean[name not in self.config['hidden_columns']],
         }
 
         if name in self.ordering:
