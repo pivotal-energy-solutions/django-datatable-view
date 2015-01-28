@@ -237,6 +237,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.ordering[column_name] = ColumnOrderingTuple(i, index, sort_direction)
 
+    # Client request configuration mergers
     def normalize_config(self, config, query_config):
         """
         Merge the declared configuration with whatever valid query parameters are found from the
@@ -257,7 +258,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         return config
 
-    # Client request configuration mergers
     def normalize_config_search(self, config, query_config):
         return query_config.get(OPTION_NAME_MAP['search'], '').strip()
 
