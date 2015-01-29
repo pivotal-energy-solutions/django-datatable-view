@@ -174,7 +174,7 @@ class PrettyNamesDatatableView(DemoMixin, DatatableView):
             'headline',
             ("Publication date", 'pub_date'),
             'n_comments',
-            'rating',
+            ('rating', 'rating', helpers.field_display),
         ]
     }
 

@@ -58,7 +58,7 @@ FIELD_TYPES = defaultdict(list)
 FIELD_TYPES.update({
     'text': [models.CharField, models.TextField, models.FileField],
     'date': [models.DateField],
-    'boolean': [models.BooleanField],
+    'boolean': [models.BooleanField, models.NullBooleanField],
     'integer': [models.IntegerField, models.AutoField],
     'float': [models.FloatField, models.DecimalField],
 

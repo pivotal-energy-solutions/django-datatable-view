@@ -2,7 +2,7 @@
 
 __name__ = 'datatableview'
 __author__ = 'Tim Valenta'
-__version_info__ = (0, 8, 0)
+__version_info__ = (0, 8, 1)
 __version__ = '.'.join(map(str, __version_info__))
 __date__ = '2013/11/14 2:00:00 PM'
 __credits__ = ['Tim Valenta', 'Steven Klass']

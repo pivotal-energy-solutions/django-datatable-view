@@ -26,6 +26,16 @@ class Author(models.Model):
 
 
 class Entry(models.Model):
+
+    _rating_choices = (
+        (0, 'Ridiculous'),
+        (1, 'Awful'),
+        (2, 'Bad'),
+        (3, 'Average'),
+        (4, 'Good'),
+        (5, 'Excellent'),
+    )
+
     blog = models.ForeignKey(Blog)
     headline = models.CharField(max_length=255)
     body_text = models.TextField()
@@ -34,7 +44,7 @@ class Entry(models.Model):
     authors = models.ManyToManyField(Author)
     n_comments = models.IntegerField()
     n_pingbacks = models.IntegerField()
-    rating = models.IntegerField()
+    rating = models.IntegerField(choices=_rating_choices)
 
     def __unicode__(self):
         return self.headline

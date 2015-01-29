@@ -22,11 +22,9 @@ from django import get_version
 import six
 
 from .forms import XEditableUpdateForm
-from .utils import (
-    FIELD_TYPES, FIELD_HANDLERS, ObjectListResult, DatatableOptions, split_real_fields,
-    filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
-    get_field_definition
-)
+from .utils import (FIELD_TYPES, FIELD_HANDLERS, ObjectListResult, DatatableOptions,
+                    DatatableStructure, split_real_fields, filter_real_fields, resolve_orm_path,
+                    get_first_orm_bit, get_field_definition)
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +47,8 @@ class DatatableMixin(MultipleObjectMixin):
 
     datatable_options = None
     datatable_context_name = 'datatable'
+    datatable_options_class = DatatableOptions
+    datatable_structure_class = DatatableStructure
 
     def get(self, request, *args, **kwargs):
         """
@@ -61,9 +61,22 @@ class DatatableMixin(MultipleObjectMixin):
             return self.get_ajax(request, *args, **kwargs)
         return super(DatatableMixin, self).get(request, *args, **kwargs)
 
+    def get_model(self):
+        if not self.model:
+            self.model = self.get_queryset().model
+        return self.model
+
     def get_object_list(self):
         """ Gets the core queryset, but applies the datatable options to it. """
         return self.apply_queryset_options(self.get_queryset())
+
+    def get_ajax_url(self):
+        return self.request.path
+
+    def get_datatable_structure(self):
+        options = self._get_datatable_options()
+        model = self.get_model()
+        return self.datatable_structure_class(self.get_ajax_url(), options, model=model)
 
     def get_datatable_options(self):
         """
@@ -83,16 +96,15 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         if not hasattr(self, '_datatable_options'):
-            if self.model is None:
-                self.model = self.get_queryset().model
+            model = self.get_model()
 
             options = self.get_datatable_options()
             if options:
                 # Options are defined, but probably in a raw dict format
-                options = DatatableOptions(self.model, self.request.GET, **dict(options))
+                options = self.datatable_options_class(model, self.request.GET, **dict(options))
             else:
                 # No options defined on the view
-                options = DatatableOptions(self.model, self.request.GET)
+                options = self.datatable_options_class(model, self.request.GET)
 
             self._datatable_options = options
         return self._datatable_options
@@ -118,11 +130,11 @@ class DatatableMixin(MultipleObjectMixin):
         total_initial_record_count = queryset.count()
 
         if options['ordering']:
-            db_fields, sort_fields = split_real_fields(self.model, options['ordering'])
+            db_fields, sort_fields = split_real_fields(self.get_model(), options['ordering'])
             queryset = queryset.order_by(*db_fields)
 
         if options['search']:
-            db_fields, searches = filter_real_fields(self.model, options['columns'],
+            db_fields, searches = filter_real_fields(self.get_model(), options['columns'],
                                                      key=get_first_orm_bit)
             db_fields.extend(options['search_fields'])
 
@@ -131,24 +143,39 @@ class DatatableMixin(MultipleObjectMixin):
 
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
-                # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.
-                # For example, "subdivision__name" terminates in a CharField.
+                # Every concrete database lookup string in 'columns' is followed to its trailing
+                # field descriptor. For example, "subdivision__name" terminates in a CharField.
                 # The field type determines how it is probed for search.
                 for column in db_fields:
                     column = get_field_definition(column)
                     for component_name in column.fields:
-                        field = resolve_orm_path(self.model, component_name)
-                        for label, field_types in FIELD_TYPES.items():
-                            if isinstance(field, tuple(field_types)):
-                                # Queries generated to search this database field for the search term
-                                handler = FIELD_HANDLERS.get(label)
-                                if not handler:
-                                    raise ValueError("Unhandled field type %s. Please update FIELD_HANDLERS." % label)
-                                field_queries = handler(field, component_name, term)
-                                break
+                        field_queries = []  # Queries generated to search this database field for the search term
+                        field = resolve_orm_path(self.get_model(), component_name)
+                        if field.choices:
+                            # Query the database for the database value rather than display value
+                            choices = field.get_flatchoices()
+                            length = len(choices)
+                            database_values = []
+                            display_values = []
+
+                            for choice in choices:
+                                database_values.append(choice[0])
+                                display_values.append(choice[1].lower())
+
+                            for i in range(length):
+                                if term.lower() in display_values[i]:
+                                    field_queries = [{component_name + '__iexact': database_values[i]}]
                         else:
-                            raise ValueError("Unhandled field type for %s (%r) in search." % (
-                                             component_name, type(field)))
+                            for label, field_types in FIELD_TYPES.items():
+                                if isinstance(field, tuple(field_types)):
+                                    # Queries generated to search this database field for the search term
+                                    handler = FIELD_HANDLERS.get(label)
+                                    if not handler:
+                                        raise ValueError("Unhandled field type %s. Please update "
+                                                         "FIELD_HANDLERS." % label)
+                                    field_queries = handler(field, component_name, term)
+                                    break
+
                         # Append each field inspection for this term
                         if field_queries:
                             term_queries.extend(map(lambda q: Q(**q), field_queries))
@@ -166,7 +193,10 @@ class DatatableMixin(MultipleObjectMixin):
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
-            object_list._dtv_unpaged_total = queryset.count()
+            if options['search']:
+                object_list._dtv_unpaged_total = queryset.count()
+            else:
+                object_list._dtv_unpaged_total = total_initial_record_count
         else:
             object_list = ObjectListResult(queryset)
 
@@ -244,9 +274,7 @@ class DatatableMixin(MultipleObjectMixin):
         Returns the helper object that can be used in the template to render the datatable skeleton.
 
         """
-
-        options = self._get_datatable_options()
-        return get_datatable_structure(self.request.path, options, model=self.model)
+        return self.get_datatable_structure()
 
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
@@ -502,10 +530,6 @@ class XEditableMixin(object):
     def get_ajax_xeditable_choices(self, request, *args, **kwargs):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
         field_name = request.GET[self.xeditable_fieldname_param]
-
-        if not self.model:
-            self.model = self.get_queryset().model
-
         # Sanitize the requested field name by limiting valid names to the datatable_options columns
         columns = self._get_datatable_options()['columns']
         for name in columns:
@@ -516,7 +540,7 @@ class XEditableMixin(object):
         else:
             return HttpResponseBadRequest()
 
-        field = self.model._meta.get_field_by_name(field_name)[0]
+        field = self.get_model()._meta.get_field_by_name(field_name)[0]
 
         choices = self.get_field_choices(field, field_name)
         return HttpResponse(json.dumps(choices))
