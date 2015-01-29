@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 
+import datetime
 import dateutil.parser
 
 __all__ = (
@@ -10,9 +11,9 @@ __all__ = (
 
 def boolean_field_handler(field, component_name, term):
     if term.lower() in ('true', 'yes'):
-        [{component_name: True}]
+        return [{component_name: True}]
     elif term.lower() in ('false', 'no'):
-        [{component_name: False}]
+        return [{component_name: False}]
 
 
 def date_field_handler(field, component_name, term):
@@ -25,6 +26,9 @@ def date_field_handler(field, component_name, term):
     except TypeError:
         # Failed conversions can lead to the parser adding ints to None.
         pass
+    except OverflowError:
+        # Catches OverflowError: signed integer is greater than maximum
+        pass
     else:
         field_queries.append({component_name: date_obj})
 
@@ -34,7 +38,7 @@ def date_field_handler(field, component_name, term):
     except ValueError:
         pass
     else:
-        if 0 < numerical_value < 3000:
+        if datetime.MINYEAR < numerical_value < datetime.MAXYEAR - 1:
             field_queries.append({component_name + '__year': numerical_value})
         if 0 < numerical_value <= 12:
             field_queries.append({component_name + '__month': numerical_value})
