@@ -708,7 +708,7 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
 
 
-# Advanced configuration
+# Advanced topics
 class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
     Care must be taken to modify the options object on the View class: because it is defined as a
