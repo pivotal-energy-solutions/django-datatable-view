@@ -42,7 +42,7 @@
     }},
     { "model": "example_app.Entry", "pk": 3, "fields": {
         "blog": 1,
-        "headline": "",
+        "headline": "Third Headline",
         "body_text": "",
         "pub_date": "2013-01-01",
         "mod_date": "2013-01-02",
@@ -53,7 +53,7 @@
     }},
     { "model": "example_app.Entry", "pk": 4, "fields": {
         "blog": 1,
-        "headline": "",
+        "headline": "Fourth Headline",
         "body_text": "",
         "pub_date": "2013-01-01",
         "mod_date": "2013-01-02",
@@ -64,7 +64,7 @@
     }},
     { "model": "example_app.Entry", "pk": 5, "fields": {
         "blog": 1,
-        "headline": "",
+        "headline": "Fifth Headline",
         "body_text": "",
         "pub_date": "2013-01-01",
         "mod_date": "2013-01-02",
@@ -75,7 +75,7 @@
     }},
     { "model": "example_app.Entry", "pk": 6, "fields": {
         "blog": 2,
-        "headline": "",
+        "headline": "Sixth Headline",
         "body_text": "",
         "pub_date": "2013-01-01",
         "mod_date": "2013-01-02",
