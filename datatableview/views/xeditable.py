@@ -34,8 +34,9 @@ class XEditableMixin(object):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
         field_name = request.GET[self.xeditable_fieldname_param]
 
+        queryset = self.get_queryset()
         if not self.model:
-            self.model = self.get_queryset().model
+            self.model = queryset.model
 
         # Sanitize the requested field name by limiting valid names to the datatable_options columns
         columns = self._get_datatable_options()['columns']
