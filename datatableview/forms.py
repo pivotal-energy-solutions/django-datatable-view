@@ -15,7 +15,6 @@ class XEditableUpdateForm(forms.Form):
     # Displaying field itself should not be required on the frontend, but x-editable.js sends it
     # along as part of the editing widget.
     name = forms.CharField(max_length=100)
-    # value = forms.CharField(max_length=512)
 
     def __init__(self, model, data, *args, **kwargs):
         super(XEditableUpdateForm, self).__init__(data, *args, **kwargs)
@@ -25,7 +24,7 @@ class XEditableUpdateForm(forms.Form):
 
     def set_value_field(self, model, field_name):
         """ Sets the ``value`` field's class so that it can validate naturally. """
-        fields = fields_for_model(model)
+        fields = fields_for_model(model, fields=[field_name])
         self.fields['value'] = fields[field_name]
 
     def clean_name(self):
