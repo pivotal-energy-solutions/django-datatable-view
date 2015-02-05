@@ -32,7 +32,9 @@ class XEditableMixin(object):
 
     def get_ajax_xeditable_choices(self, request, *args, **kwargs):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
-        field_name = request.GET[self.xeditable_fieldname_param]
+        field_name = request.GET.get(self.xeditable_fieldname_param)
+        if not field_name:
+            return HttpResponseBadRequest("Field name must be given")
 
         queryset = self.get_queryset()
         if not self.model:
