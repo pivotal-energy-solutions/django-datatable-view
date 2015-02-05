@@ -71,6 +71,7 @@ XEDITABLE_FIELD_TYPES = {
     'SmallIntegerField': 'number',
     'TextField': 'text',
     'TimeField': 'text',
+    'ForeignKey': 'select',
 }
 
 # Private utilities
