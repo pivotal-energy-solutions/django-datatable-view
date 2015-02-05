@@ -8,6 +8,12 @@ class XEditableUpdateForm(forms.Form):
     # Note that a primary key can be anything at all, not just an integer
     pk = forms.CharField(max_length=512)
 
+    # The field name we're editing on the target.
+    # This isn't normally a great way to track the field name in the request, but we're going need
+    # to validate the field against the model, so we use the form logic process to force the form
+    # into failure mode if the field name is bad.
+    # Displaying field itself should not be required on the frontend, but x-editable.js sends it
+    # along as part of the editing widget.
     name = forms.CharField(max_length=100)
     # value = forms.CharField(max_length=512)
 
