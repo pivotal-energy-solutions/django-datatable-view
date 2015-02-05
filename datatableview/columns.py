@@ -86,6 +86,8 @@ class Column(object):
                 value = six.text_type(value)
 
             if value is not None:
+                if not isinstance(value, (tuple, list)):
+                    value = (value, value)
                 values.append(value)
 
         if len(values) == 1:
