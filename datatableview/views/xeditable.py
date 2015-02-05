@@ -39,14 +39,19 @@ class XEditableMixin(object):
             self.model = queryset.model
 
         # Sanitize the requested field name by limiting valid names to the datatable_options columns
-        columns = self._get_datatable_options()['columns']
-        for name in columns:
-            if isinstance(name, (list, tuple)):
-                name = name[1]
-            if name == field_name:
-                break
+        from datatableview.views import legacy
+        if isinstance(self, (legacy.LegacyDatatableMixin, legacy.LegacyConfigurationDatatableMixin)):
+            columns = self._get_datatable_options()['columns']
+            for name in columns:
+                if isinstance(name, (list, tuple)):
+                    name = name[1]
+                if name == field_name:
+                    break
+            else:
+                return HttpResponseBadRequest("Invalid field name")
         else:
-            return HttpResponseBadRequest()
+            if field_name not in self.get_datatable().config['columns']:
+                return HttpResponseBadRequest("Invalid field name")
 
         field = self.model._meta.get_field_by_name(field_name)[0]
 
