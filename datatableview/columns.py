@@ -83,7 +83,7 @@ class Column(object):
             value = reduce(get_attribute_value, [obj] + field_name.split('__'))
 
             if isinstance(value, Model):
-                value = six.text_type(value)
+                value = (value.pk, value)
 
             if value is not None:
                 if not isinstance(value, (tuple, list)):
