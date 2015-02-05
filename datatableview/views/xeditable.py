@@ -9,6 +9,7 @@ from .base import DatatableView
 from django import get_version
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.db.models import ForeignKey
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +131,25 @@ class XEditableMixin(object):
             names = ['id', 'text']
         else:
             names = ['value', 'text']
-        return [dict(zip(names, choice)) for choice in field.choices]
+        choices_getter = getattr(self, 'get_field_%s_choices', None)
+        if choices_getter is None:
+            if isinstance(field, ForeignKey):
+                choices_getter = self._get_foreignkey_choices
+            else:
+                choices_getter = self._get_default_choices
+        return [dict(zip(names, choice)) for choice in choices_getter(field, field_name)]
+
+    def _get_foreignkey_choices(self, field, field_name):
+        formfield_kwargs = {}
+        if not field.blank:
+            # Explicitly remove empty choice, since formfield isn't working with instance data and
+            # will consequently try to assume initial=None, forcing the blank option to appear.
+            formfield_kwargs['empty_label'] = None
+        formfield = field.formfield(**formfield_kwargs)
+        return formfield.choices
+
+    def _get_default_choices(self, field, field_name):
+        return field.choices
 
 
 class XEditableDatatableView(XEditableMixin, DatatableView):
