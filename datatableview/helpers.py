@@ -13,6 +13,7 @@ from functools import partial, wraps
 
 from django import get_version
 from django.forms.util import flatatt
+from django.db.models import Model
 
 import six
 
@@ -200,7 +201,11 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             raise ValueError("'make_xeditable' helper needs a single-field data column,"
                              " not {0!r}".format(field_name))
     attrs['data-name'] = field_name
-    attrs['data-value'] = data
+
+    if isinstance(data, Model):
+        attrs['data-value'] = data.pk
+    else:
+        attrs['data-value'] = data
 
     if 'data-pk' not in attrs:
         attrs['data-pk'] = instance.pk
