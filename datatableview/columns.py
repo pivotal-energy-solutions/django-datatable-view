@@ -71,12 +71,6 @@ class Column(object):
         values = self.process_value(obj, **kwargs)
 
         if not isinstance(values, (tuple, list)):
-            # if six.PY2:
-            #     if isinstance(values, str):  # not unicode
-            #         values = values.decode('utf-8')
-            #     else:
-            #         values = unicode(values)
-            # values = (values, re.sub(r'<[^>]+>', '', six.text_type(values)))
             values = (values, values)
 
         return values
