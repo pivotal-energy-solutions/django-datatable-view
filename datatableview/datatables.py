@@ -12,7 +12,7 @@ except ImportError:
 
 import six
 
-from .exceptions import ColumnError
+from .exceptions import ColumnError, SkipRecord
 from . import columns
 from .utils import (apply_options, get_field_definition, ColumnOrderingTuple, OPTION_NAME_MAP,
                     MINIMUM_PAGE_LENGTH)
@@ -373,7 +373,15 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if not hasattr(self, '_records'):
             self.populate_records()
 
-        return [self.get_record_data(obj) for obj in self._get_current_page()]
+        page_data = []
+        for obj in self._get_current_page():
+            try:
+                record_data = self.get_record_data(obj)
+            except SkipRecord:
+                pass
+            else:
+                page_data.append(record_data)
+        return page_data
 
     def populate_records(self):
         """

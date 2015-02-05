@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
-from datatableview import Datatable, columns
+from datatableview import Datatable, columns, SkipRecord
 from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
 from datatableview.views.legacy import LegacyDatatableView, LegacyConfigurationDatatableView
 from datatableview import helpers
@@ -940,6 +940,60 @@ class SatelliteDatatableView(DatatableView):
         kwargs = super(SatelliteDatatableView, self).get_datatable_kwargs()
         kwargs['url'] = reverse('satellite')
         return kwargs
+
+
+class SkippedRecordDatatableView(DemoMixin, DatatableView):
+    """
+    WARNING:
+    Avoid this.
+
+    Normally all queryset modification should happen at the view level, but it's possible that there
+    is mixed or sophisticated items in the list that deserve to be omitted from the final list of
+    objects.  Performing this work might be prohibitively expensive in a simple ``get_queryset()``
+    implementation, where you don't yet have access to information about filters, pagination, etc.
+
+    Experimental support for late omission of a record is available by raising
+    ``datatableview.exceptions.SkipRecord`` anywhere in ``preload_record_data()`` or from inside a
+    column processor function.  Upon encountering this exception, the loop will continue past the
+    object without adding it to the final page output.
+
+    WARNING:
+    Pages that have removed arbitrary objects will exhibit a quirky numbering range that appears to
+    include the dropped records.  The dataTables javascript is assuming that the page matches the
+    requested length (unless it's the last page).  In this demo, the first page has only one record,
+    and there are only a total of 5 total records, however the footer claims that it contains
+    records <code>1 to 2 of 6</code>.<br><br>We've chosen not to decrement the 6 down to 5, because
+    the total can only be monkey-patched for skips found on the current page; skipped records from
+    other pages have no opportunity to be "removed" from the total count, since only the activate
+    page is put through the serialization process where <code>SkipRecord</code> can be raised.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog']
+            page_length = 2
+
+        def get_record_data(self, obj):
+            if obj.pk == 1:
+                raise SkipRecord
+            return Datatable.get_record_data(self, obj)
+
+    implementation = u"""
+    from datatableview import SkipRecord
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog']
+            page_length = 2
+
+        def get_record_data(self, obj):
+            if obj.pk == 1:
+                raise SkipRecord
+            return super(MyDatatable, self).get_record_data(obj)
+
+    class SkippedRecordDatatableView(DemoMixin, DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
 
 
 # Template rendering

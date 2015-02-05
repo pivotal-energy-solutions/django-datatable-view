@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .datatables import Datatable, LegacyDatatable
+from .exceptions import SkipRecord
 
 __name__ = 'datatableview'
 __author__ = 'Tim Valenta'
