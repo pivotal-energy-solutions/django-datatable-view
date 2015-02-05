@@ -15,9 +15,13 @@ var datatableview = {
             options.ajaxOptions.headers = {}
         }
         options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
-        options.success = function (response, newValue) {
+        options.error = function (data) {
+            var response = data.responseJSON;
             if (response.status == 'error') {
-                return response.msg;
+                var errors = $.map(response.form_errors, function(errors, field){
+                    return errors.join('\n');
+                });
+                return errors.join('\n');
             }
         }
         return function(nRow, mData, iDisplayIndex) {
