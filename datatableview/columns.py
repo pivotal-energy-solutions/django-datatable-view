@@ -95,7 +95,9 @@ class Column(object):
             if value is None and self.empty_value is not None:
                 value = self.empty_value
         elif len(values) > 0:
-            value = self.separator.join(map(six.text_type, values))
+            plain_value = [v[0] for v in values]
+            rich_value = self.separator.join(map(six.text_type, [v[1] for v in values]))
+            value = (plain_value, rich_value)
         else:
             value = self.empty_value
 
