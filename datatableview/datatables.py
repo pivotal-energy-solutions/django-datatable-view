@@ -539,6 +539,59 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             yield column
 
 
+class ValuesDatatable(Datatable):
+    """
+    Variant of the standard Datatable that terminates its queryset with ``.values()`` and assigns
+    the results to the column values.
+    """
+    def populate_records(self):
+        """
+        Switches the object_list to a ValuesQuerySet with the given columns' ``sources`` lists.
+        """
+        # Figure out the full list of ORM path names
+        self.column_queries = OrderedDict({'pk': 'pk'})
+        for name, column in self.columns.items():
+            self.column_queries.update(OrderedDict([
+                (source, name) for source in column.sources
+            ]))
+
+        # Convert to a ValuesQuerySet
+        self.object_list = self.object_list.values(*self.column_queries.keys())
+
+        super(ValuesDatatable, self).populate_records()
+
+    def get_object_pk(self, obj):
+        """ Reads the pk from the ValuesQuerySet entry. """
+        return obj['pk']
+
+    def preload_record_data(self, obj):
+        """
+        Add entries to the object dictionary for the real column names mapped to the value from the
+        source, so that it's more natural to deal with long ORM query paths.
+
+        Example conversion:
+        
+            {'pk': 1, 'blog__name': "My Blog"}
+
+        becomes:
+
+            {'pk': 1': 'blog_name': "My Blog", 'blog': "My Blog"}
+
+        If a column declared a plural ``sources`` list, the values at the corresponding object will
+        also be a list.
+        """
+        data = {}
+
+        for orm_path, column_name in self.column_queries.items():
+            value = obj[orm_path]
+            if column_name not in data:
+                data[column_name] = value
+            else:
+                if not isinstance(data[column_name], (tuple, list)):
+                    data[column_name] = [data[column_name]]
+                data[column_name].append(value)
+        obj.update(data)
+        return super(ValuesDatatable, self).preload_record_data(obj)
 
 
 class LegacyDatatable(Datatable):

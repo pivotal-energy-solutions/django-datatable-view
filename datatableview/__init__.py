@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .datatables import Datatable, LegacyDatatable
+from .datatables import Datatable, ValuesDatatable, LegacyDatatable
 from .exceptions import SkipRecord
 
 __name__ = 'datatableview'

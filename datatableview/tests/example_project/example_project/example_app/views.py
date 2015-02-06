@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
-from datatableview import Datatable, columns, SkipRecord
+from datatableview import Datatable, ValuesDatatable, columns, SkipRecord
 from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
 from datatableview.views.legacy import LegacyDatatableView, LegacyConfigurationDatatableView
 from datatableview import helpers
@@ -139,6 +139,64 @@ class ConfigureDatatableObject(DemoMixin, DatatableView):
         model = Entry
         datatable_class = MyDatatable
     """
+
+class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
+    """
+    ``ValuesDatatable`` is a variant of the standard ``Datatable`` configuration object that
+    leverages the very same interaction model.
+    
+    This version of the datatable object gets to make three very helpful assumptions about the data
+    being displayed:
+    
+    <ol>
+    <li>You want faster, smaller queries.</li>
+    <li>``object_list`` is a QuerySet, not just a ``list``.</li>
+    <li>The column definitions are capable of displaying data without the help of any of the model's
+        methods.</li>
+    </ol>
+
+    If these things are true, you can use ``ValuesDatatable`` to have it flip the ``QuerySet`` into
+    a ``ValuesQuerySet`` and fetch only the data that is referenced by your column definitions'
+    ``sources`` declarations.
+
+    INFO:
+    The items in a ``ValuesQuerySet`` are not instances of your model, but are instead simple
+    dictionaries, so you must avoid dotted attribute lookups.
+
+    To reduce confusion about what names are being used to store values found by the ValuesQuerySet,
+    (particularly in the case of related lookups such as ``blog__id``), some postprocessing is
+    performed in the ``preload_record_data()`` hook.  A entry is made in the object dictionary for
+    each column, where value is intuitively what you asked for.  If there was more than one ORM path
+    named in the column's ``sources`` list, then you will find a corresponding list in your object
+    with each of the values.
+
+    To visualize what's being done here, here is a sample object that would be sent to column
+    processor callbacks, which has keys for all ORM source names mixed with actual column names
+    given by the configuration:
+    """
+    model = Entry
+    class datatable_class(ValuesDatatable):
+        blog = columns.TextColumn("Blog", sources=['blog__id', 'blog__name'])
+        publication_date = columns.DateColumn("Publication Date", sources=['pub_date'])
+
+        class Meta:
+            model = Entry
+            columns = ['id', 'blog', 'headline', 'publication_date', 'n_comments', 'n_pingbacks']
+
+    implementation = u"""
+    class MyDatatable(ValuesDatatable):
+        blog = columns.TextColumn("Blog", sources=['blog__id', 'blog__name'])
+        publication_date = columns.DateColumn("Publication Date", sources=['pub_date'])
+
+        class Meta:
+            model = Entry
+            columns = ['id', 'blog', 'headline', 'publication_date', 'n_comments', 'n_pingbacks']
+
+    class ConfigureValuesDatatableObjectDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
 
 class ConfigureInline(DemoMixin, DatatableView):
     """

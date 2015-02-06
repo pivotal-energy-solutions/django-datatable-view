@@ -95,7 +95,10 @@ class Column(object):
 
         values = []
         for field_name in self.sources:
-            value = reduce(get_attribute_value, [obj] + field_name.split('__'))
+            if isinstance(obj, Model):
+                value = reduce(get_attribute_value, [obj] + field_name.split('__'))
+            else:
+                value = obj[field_name]
 
             if isinstance(value, Model):
                 value = (value.pk, value)
