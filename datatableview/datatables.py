@@ -540,7 +540,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
 
 
-        return attributes
 
 class LegacyDatatable(Datatable):
     def resolve_virtual_columns(self, *names):
