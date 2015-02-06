@@ -3,7 +3,6 @@ import copy
 from collections import OrderedDict
 
 from django.db import models
-from django.forms.util import flatatt
 from django.template.loader import render_to_string
 try:
     from django.utils.encoding import python_2_unicode_compatible
@@ -526,6 +525,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         context = {
             'url': self.url,
             'config': self.config,
+            'datatable': self,
             'columns': self.columns.values(),
         }
         return render_to_string(self.config['structure_template'], context)
