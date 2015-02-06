@@ -16,6 +16,7 @@ from django.http import HttpResponse
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils.encoding import force_text
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
@@ -557,7 +558,7 @@ class LegacyDatatableMixin(MultipleObjectMixin):
             return True, getattr(self, callback)
 
         # Treat the 'nice name' as the starting point for looking up a method
-        name = column.pretty_name
+        name = force_text(column.pretty_name, errors="ignore")
         if not name:
             name = column.fields[0]
 
