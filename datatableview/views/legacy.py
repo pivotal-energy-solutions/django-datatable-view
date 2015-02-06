@@ -83,7 +83,6 @@ class DatatableStructure(object):
             'column_info': self.get_column_info(),
         }
         context.update(self.options)
-        print '---', self.options
         return render_to_string(self.options['structure_template'], context)
 
     def __iter__(self):

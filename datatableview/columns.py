@@ -108,9 +108,6 @@ class Column(object):
         else:
             value = self.empty_value
 
-        # if 'datatable' in kwargs:
-        #     return kwargs['datatable'].process_value(obj, default_value=value, **kwargs)
-
         return value
         
 
