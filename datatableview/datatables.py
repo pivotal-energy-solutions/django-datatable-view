@@ -417,6 +417,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         return {}
 
+    def get_object_pk(self, obj):
+        """ Returns the object's ``pk`` value. """
+        return obj.pk
+
     def get_extra_record_data(self, obj):
         """ Returns a dictionary of JSON-friendly data sent to the client as ``"DT_RowData"``. """
         return {}
@@ -432,7 +436,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         preloaded_kwargs = self.preload_record_data(obj)
         data = {
-            'pk': obj.pk,
+            'pk': self.get_object_pk(obj),
             '_extra_data': self.get_extra_record_data(obj),
         }
         for i, (name, column) in enumerate(self.columns.items()):
