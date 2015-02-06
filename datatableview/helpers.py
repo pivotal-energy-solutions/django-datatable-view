@@ -1,4 +1,5 @@
-# coding=utf-8
+# -*- encoding: utf-8 -*-
+
 """
 A collection of small helper functions for generating small pieces of datatable output in custom
 methods on a view.
@@ -151,10 +152,10 @@ def attrgetter(attr, key=None):
     return helper
 
 
-
 def format_date(format_string, localize=False, key=None):
     if localize is not False and localtime is None:
         raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
+
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
@@ -179,6 +180,7 @@ def format(format_string, cast=lambda x: x):
         value = cast(value)
         return format_string.format(value, obj=instance)
     return helper
+
 
 def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     if instance is None:
@@ -261,13 +263,13 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                     attrs['data-source'] += '&select2=true'
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'source'.")
-            
 
         # Choice fields will want to display their readable label instead of db data
         data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
 
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
+
 
 def through_filter(template_filter, arg=None):
     def helper(instance, *args, **kwargs):

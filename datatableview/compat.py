@@ -1,6 +1,9 @@
+# -*- encoding: utf-8 -*-
+
 """ Backports of code left behind by new versions of Django. """
 
 import six
+
 
 # Django 1.7 removed StrAndUnicode, so it has been purged from this project as well.  To bridge the
 # gap, we will rely on this utility directly, instead of trying to generate our own replacement

@@ -1,4 +1,6 @@
-from collections import namedtuple
+# -*- encoding: utf-8 -*-
+
+from collections import defaultdict, namedtuple
 try:
     from functools import reduce
 except ImportError:
@@ -19,6 +21,8 @@ except ImportError:
     from .compat import python_2_unicode_compatible
 
 import six
+
+from . import handlers
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
@@ -50,7 +54,8 @@ OPTION_NAME_MAP = {
 # Mapping of Django field categories to the set of field classes falling into that category.
 # This is used during field searches to know which ORM language queries can be applied to a field,
 # such as "__icontains" or "__year".
-FIELD_TYPES = {
+FIELD_TYPES = defaultdict(list)
+FIELD_TYPES.update({
     'text': [models.CharField, models.TextField, models.FileField],
     'date': [models.DateField],
     'boolean': [models.BooleanField, models.NullBooleanField],
@@ -60,9 +65,18 @@ FIELD_TYPES = {
     # This is a special type for fields that should be passed up, since there is no intuitive
     # meaning for searches done agains the FK field directly.
     'ignored': [models.ForeignKey],
-}
+})
 if hasattr(models, 'GenericIPAddressField'):
     FIELD_TYPES['text'].append(models.GenericIPAddressField)
+
+FIELD_HANDLERS = {
+    'text': handlers.text_field_handler,
+    'date': handlers.date_field_handler,
+    'boolean': handlers.boolean_field_handler,
+    'integer': handlers.integer_field_handler,
+    'float': handlers.float_field_handler,
+    'ignored': handlers.ignored_field_handler
+}
 
 # Mapping of Django's supported field types to their more generic type names.
 # These values are primarily used for the xeditable field type lookups.
@@ -100,6 +114,7 @@ FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'field
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -132,7 +147,7 @@ def get_model_at_related_field(model, attr):
         model = field.rel.to
     else:
         raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                field.__class__.__name__))
+                         field.__class__.__name__))
     return model
 
 
@@ -227,12 +242,10 @@ class DatatableStructure(object):
         for column in self.options['columns']:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
-            column_name = column.pretty_name
             if column.fields and column.fields[0] in model_fields:
                 ordering_name = column.fields[0]
                 if not pretty_name:
                     field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
                     pretty_name = field.verbose_name
             else:
                 ordering_name = pretty_name
@@ -459,4 +472,3 @@ def filter_real_fields(model, fields, key=None):
         else:
             virtual_fields.append(field)
     return db_fields, virtual_fields
-

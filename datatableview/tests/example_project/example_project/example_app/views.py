@@ -1,10 +1,11 @@
+# -*- encoding: utf-8 -*-
+
 from os import sep
 import os.path
 import re
 
 import django
 from django.views.generic import View, TemplateView
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
@@ -14,6 +15,7 @@ from datatableview.utils import get_datatable_structure
 from datatableview import helpers
 
 from .models import Entry, Blog
+
 
 class ResetView(View):
     """ Google App Engine view for reloading the database to a fresh state every 24 hours. """
@@ -98,6 +100,7 @@ class DemoMixin(object):
 
         return context
 
+
 class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
     """
     If no columns are specified in the view's ``datatable_options`` attribute, ``DatatableView``
@@ -122,12 +125,13 @@ class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
         model = Entry
     """
 
+
 class SpecificColumnsDatatableView(DemoMixin, DatatableView):
     """
     To target specific columns that should appear on the table, use the
     ``datatable_options['columns']`` key in the configuration.  Specify a tuple or list of model
     field names, in the order that they are to appear on the table.
-    
+
     Note that fields will attempt to use their ``verbose_name``, if available.
     """
     model = Entry
@@ -153,12 +157,13 @@ class SpecificColumnsDatatableView(DemoMixin, DatatableView):
         }
     """
 
+
 class PrettyNamesDatatableView(DemoMixin, DatatableView):
     """
     By converting a column's definition to a 2-tuple, you can specify a verbose name that should
     appear as the column header.  In this example, the ``pub_date`` field has been given a special
     verbose name ``"Publication date"``.
-    
+
     This becomes particularly useful when the field is virtualized (i.e., not tied to a specific
     model field).
     """
@@ -193,7 +198,7 @@ class PresentationalChangesDatatableView(DemoMixin, DatatableView):
     This table actually uses the same column twice; the first time is for a raw display of the
     ``pub_date`` value, and the second is for a humanized version of the same information via the
     template filter ``timesince``.
-    
+
     Note that the ``Age`` column is sortable using the underlying data from the ``pub_date`` field,
     and is not actually sorting the presentionally modified text of the frontend.
 
@@ -361,7 +366,7 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
     """
     The standard ``"__"`` related field syntax is supported in the model field names for a column.
     The only limitation is that the field's pretty-name should be explicitly given.
-    
+
     Sorting, searching, and value callbacks work on these columns as well.
 
     INFO:
@@ -380,7 +385,7 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
             'pub_date',
         ],
     }
-    
+
     implementation = u"""
     class RelatedFieldsDatatableView(DatatableView):
         model = Entry
@@ -442,6 +447,7 @@ class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
             return ", ".join([helpers.link_to_model(author) for author in instance.authors.all()])
     """
 
+
 class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     """
     If a column definition hasn't supplied an explicit callback value processor, there is a default
@@ -450,7 +456,7 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     If the field has defined a "pretty name" in the tuple format, the pretty name will be used for
     the basis of looking up this default callback.  This is to avoid the complexities of mangling an
     automatic name that makes sense for compound and virtual columns.
-    
+
     "Pretty names" put through the mangling process essentially normalize non-letter non-number
     characters to underscores, and multiple adjacent underscores are collapsed to a single
     underscore.  It's like a slugify process, but using ``"_"`` and without lowercasing.
@@ -500,6 +506,7 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
         def get_column_Publication_Date_data(self, instance, *args, **kwargs):
             return instance.pub_date.strftime("%m/%d/%Y")
     """
+
 
 class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
     """
@@ -607,7 +614,7 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
     Care must be taken to modify the options object on the View class: because it is defined as a
     class attribute, there is only one copy of it in memory, and changing it is not thread safe.
-    
+
     To safely change the options at runtime, copy the main options dictionary and then make a deep
     of the columns list (copying the outer dictionary will not do this automatically).  The simplest
     way to do this is via a call to the built-in ``copy.deepcopy`` function.
@@ -643,11 +650,12 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
             return options
     """
 
+
 class OrderingDatatableView(DemoMixin, DatatableView):
     """
     Default ordering is normally controlled by the model's Meta option ``ordering``, which is a list
     of field names (possibly with a prefix ``"-"`` character to denote reverse order).
-    
+
     ``datatable_options["ordering"]`` is the same kind of list, with the exception that it should
     target virtual and compound fields by their "pretty name", which is the first item in the column
     definition tuple.
@@ -751,7 +759,7 @@ class SearchFieldsDatatableView(DemoMixin, DatatableView):
     When a user searches a datatable, the server will query all of the concrete fields in the
     displayed columns.  You can enable extra search fields that are not shown on the table, but are
     consulted during a search query, by adding ``datatable_options["search_fields"]``.
-    
+
     ``search_fields`` is a simple list of fields using the normal query language.  In this case,
     ``"blog__name"`` has been added to the list of fields, and so you can search the above table
     for the term ``First`` or ``Second`` and see the table filter the results, even though that
@@ -823,6 +831,7 @@ class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
         }
     """
 
+
 class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     """
     The easiest way to get Bootstrap datatables is to use the alternate structural template
@@ -831,7 +840,7 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     specify the template directly in ``datatable_options["structure_template"]``, or you can create
     your own ``datatableview/default_structure.html`` template and simply paste the contents of the
     bootstrap version into it.
-    
+
     WARNING:
     Overriding ``datatableview/default_structure.html`` will affect all datatables using the default
     template!
@@ -839,7 +848,7 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     This gets the table itself looking better, but the rest of the controls added by dataTables.js
     are a little lackluster by comparison.  To fix this, reference the latest integration helper CSS
     and javascript support files in the template:
-    
+
     <pre>
     &lt;link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" /&gt;
     </pre>
@@ -924,7 +933,7 @@ class MultipleTablesDatatableView(DemoMixin, DatatableView):
     automatically read the model class from the returned queryset from ``get_queryset()``.
 
     See the following examples for how to handle certain scenarios.
-    
+
     The principle of the process is that you can override ``get_datatable_options()`` and
     ``get_datatable()`` to modify the structural objects that get returned by the view based on
     certain URL kwargs, GET data, etc.  If you examine the implementation code at the bottom of the
@@ -1021,11 +1030,10 @@ class MultipleTablesDatatableView(DemoMixin, DatatableView):
             return super(MultipleTablesDatatableView, self).get_datatable()
 
         return datatable
-        
 
     def get_context_data(self, **kwargs):
         context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
-    
+
         # Get the other structure objects for the initial context
         context['modified_columns_datatable'] = self.get_datatable(type="demo2")
         context['blog_datatable'] = self.get_datatable(type="demo3")
@@ -1109,7 +1117,7 @@ class MultipleTablesDatatableView(DemoMixin, DatatableView):
                 return super(MultipleTablesDatatableView, self).get_datatable()
 
             return datatable
-        
+
 
         def get_context_data(self, **kwargs):
             context = super(MultipleTablesDatatableView, self).get_context_data(**kwargs)
@@ -1134,9 +1142,9 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
     all of the options and machinery for getting the structure object for the context.
 
     Just add a ``get_context_data()`` method, instantiate the other view, and ask it to generate
-    the options object via ``get_datatable_options()``.  You can feed this options object into 
+    the options object via ``get_datatable_options()``.  You can feed this options object into
     the ``datatableview.utils.get_datatable_structure()`` utility.
-    
+
     ``get_datatable_structure()`` takes at least two arguments, and is the mechanism that a regular
     call to a ``DatatableView.get_datatable()`` uses to get the context variable: the ``ajax_url``
     the table will target, and the ``options`` object.  Unless there are ordering options set in
@@ -1181,6 +1189,7 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
             ],
         }
     '''
+
 
 class SatelliteDatatableView(DatatableView):
     """
