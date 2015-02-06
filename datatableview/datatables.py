@@ -445,21 +445,24 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 'view': self.view,
                 'field_name': column.name,
             })
-            value = column.value(obj, **kwargs)[1]
+            value = self.get_column_value(obj, column, **kwargs)
             processor = self._get_processor_method(i, column)
             if processor:
-                value = processor(obj, default_value=value, **kwargs)
+                value = processor(obj, default_value=value[0], rich_value=value[1], **kwargs)
+
+            # A 2-tuple at this stage has presumably served its purpose in the processor callback,
+            # so we convert it to its "rich" value for display purposes.
             if isinstance(value, (tuple, list)):
-                value = value[0]
+                value = value[1]
 
             if six.PY2 and isinstance(value, str):  # not unicode
                 value = value.decode('utf-8')
             data[str(i)] = six.text_type(value)
         return data
 
-    def process_value(self, obj, **kwargs):
+    def get_column_value(self, obj, column, **kwargs):
         """ Returns whatever the column derived as the source value. """
-        return kwargs['default_value']
+        return column.value(obj, **kwargs)
 
     def _get_processor_method(self, i, column):
         """
