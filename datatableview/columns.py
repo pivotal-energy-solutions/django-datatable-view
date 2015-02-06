@@ -38,7 +38,7 @@ class Column(object):
 
     def __init__(self, label=None, sources=None, model_field_class=None,
                  separator=DEFAULT_MULTIPLE_SEPARATOR, empty_value=DEFAULT_EMPTY_VALUE,
-                 localize=False, processor=None):
+                 sortable=True, visible=True, localize=False, processor=None):
         if model_field_class:
             self.model_field_class = model_field_class
 
@@ -52,7 +52,14 @@ class Column(object):
         self.label = label
         self.empty_value = smart_text(empty_value)
         self.localize = localize
+        self.sortable = sortable
+        self.visible = visible
         self.processor = processor
+
+        # To be filled in externally once the datatable has ordering figured out.
+        self.sort_priority = None
+        self.sort_direction = None
+        self.index = None
 
         # Increase the creation counter, and save our local copy.
         self.creation_counter = Column.creation_counter

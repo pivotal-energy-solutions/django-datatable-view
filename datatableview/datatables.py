@@ -41,7 +41,8 @@ def get_column_for_modelfield(model_field):
             return ColumnClass
 
 # Borrowed from the Django forms implementation 
-def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None):
+def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
+                      unsortable=None, hidden=None):
     field_list = []
     opts = model._meta
     for f in sorted(opts.fields):
@@ -59,8 +60,17 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
             processor = processors[f.name]
         else:
             processor = None
+        if unsortable and f.name in unsortable:
+            sortable = False
+        else:
+            sortable = True
+        if hidden and f.name in hidden:
+            visible = False
+        else:
+            visible = True
         label = (labels or {}).get(f.name, pretty_name(f.verbose_name))
-        column = column_class(sources=[f.name], label=label, processor=processor)
+        column = column_class(sources=[f.name], label=label, processor=processor, sortable=sortable,
+                              visible=visible)
         column.name = f.name
         field_list.append((f.name, column))
 
@@ -143,7 +153,7 @@ class DatatableMetaclass(type):
         opts = new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
         if opts.model:
             columns = columns_for_model(opts.model, opts.columns, opts.exclude, opts.labels,
-                                        opts.processors)
+                                        opts.processors, opts.unsortable_columns, opts.hidden_columns)
             none_model_columns = [k for k, v in six.iteritems(columns) if not v]
             missing_columns = set(none_model_columns) - set(declared_columns.keys())
 
@@ -223,7 +233,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         self.config = self.normalize_config(declared_config, query_config)
 
-        self.ordering = {}
         column_order = list(self.columns.keys())
         if self.config['ordering']:
             for i, name in enumerate(self.config['ordering']):
@@ -234,8 +243,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                     # It is important to ignore a bad ordering name, since the model.Meta may
                     # specify a field name that is not present on the datatable columns list.
                     continue
-                sort_direction = 'desc' if name[0] == '-' else 'asc'
-                self.ordering[column_name] = ColumnOrderingTuple(i, index, sort_direction)
+                self.columns[column_name].sort_priority = i
+                self.columns[column_name].sort_direction = 'desc' if name[0] == '-' else 'asc'
+                self.columns[column_name].index = index
 
     # Client request configuration mergers
     def normalize_config(self, config, query_config):
@@ -331,8 +341,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             ordering.append('%s%s' % (sort_modifier, column.name))
 
-        if not ordering and model:
-            return model._meta.ordering
+        if not ordering and config['model']:
+            return config['model']._meta.ordering
         return ordering
 
     def resolve_virtual_columns(self, *names):
@@ -521,19 +531,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for column in self.columns.values():
             yield column
 
-    @property
-    def attributes(self):
-        javascript_boolean = {
-            True: 'true',
-            False: 'false',
-        }
-        attributes = {
-            'data-sortable': javascript_boolean[name not in self.config['unsortable_columns']],
-            'data-visible': javascript_boolean[name not in self.config['hidden_columns']],
-        }
 
-        if name in self.ordering:
-            attributes['data-sorting'] = ','.join(map(six.text_type, self.ordering[name]))
 
         return attributes
 
