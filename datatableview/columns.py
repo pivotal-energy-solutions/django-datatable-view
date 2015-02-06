@@ -8,6 +8,13 @@ from django.db import models
 from django.db.models import Model, Manager
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
+from django.utils.safestring import mark_safe
+from django.forms.util import flatatt
+from django.template.defaultfilters import slugify
+try:
+    from django.utils.encoding import python_2_unicode_compatible
+except ImportError:
+    from .compat import python_2_unicode_compatible
 
 import six
 
@@ -27,6 +34,7 @@ def get_attribute_value(obj, bit):
     return value
 
 # Corollary to django.forms.fields.Field
+@python_2_unicode_compatible
 class Column(object):
     """ Generic table column using CharField for rendering. """
 
@@ -113,6 +121,30 @@ class Column(object):
 
     def get_processor_kwargs(self, **kwargs):
         return kwargs
+
+    # Template rendering
+    def __str__(self):
+        return mark_safe(u"""<th data-name="{name_slug}"{attrs}>{label}</th>""".format(**{
+            'name_slug': slugify(self.label),
+            'attrs': self.attributes,
+            'label': self.label,
+        }))
+
+    @property
+    def attributes(self):
+        attributes = {
+            'data-sortable': 'true' if self.sortable else 'false',
+            'data-visible': 'true' if self.visible else 'false',
+        }
+
+        if self.sort_priority is not None:
+            attributes['data-sorting'] = ','.join(map(six.text_type, [
+                self.sort_priority,
+                self.index,
+                self.sort_direction,
+            ]))
+
+        return flatatt(attributes)
 
 
 class TextColumn(Column):
