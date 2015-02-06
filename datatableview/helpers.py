@@ -202,8 +202,8 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                              " not {0!r}".format(field_name))
     attrs['data-name'] = field_name
 
-    if isinstance(data, Model):
-        attrs['data-value'] = data.pk
+    if isinstance(data.get('rich_value'), Model):
+        attrs['data-value'] = data['rich_value'].pk
     else:
         attrs['data-value'] = data
 
