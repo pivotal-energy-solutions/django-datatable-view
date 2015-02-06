@@ -1,5 +1,6 @@
 import datetime
 import json
+from django.utils.encoding import force_text
 import re
 import operator
 import logging
@@ -502,7 +503,7 @@ class DatatableMixin(MultipleObjectMixin):
             return True, getattr(self, callback)
 
         # Treat the 'nice name' as the starting point for looking up a method
-        name = column.pretty_name
+        name = force_text(column.pretty_name, errors="ignore")
         if not name:
             name = column.fields[0]
 
