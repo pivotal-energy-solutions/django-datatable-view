@@ -201,3 +201,7 @@ class FloatColumn(Column):
 
 class ForeignKeyColumn(Column):
     model_field_class = models.ForeignKey
+
+
+# Modifications to built-in column mapping
+COLUMN_CLASSES[IntegerColumn].append(models.AutoField)
