@@ -1,6 +1,7 @@
 import json
 import re
 import logging
+from collections import namedtuple
 try:
     from functools import reduce
 except ImportError:
@@ -26,8 +27,8 @@ import six
 
 from .base import DatatableMixin
 from ..datatables import Datatable, LegacyDatatable
-from ..utils import (apply_options, get_field_definition, get_datatable_structure,
-                     ColumnInfoTuple, ColumnOrderingTuple, OPTION_NAME_MAP, DEFAULT_PAGE_LENGTH,
+from ..utils import (apply_options, get_datatable_structure,
+                     OPTION_NAME_MAP, DEFAULT_PAGE_LENGTH,
                      MINIMUM_PAGE_LENGTH)
 
 log = logging.getLogger(__name__)
@@ -51,9 +52,37 @@ _javascript_boolean = {
     False: 'false',
 }
 
+FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
+ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
+ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
+
+def get_field_definition(field_definition):
+    """ Normalizes a field definition into its component parts, even if some are missing. """
+    if not isinstance(field_definition, (tuple, list)):
+        field_definition = [field_definition]
+    else:
+        field_definition = list(field_definition)
+
+    if len(field_definition) == 1:
+        field = [None, field_definition, None]
+    elif len(field_definition) == 2:
+        field = field_definition + [None]
+    elif len(field_definition) == 3:
+        field = field_definition
+    else:
+        raise ValueError("Invalid field definition format.")
+
+    if not isinstance(field[1], (tuple, list)):
+        field[1] = (field[1],)
+    field[1] = tuple(name for name in field[1] if name is not None)
+
+    return FieldDefinitionTuple(*field)
+
+
 class ObjectListResult(list):
     _dtv_total_initial_record_count = None
     _dtv_unpaged_total = None
+
 
 @python_2_unicode_compatible
 class DatatableStructure(object):

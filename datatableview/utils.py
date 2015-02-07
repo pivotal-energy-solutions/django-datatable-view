@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import defaultdict
 import operator
 try:
     from functools import reduce
@@ -74,11 +74,6 @@ XEDITABLE_FIELD_TYPES = {
     'ForeignKey': 'select',
 }
 
-# Private utilities
-FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
-ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
-ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
-
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -115,37 +110,12 @@ def get_model_at_related_field(model, attr):
     return model
 
 
-def get_first_orm_bit(field_definition):
+def get_first_orm_bit(column):
     """ Returns the first ORM path component of a field definition's declared db field. """
-    column = get_field_definition(field_definition)
-
-    if not column.fields:
+    if not column.sources:
         return None
 
-    return column.fields[0].split('__')[0]
-
-
-def get_field_definition(field_definition):
-    """ Normalizes a field definition into its component parts, even if some are missing. """
-    if not isinstance(field_definition, (tuple, list)):
-        field_definition = [field_definition]
-    else:
-        field_definition = list(field_definition)
-
-    if len(field_definition) == 1:
-        field = [None, field_definition, None]
-    elif len(field_definition) == 2:
-        field = field_definition + [None]
-    elif len(field_definition) == 3:
-        field = field_definition
-    else:
-        raise ValueError("Invalid field definition format.")
-
-    if not isinstance(field[1], (tuple, list)):
-        field[1] = (field[1],)
-    field[1] = tuple(name for name in field[1] if name is not None)
-
-    return FieldDefinitionTuple(*field)
+    return column.sources[0].split('__')[0]
 
 
 def apply_options(object_list, spec):
@@ -158,24 +128,26 @@ def apply_options(object_list, spec):
 
     """
 
+    from .views.legacy import get_field_definition
     config = spec.config
 
     # These will hold residue queries that cannot be handled in at the database level.  Anything
     # in these variables by the end will be handled manually (read: less efficiently)
-    sort_fields = []
-    searches = []
+    virtual_ordering = []
+    virtual_searches = []
 
     # This count is for the benefit of the frontend datatables.js
     total_initial_record_count = len(object_list)
 
     if config['ordering']:
-        db_fields, sort_fields = split_real_fields(spec.model, config['ordering'])
-        object_list = object_list.order_by(*db_fields)
+        db_ordering, virtual_ordering = spec.get_ordering_splits()
+        object_list = object_list.order_by(*db_ordering)
+
+        # Save virtual_ordering for later
 
     if config['search']:
-        db_fields, searches = filter_real_fields(spec.model, spec.columns,
-                                                 key=get_first_orm_bit)
-        db_fields.extend(config['search_fields'])
+        db_searches, virtual_searches = spec.get_db_splits()
+        db_searches.extend(config['search_fields'])
 
         queries = []  # Queries generated to search all fields for all terms
         search_terms = map(lambda q: q.strip("'\" "), smart_split(config['search']))
@@ -183,7 +155,7 @@ def apply_options(object_list, spec):
         for term in search_terms:
             term_queries = []  # Queries generated to search all fields for this term
             # Every concrete database lookup string in 'columns' is followed to its trailing field descriptor.  For example, "subdivision__name" terminates in a CharField.  The field type determines how it is probed for search.
-            for column in db_fields:
+            for column in db_searches:
                 column = get_field_definition(column)
                 for component_name in column.fields:
                     field_queries = []  # Queries generated to search this database field for the search term
@@ -249,7 +221,7 @@ def apply_options(object_list, spec):
             object_list = object_list.filter(reduce(operator.and_, queries))
 
     # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
-    if not sort_fields and not searches:
+    if not virtual_ordering and not virtual_searches:
         # We can shortcut and speed up the process if all operations are database-backed.
         object_list = object_list
         if config['search']:
@@ -267,7 +239,7 @@ def apply_options(object_list, spec):
         #     length = len(object_list)
         #     for i, obj in enumerate(reversed(object_list)):
         #         keep = False
-        #         for column_info in searches:
+        #         for column_info in virtual_searches:
         #             column_index = config['columns'].index(column_info)
         #             rich_data, plain_data = spec.get_column_data(column_index, column_info, obj)
         #             for term in search_terms:
@@ -325,63 +297,8 @@ def apply_options(object_list, spec):
     spec.total_initial_record_count = total_initial_record_count
     return object_list
 
-def split_real_fields(model, field_list):
-    """
-    Splits a list of field names on the first name that isn't in the model's concrete fields.  This
-    is used repeatedly for allowing a client to request sorting or filtering on virtual or compound
-    columns in the display.
 
-    Returns a 2-tuple, where the database can safely handle the first item, and the second must be
-    handled in code.
-
-    """
-
-    i = 0
-
-    for i, field_name in enumerate(field_list):
-        if field_name[0] in '-+':
-            field_name = field_name[1:]
-
-        # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
-        # the search for the first non-database field should end.
-        try:
-            resolve_orm_path(model, field_name)
-        except FieldDoesNotExist:
-            break
-    else:
-        i = len(field_list)
-
-    return field_list[:i], field_list[i:]
-
-
-def filter_real_fields(model, fields, key=None):
-    """
-    Like ``split_real_fields``, except that the returned 2-tuple is [0] the set of concrete field
-    names that can be queried in the ORM, and [1] the set of virtual names that can't be handled.
-
-    """
-
-    field_hints = tuple(zip(map(key, fields), fields))
-    field_map = dict(field_hints)
-    field_list = set(field_map.keys())
-    concrete_names = set(model._meta.get_all_field_names())
-
-    # Do some math with sets
-    concrete_fields = concrete_names.intersection(field_list)
-    virtual_fields = field_list.difference(concrete_names)
-
-    # Get back the original data items that correspond to the found data
-    db_fields = []
-    virtual_fields = []
-    for bit, field in field_hints:
-        if bit in concrete_fields:
-            db_fields.append(field)
-        else:
-            virtual_fields.append(field)
-    return db_fields, virtual_fields
-
-
-# Legacy
+# Legacy only
 def get_datatable_structure(ajax_url, options, model=None):
     """
     Uses ``options``, a dict or DatatableOptions, into a ``DatatableStructure`` for template use.

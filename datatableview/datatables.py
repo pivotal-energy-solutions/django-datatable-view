@@ -13,8 +13,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from . import columns
-from .utils import (apply_options, get_field_definition, ColumnOrderingTuple, OPTION_NAME_MAP,
-                    MINIMUM_PAGE_LENGTH)
+from .utils import apply_options, OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH
 
 COLUMN_TYPES = {
     columns.TextColumn: [models.CharField, models.TextField, models.FileField],
@@ -599,6 +598,7 @@ class LegacyDatatable(Datatable):
         """
         Assume that all ``names`` are legacy-style declarations and generate columns accordingly.
         """
+        from .views.legacy import get_field_definition
         virtual_columns = {}
         for name in names:
             field = get_field_definition(name)
