@@ -1,4 +1,5 @@
 import re
+import operator
 from collections import defaultdict
 try:
     from functools import reduce
@@ -7,7 +8,8 @@ except ImportError:
 
 from django import get_version
 from django.db import models
-from django.db.models import Model, Manager
+from django.db.models import Model, Manager, Q
+from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
@@ -19,6 +21,8 @@ except ImportError:
     from .compat import python_2_unicode_compatible
 
 import six
+import dateutil
+
 from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
 # Registry of Column subclasses to their declared corresponding ModelField.
@@ -143,6 +147,125 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     def get_processor_kwargs(self, **kwargs):
         return kwargs
 
+    def get_db_sources(self, model):
+        sources = []
+        for source in self.sources:
+            target_field = self._resolve_source(model, source)
+            if target_field:
+                sources.append(source)
+        return sources
+
+    def get_virtual_sources(self, model):
+        sources = []
+        for source in self.sources:
+            target_field = self._resolve_source(model, source)
+            if target_field is None:
+                sources.append(source)
+        return sources
+
+    def _resolve_source(self, model, source):
+        # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
+        # the search for the first non-database field should end.
+        try:
+            return resolve_orm_path(model, source)
+        except FieldDoesNotExist:
+            return None
+
+    # Interactivity features
+    def get_column_for_source(self, model, source):
+        """ Generates a temporary searchterm-handling Column for a given ``source``. """
+        # TODO: Get this method on the Datatable instead of the Column
+        modelfield = resolve_orm_path(model, source)
+        for Column, modelfields in COLUMN_CLASSES.items():
+            if isinstance(modelfield, tuple(modelfields)):
+                return Column()
+
+    def prep_search_value(self, term, lookup_type):
+        """ Coerce the input term to work for the given lookup_type. """
+
+        # We avoid making changes that the Django ORM can already do for us
+        multi_terms = None
+
+        if lookup_type == "in":
+            in_bits = re.split(r',\s*', term)
+            if len(in_bits) > 1:
+                multi_terms = in_bits
+            else:
+                term = None
+
+        if lookup_type == "range":
+            range_bits = re.split(r'\s*-\s*', term)
+            if len(range_bits) == 2:
+                multi_terms = range_bits
+            else:
+                term = None
+
+        if multi_terms:
+            return filter(None, (self.prep_search_value(multi_term) for multi_term in multi_terms))
+
+        if lookup_type not in ('year', 'month', 'day', 'hour' 'minute', 'second', 'week_day'):
+            model_field = self.model_field_class()
+            try:
+                term = model_field.get_prep_value(term)
+            except:
+                term = None
+        else:
+            try:
+                term = int(term)
+            except ValueError:
+                term = None
+
+        return term
+
+    def get_lookup_types(self, handler=None):
+        """ Generates the list of valid ORM lookup operators. """
+        lookup_types = self.lookup_types
+        if handler:
+            lookup_types = handler.lookup_types
+
+        # Add regex and MySQL 'search' operators if requested for the original column definition
+        if self.allow_regex and 'iregex' not in lookup_types:
+            lookup_types += ('iregex',)
+        if self.allow_full_text_search and 'search' not in lookup_types:
+            lookup_types += ('search',)
+        return lookup_types
+
+    def search(self, model, terms):
+        """
+        Returns the ``Q`` object representing queries made against this column for the given terms.
+        """
+        sources = self.get_db_sources(model)
+        column_queries = []
+        for term in terms:
+            term_queries = []
+            for source in sources:
+                handler = self.get_column_for_source(model, source)
+                lookup_types = self.get_lookup_types(handler=handler)
+                for lookup_type in lookup_types:
+                    coerced_term = (handler or self).prep_search_value(term, lookup_type)
+                    if coerced_term is None:
+                        # Skip terms that don't work with the lookup_type
+                        continue
+                    elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
+                        # Skip attempts to build multi-component searches if we only have one term
+                        continue
+
+                    k = '%s__%s' % (source, lookup_type)
+                    term_queries.append(Q(**{k: coerced_term}))
+
+            if term_queries:
+                q = reduce(operator.or_, term_queries)
+                column_queries.append(q)
+
+        if column_queries:
+            q = reduce(operator.or_, term_queries)
+        else:
+            q = None
+        return q
+
+    def get_sort_fields(self):
+        return self.get_db_sources()
+
     # Template rendering
     def __str__(self):
         return mark_safe(u"""<th data-name="{name_slug}"{attrs}>{label}</th>""".format(**{
@@ -176,6 +299,20 @@ class TextColumn(Column):
 class DateColumn(Column):
     model_field_class = models.DateField
     lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
+
+    def prep_search_value(self, term, lookup_type):
+        if lookup_type in ('exact', 'in', 'range'):
+            try:
+                date_obj = dateutil.parser.parse(term)
+            except ValueError:
+                # This exception is theoretical, but it doesn't seem to raise.
+                pass
+            except TypeError:
+                # Failed conversions can lead to the parser adding ints to None.
+                pass
+            else:
+                return date_obj
+        return super(DateColumn, self).prep_search_value(term, lookup_type)
 
 
 class DateTimeColumn(DateColumn):
