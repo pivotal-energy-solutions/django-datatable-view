@@ -1,9 +1,15 @@
 import re
 import copy
+import operator
 from collections import OrderedDict
+try:
+    from functools import reduce
+except ImportError:
+    pass
 
 from django.db import models
 from django.template.loader import render_to_string
+from django.utils.text import smart_split
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
@@ -353,6 +359,41 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if names:
             raise ColumnError("Unknown column name(s): %r" % (names,))
 
+    # Reflection methods for wrapped columns
+    def get_ordering_splits(self):
+        """
+        Returns a 2-tuple of database-sortable and non-database-sortable column names.  The first
+        list ends when the first non-db column is found.  It is therefore possible that
+        ``virtual_fields`` contains subsequent real db-backed fields, but because arrangement of the
+        ordering fields matters, we can't respect those until manual ordering has been done on the
+        intervening non-db fields.
+        """
+        if self.config['ordering'] is None:
+            return [], []
+
+        db_fields = []
+        virtual_fields = []
+        i = 0
+        for i, name in enumerate(self.config['ordering']):
+            column = self.columns[name]
+            if column.get_db_sources():
+                break
+        else:
+            i = len(self.config['ordering'])
+        return self.config['ordering'][:i], self.config['ordering'][i:]
+
+    def get_db_splits(self):
+        """  """
+        db_fields = []
+        virtual_fields = []
+        for name in enumerate(self.config['ordering']):
+            column = self.columns[name]
+            if column.get_db_sources():
+                db_fields.append(name)
+            else:
+                virtual_fields.append(name)
+        return self.config['ordering'][:i], self.config['ordering'][i:]
+
     # Data retrieval
     def _get_current_page(self):
         """
@@ -404,8 +445,48 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         No paging will take place at this stage!
         """
-        self._records = apply_options(self.object_list, self)
+        self._records = None
+        objects = self.object_list
+        objects = self.search(objects)
+        objects = self.sort(objects)
+        self._records = objects
 
+    def search(self, queryset):
+        """ Performs db-only queryset searches. """
+        table_queries = []
+        for name, column in self.columns.items():
+            # TODO: Column-specific search terms
+            terms = self.config['search']
+            terms = filter(None, map(lambda t: t.strip("'\" "), smart_split(terms)))
+
+            search_f = getattr(self, 'search_%s', self._search_column)
+            q = search_f(column, terms)
+            if q is not None:
+                table_queries.append(q)
+
+        if table_queries:
+            q = reduce(operator.or_, table_queries)
+            queryset = queryset.filter(q)
+
+        return queryset
+
+    def _search_column(self, column, terms):
+        """ Requests search queries to perform on  """
+        return column.search(self.model, terms)
+
+    def sort(self, queryset):
+        """ Performs db-only queryset sorts. """
+        fields = []
+        db, virtual = self.get_ordering_splits()
+        for name in db:
+            column = self.columns[name]
+            sources = column.get_sort_fields()
+            if sources:
+                fields.extend(sources)
+
+        return queryset.order_by(*fields)
+
+    # Per-record callbacks
     def preload_record_data(self, obj):
         """
         An empty hook for doing something with ``instance`` before column lookups are called
