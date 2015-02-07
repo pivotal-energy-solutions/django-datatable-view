@@ -1,9 +1,11 @@
 import re
+from collections import defaultdict
 try:
     from functools import reduce
 except ImportError:
     pass
 
+from django import get_version
 from django.db import models
 from django.db.models import Model, Manager
 from django.core.exceptions import ObjectDoesNotExist
@@ -51,6 +53,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     """ Generic table column using CharField for rendering. """
 
     model_field_class = models.CharField
+
+    lookup_types = ('exact', 'in')
 
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
@@ -166,14 +170,21 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
+    lookup_types = ('iexact', 'in', 'icontains')
 
 
 class DateColumn(Column):
     model_field_class = models.DateField
+    lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
 
 
-class DateTimeColumn(Column):
+class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
+    lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
+
+
+if get_version().split('.') >= ['1', '6']:
+    DateTimeColumn.lookup_types += ('hour', 'minute', 'second')
 
 
 class BooleanColumn(Column):
