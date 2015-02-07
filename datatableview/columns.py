@@ -51,7 +51,6 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     """ Generic table column using CharField for rendering. """
 
     model_field_class = models.CharField
-    widget_class = None
 
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
