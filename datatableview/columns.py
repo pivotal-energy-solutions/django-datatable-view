@@ -17,8 +17,12 @@ except ImportError:
     from .compat import python_2_unicode_compatible
 
 import six
+from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
-from .utils import DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
+# Registry of Column subclasses to their declared corresponding ModelField.
+# There are manual additions to this setting after the column definitions below.
+COLUMN_CLASSES = defaultdict(list)
+
 
 def get_attribute_value(obj, bit):
     try:
@@ -33,9 +37,17 @@ def get_attribute_value(obj, bit):
                 value = value()
     return value
 
+class ColumnMetaclass(type):
+    """ Column type for automatic registration of column types as ModelField handlers. """
+    def __new__(cls, name, bases, attrs):
+        new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
+        COLUMN_CLASSES[new_class].append(new_class.model_field_class)
+        return new_class
+
+
 # Corollary to django.forms.fields.Field
 @python_2_unicode_compatible
-class Column(object):
+class Column(six.with_metaclass(ColumnMetaclass)):
     """ Generic table column using CharField for rendering. """
 
     model_field_class = models.CharField
