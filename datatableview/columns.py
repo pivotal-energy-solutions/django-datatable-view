@@ -57,7 +57,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     def __init__(self, label=None, sources=None, model_field_class=None,
                  separator=DEFAULT_MULTIPLE_SEPARATOR, empty_value=DEFAULT_EMPTY_VALUE,
-                 sortable=True, visible=True, localize=False, processor=None):
+                 sortable=True, visible=True, localize=False, processor=None, allow_regex=False,
+                 allow_full_text_search=False):
         if model_field_class:
             self.model_field_class = model_field_class
 
@@ -74,6 +75,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         self.sortable = sortable
         self.visible = visible
         self.processor = processor
+        self.allow_regex = allow_regex
+        self.allow_full_text_search = allow_full_text_search
 
         # To be filled in externally once the datatable has ordering figured out.
         self.sort_priority = None
