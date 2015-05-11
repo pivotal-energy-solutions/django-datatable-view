@@ -11,7 +11,10 @@ except ImportError:
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
-from django.forms.util import flatatt
+try:
+    from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
 
 try:
     from django.utils.encoding import python_2_unicode_compatible

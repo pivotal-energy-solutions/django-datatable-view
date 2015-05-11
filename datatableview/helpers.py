@@ -12,7 +12,10 @@ in any way.
 from functools import partial, wraps
 
 from django import get_version
-from django.forms.util import flatatt
+try:
+    from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
 
 import six
 
