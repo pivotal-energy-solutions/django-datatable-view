@@ -126,8 +126,8 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if not direct and hasattr(field, 'model'):  # Reverse relationship
-        model = field.model
+    if not direct and hasattr(field, 'related_model'):  # Reverse relationship
+        model = field.related_model
     elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
         model = field.rel.to
     else:
