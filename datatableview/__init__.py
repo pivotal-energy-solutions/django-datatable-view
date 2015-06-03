@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
+
 __name__ = 'datatableview'
 __author__ = 'Tim Valenta'
 __version_info__ = (0, 8, 1)

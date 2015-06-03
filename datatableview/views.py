@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import datetime
 import json
 from django.utils.encoding import force_text
