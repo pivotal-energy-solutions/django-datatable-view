@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 """setup.py: Django django-datatables-view"""
 
 from setuptools import setup, find_packages
 
 setup(name='django-datatable-view',
-      version='0.6.2',
+      version='0.8.2',
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
@@ -13,7 +13,7 @@ setup(name='django-datatable-view',
       author='Tim Valenta',
       author_email='tvalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
-      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.5.3',
+      download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.8.2',
       license='Apache License (2.0)',
       classifiers=[
            'Development Status :: 2 - Pre-Alpha',
@@ -28,5 +28,5 @@ setup(name='django-datatable-view',
       packages=find_packages(exclude=['tests', 'tests.*']),
       package_data={'datatableview': ['static/js/*.js', 'templates/datatableview/*.html']},
       include_package_data=True,
-      install_requires=['django>=1.2', 'python-dateutil>=2.2'],
+      install_requires=['django>=1.2', 'python-dateutil>=2.1'],
 )

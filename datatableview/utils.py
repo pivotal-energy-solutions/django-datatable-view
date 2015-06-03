@@ -1,14 +1,29 @@
-from collections import namedtuple
+# -*- encoding: utf-8 -*-
 
+from collections import defaultdict, namedtuple
+try:
+    from functools import reduce
+except ImportError:
+    pass
 try:
     from collections import UserDict
 except ImportError:
     from UserDict import UserDict
 
+from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
-from django.utils.encoding import StrAndUnicode
-from django.forms.util import flatatt
+try:
+    from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
+
+try:
+    from django.utils.encoding import python_2_unicode_compatible
+except ImportError:
+    from .compat import python_2_unicode_compatible
+
+import six
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
@@ -37,9 +52,28 @@ OPTION_NAME_MAP = {
     'sort_column_direction': 'sSortDir_%d',
 }
 
+# Mapping of Django field categories to the set of field classes falling into that category.
+# This is used during field searches to know which ORM language queries can be applied to a field,
+# such as "__icontains" or "__year".
+FIELD_TYPES = defaultdict(list)
+FIELD_TYPES.update({
+    'text': [models.CharField, models.TextField, models.FileField],
+    'date': [models.DateField],
+    'boolean': [models.BooleanField, models.NullBooleanField],
+    'integer': [models.IntegerField, models.AutoField],
+    'float': [models.FloatField, models.DecimalField],
+
+    # This is a special type for fields that should be passed up, since there is no intuitive
+    # meaning for searches done agains the FK field directly.
+    'ignored': [models.ForeignKey],
+})
+if hasattr(models, 'GenericIPAddressField'):
+    FIELD_TYPES['text'].append(models.GenericIPAddressField)
+
 # Mapping of Django's supported field types to their more generic type names.
-# These values are primarily used for the xeditable field type lookups
-FIELD_TYPES = {
+# These values are primarily used for the xeditable field type lookups.
+# TODO: Would be nice if we can derive these from FIELD_TYPES so there's less repetition.
+XEDITABLE_FIELD_TYPES = {
     'AutoField': 'number',
     'BooleanField': 'text',
     'CharField': 'text',
@@ -98,14 +132,19 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if not direct and hasattr(field, 'model'):  # Reverse relationship
-        model = field.model
-    elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
-        model = field.rel.to
-    else:
-        raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                field.__class__.__name__))
-    return model
+    if not direct:
+        if hasattr(field, 'related_model'):  # Reverse relationship
+            # -- Django >=1.8 mode
+            return field.related_model
+        elif hasattr(field, "model"):
+            # -- Django <1.8 mode
+            return field.model
+
+    if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
+        return field.rel.to
+
+    raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
+            field.__class__.__name__))
 
 
 def get_first_orm_bit(field_definition):
@@ -141,7 +180,8 @@ def get_field_definition(field_definition):
     return FieldDefinitionTuple(*field)
 
 
-class DatatableStructure(StrAndUnicode):
+@python_2_unicode_compatible
+class DatatableStructure(object):
     """
     A class designed to be echoed directly to into template HTML to represent a skeleton table
     structure that datatables.js can use.
@@ -154,8 +194,8 @@ class DatatableStructure(StrAndUnicode):
         self.model = model
 
         self.ordering = {}
-        if options.ordering:
-            for i, name in enumerate(options.ordering):
+        if options['ordering']:
+            for i, name in enumerate(options['ordering']):
                 plain_name = name.lstrip('-+')
                 index = options.get_column_index(plain_name)
                 if index == -1:
@@ -163,8 +203,8 @@ class DatatableStructure(StrAndUnicode):
                 sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.ordering[plain_name] = ColumnOrderingTuple(i, index, sort_direction)
 
-    def __unicode__(self):
-        return render_to_string(self.options.structure_template, {
+    def __str__(self):
+        return render_to_string(self.options['structure_template'], {
             'url': self.url,
             'result_counter_id': self.options['result_counter_id'],
             'column_info': self.get_column_info(),
@@ -195,15 +235,13 @@ class DatatableStructure(StrAndUnicode):
         else:
             model_fields = []
 
-        for column in self.options.columns:
+        for column in self.options['columns']:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
-            column_name = column.pretty_name
             if column.fields and column.fields[0] in model_fields:
                 ordering_name = column.fields[0]
                 if not pretty_name:
                     field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
                     pretty_name = field.verbose_name
             else:
                 ordering_name = pretty_name
@@ -215,12 +253,12 @@ class DatatableStructure(StrAndUnicode):
 
     def get_column_attributes(self, name):
         attributes = {
-            'data-sortable': _javascript_boolean[name not in self.options.unsortable_columns],
-            'data-visible': _javascript_boolean[name not in self.options.hidden_columns],
+            'data-sortable': _javascript_boolean[name not in self.options['unsortable_columns']],
+            'data-visible': _javascript_boolean[name not in self.options['hidden_columns']],
         }
 
         if name in self.ordering:
-            attributes['data-sorting'] = ','.join(map(unicode, self.ordering[name]))
+            attributes['data-sorting'] = ','.join(map(six.text_type, self.ordering[name]))
 
         return attributes
 
@@ -234,7 +272,7 @@ class DatatableOptions(UserDict):
         # Core options, not modifiable by client updates
         if 'columns' not in kwargs:
             model_fields = model._meta.local_fields
-            kwargs['columns'] = map(lambda f: (f.verbose_name, f.name), model_fields)
+            kwargs['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
 
         if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
             kwargs['hidden_columns'] = []
@@ -251,18 +289,12 @@ class DatatableOptions(UserDict):
         UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
 
         self._flat_column_names = []
-        for column in self.columns:
+        for column in self['columns']:
             column = get_field_definition(column)
             flat_name = column.pretty_name
             if column.fields:
                 flat_name = column.fields[0]
             self._flat_column_names.append(flat_name)
-
-    def __getattr__(self, k):
-        try:
-            return self.data[k]
-        except KeyError:
-            raise AttributeError("%s doesn't support option %r" % (self.__class__.__name__, k))
 
     def _normalize_options(self, query, options):
         """ Validates incoming options in the request query parameters. """
@@ -320,7 +352,12 @@ class DatatableOptions(UserDict):
 
                     column = options['columns'][column_index]
                     column = get_field_definition(column)
-                    is_local_field = column.fields[0] in self._model._meta.get_all_field_names()
+                    is_local_field = False
+                    if column.fields:
+                        base_field_name = column.fields[0].split('__')[0]
+                        if base_field_name in self._model._meta.get_all_field_names():
+                            is_local_field = True
+
                     if not column.fields or len(column.fields) > 1 or not is_local_field:
                         field_name = '!{0}'.format(column_index)
 
@@ -413,7 +450,7 @@ def filter_real_fields(model, fields, key=None):
 
     """
 
-    field_hints = zip(map(key, fields), fields)
+    field_hints = tuple(zip(map(key, fields), fields))
     field_map = dict(field_hints)
     field_list = set(field_map.keys())
     concrete_names = set(model._meta.get_all_field_names())

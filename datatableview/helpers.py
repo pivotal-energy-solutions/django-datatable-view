@@ -1,4 +1,5 @@
-# coding=utf-8
+# -*- encoding: utf-8 -*-
+
 """
 A collection of small helper functions for generating small pieces of datatable output in custom
 methods on a view.
@@ -12,9 +13,14 @@ in any way.
 from functools import partial, wraps
 
 from django import get_version
-from django.forms.util import flatatt
+try:
+    from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
 
-from .utils import resolve_orm_path, FIELD_TYPES
+import six
+
+from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES
 
 if get_version().split('.') >= ['1', '5']:
     from django.utils.timezone import localtime
@@ -82,8 +88,19 @@ def link_to_model(instance, text=None, *args, **kwargs):
 
     """
     if not text:
-        text = kwargs.get('default_value') or unicode(instance)
-    return u"""<a href="{}">{}</a>""".format(instance.get_absolute_url(), text)
+        text = kwargs.get('default_value') or six.text_type(instance)
+    return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
+
+
+@keyed_helper
+def field_display(instance, *args, **kwargs):
+    """
+    Returns the display name of a field
+    """
+    field_name = kwargs.get('field_data')[1]
+    field_display_method_name = 'get_' + field_name + '_display'
+    method = getattr(instance, field_display_method_name)
+    return u"{}".format(method())
 
 
 @keyed_helper
@@ -106,7 +123,7 @@ def itemgetter(k, ellipsis=False, key=None):
         if default_value is None:
             default_value = instance
         value = default_value[k]
-        if ellipsis and isinstance(k, slice) and isinstance(value, basestring) and \
+        if ellipsis and isinstance(k, slice) and isinstance(value, six.string_types) and \
                 len(default_value) > len(value):
             if ellipsis is True:
                 value += "..."
@@ -138,16 +155,16 @@ def attrgetter(attr, key=None):
     return helper
 
 
-
 def format_date(format_string, localize=False, key=None):
     if localize is not False and localtime is None:
         raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
+
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
         else:
             value = kwargs.get('default_value', value)
-        if value is None:
+        if not value:  # Empty or missing default_value
             return ""
         if localize:
             value = localtime(value)
@@ -167,6 +184,7 @@ def format(format_string, cast=lambda x: x):
         return format_string.format(value, obj=instance)
     return helper
 
+
 def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     if instance is None:
         # Preloading kwargs into the helper for deferred execution
@@ -184,7 +202,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         if k in valid_attr_names:
             if k.startswith('data_'):
                 k = k[5:]
-            attrs['data-{}'.format(k)] = v
+            attrs['data-{0}'.format(k)] = v
 
     attrs['data-xeditable'] = "xeditable"
 
@@ -229,7 +247,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             if field.choices:
                 field_type = 'select'
             else:
-                field_type = FIELD_TYPES.get(field.get_internal_type(), 'text')
+                field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), 'text')
         else:
             field_type = 'text'
         attrs['data-type'] = field_type
@@ -248,13 +266,13 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                     attrs['data-source'] += '&select2=true'
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'source'.")
-            
 
         # Choice fields will want to display their readable label instead of db data
         data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
 
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
+
 
 def through_filter(template_filter, arg=None):
     def helper(instance, *args, **kwargs):

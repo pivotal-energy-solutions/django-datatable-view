@@ -1,25 +1,33 @@
+# -*- encoding: utf-8 -*-
+
+import datetime
 import json
+from django.utils.encoding import force_text
 import re
 import operator
 import logging
+try:
+    from functools import reduce
+except ImportError:
+    pass
 
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.db.models import Model, Manager, Q
-from django.utils.cache import add_never_cache_headers
+from django.utils.encoding import force_text
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from django import get_version
 
+import six
 import dateutil.parser
 
 from .forms import XEditableUpdateForm
-from .utils import (ObjectListResult, DatatableOptions, split_real_fields,
-        filter_real_fields, get_datatable_structure, resolve_orm_path, get_first_orm_bit,
-        get_field_definition)
+from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, DatatableStructure,
+                    split_real_fields, filter_real_fields, resolve_orm_path, get_first_orm_bit,
+                    get_field_definition)
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +50,8 @@ class DatatableMixin(MultipleObjectMixin):
 
     datatable_options = None
     datatable_context_name = 'datatable'
+    datatable_options_class = DatatableOptions
+    datatable_structure_class = DatatableStructure
 
     def get(self, request, *args, **kwargs):
         """
@@ -54,9 +64,22 @@ class DatatableMixin(MultipleObjectMixin):
             return self.get_ajax(request, *args, **kwargs)
         return super(DatatableMixin, self).get(request, *args, **kwargs)
 
+    def get_model(self):
+        if not self.model:
+            self.model = self.get_queryset().model
+        return self.model
+
     def get_object_list(self):
         """ Gets the core queryset, but applies the datatable options to it. """
         return self.apply_queryset_options(self.get_queryset())
+
+    def get_ajax_url(self):
+        return self.request.path
+
+    def get_datatable_structure(self):
+        options = self._get_datatable_options()
+        model = self.get_model()
+        return self.datatable_structure_class(self.get_ajax_url(), options, model=model)
 
     def get_datatable_options(self):
         """
@@ -76,16 +99,15 @@ class DatatableMixin(MultipleObjectMixin):
         """
 
         if not hasattr(self, '_datatable_options'):
-            if self.model is None:
-                self.model = self.get_queryset().model
+            model = self.get_model()
 
             options = self.get_datatable_options()
             if options:
                 # Options are defined, but probably in a raw dict format
-                options = DatatableOptions(self.model, self.request.GET, **dict(options))
+                options = self.datatable_options_class(model, self.request.GET, **dict(options))
             else:
                 # No options defined on the view
-                options = DatatableOptions(self.model, self.request.GET)
+                options = self.datatable_options_class(model, self.request.GET)
 
             self._datatable_options = options
         return self._datatable_options
@@ -110,17 +132,17 @@ class DatatableMixin(MultipleObjectMixin):
         # This count is for the benefit of the frontend datatables.js
         total_initial_record_count = queryset.count()
 
-        if options.ordering:
-            db_fields, sort_fields = split_real_fields(self.model, options.ordering)
+        if options['ordering']:
+            db_fields, sort_fields = split_real_fields(self.get_model(), options['ordering'])
             queryset = queryset.order_by(*db_fields)
 
-        if options.search:
-            db_fields, searches = filter_real_fields(self.model, options.columns,
+        if options['search']:
+            db_fields, searches = filter_real_fields(self.get_model(), options['columns'],
                                                      key=get_first_orm_bit)
-            db_fields.extend(options.search_fields)
+            db_fields.extend(options['search_fields'])
 
             queries = []  # Queries generated to search all fields for all terms
-            search_terms = map(lambda q: q.strip("'\" "), smart_split(options.search))
+            search_terms = map(lambda q: q.strip("'\" "), smart_split(options['search']))
 
             for term in search_terms:
                 term_queries = []  # Queries generated to search all fields for this term
@@ -130,11 +152,25 @@ class DatatableMixin(MultipleObjectMixin):
                     for component_name in column.fields:
                         field_queries = []  # Queries generated to search this database field for the search term
 
-                        field = resolve_orm_path(self.model, component_name)
+                        field = resolve_orm_path(self.get_model(), component_name)
+                        if field.choices:
+                            # Query the database for the database value rather than display value
+                            choices = field.get_flatchoices()
+                            length = len(choices)
+                            database_values = []
+                            display_values = []
 
-                        if isinstance(field, (models.CharField, models.TextField, models.FileField)):
+                            for choice in choices:
+                                database_values.append(choice[0])
+                                display_values.append(choice[1].lower())
+
+                            for i in range(length):
+                                if term.lower() in display_values[i]:
+                                    field_queries = [{component_name + '__iexact': database_values[i]}]
+
+                        elif isinstance(field, tuple(FIELD_TYPES['text'])):
                             field_queries = [{component_name + '__icontains': term}]
-                        elif isinstance(field, models.DateField):
+                        elif isinstance(field, tuple(FIELD_TYPES['date'])):
                             try:
                                 date_obj = dateutil.parser.parse(term)
                             except ValueError:
@@ -142,6 +178,9 @@ class DatatableMixin(MultipleObjectMixin):
                                 pass
                             except TypeError:
                                 # Failed conversions can lead to the parser adding ints to None.
+                                pass
+                            except OverflowError:
+                                # Catches OverflowError: signed integer is greater than maximum
                                 pass
                             else:
                                 field_queries.append({component_name: date_obj})
@@ -152,13 +191,13 @@ class DatatableMixin(MultipleObjectMixin):
                             except ValueError:
                                 pass
                             else:
-                                if 0 < numerical_value < 3000:
+                                if datetime.MINYEAR < numerical_value < datetime.MAXYEAR - 1:
                                     field_queries.append({component_name + '__year': numerical_value})
                                 if 0 < numerical_value <= 12:
                                     field_queries.append({component_name + '__month': numerical_value})
                                 if 0 < numerical_value <= 31:
                                     field_queries.append({component_name + '__day': numerical_value})
-                        elif isinstance(field, models.BooleanField):
+                        elif isinstance(field, tuple(FIELD_TYPES['boolean'])):
                             if term.lower() in ('true', 'yes'):
                                 term = True
                             elif term.lower() in ('false', 'no'):
@@ -167,17 +206,17 @@ class DatatableMixin(MultipleObjectMixin):
                                 continue
 
                             field_queries = [{component_name: term}]
-                        elif isinstance(field, (models.IntegerField, models.AutoField)):
+                        elif isinstance(field, tuple(FIELD_TYPES['integer'])):
                             try:
                                 field_queries = [{component_name: int(term)}]
                             except ValueError:
                                 pass
-                        elif isinstance(field, (models.FloatField, models.DecimalField)):
+                        elif isinstance(field, tuple(FIELD_TYPES['float'])):
                             try:
                                 field_queries = [{component_name: float(term)}]
                             except ValueError:
                                 pass
-                        elif isinstance(field, models.ForeignKey):
+                        elif isinstance(field, tuple(FIELD_TYPES['ignored'])):
                             pass
                         else:
                             raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
@@ -193,11 +232,17 @@ class DatatableMixin(MultipleObjectMixin):
             if len(queries):
                 queryset = queryset.filter(reduce(operator.and_, queries))
 
+        # Append distinct() to eliminate duplicate rows
+        queryset = queryset.distinct()
+
         # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
         if not sort_fields and not searches:
             # We can shortcut and speed up the process if all operations are database-backed.
             object_list = queryset
-            object_list._dtv_unpaged_total = queryset.count()
+            if options['search']:
+                object_list._dtv_unpaged_total = queryset.count()
+            else:
+                object_list._dtv_unpaged_total = total_initial_record_count
         else:
             object_list = ObjectListResult(queryset)
 
@@ -205,12 +250,12 @@ class DatatableMixin(MultipleObjectMixin):
             # # This is broken until it searches all items in object_list previous to the database
             # # sort. That represents a runtime load that hits every row in code, rather than in the
             # # database. If enabled, this would cripple performance on large datasets.
-            # if options.i_walk_the_dangerous_line_between_genius_and_insanity:
+            # if options['i_walk_the_dangerous_line_between_genius_and_insanity']:
             #     length = len(object_list)
             #     for i, obj in enumerate(reversed(object_list)):
             #         keep = False
             #         for column_info in searches:
-            #             column_index = options.columns.index(column_info)
+            #             column_index = options['columns'].index(column_info)
             #             rich_data, plain_data = self.get_column_data(column_index, column_info, obj)
             #             for term in search_terms:
             #                 if term.lower() in plain_data.lower():
@@ -236,7 +281,7 @@ class DatatableMixin(MultipleObjectMixin):
 
             def data_getter_custom(i):
                 def key(obj):
-                    rich_value, plain_value = self.get_column_data(i, options.columns[i], obj)
+                    rich_value, plain_value = self.get_column_data(i, options['columns'][i], obj)
                     return plain_value
                 return key
 
@@ -260,7 +305,7 @@ class DatatableMixin(MultipleObjectMixin):
                 try:
                     object_list.sort(key=key_function(sort_field), reverse=reverse)
                 except TypeError as err:
-                    log.error("Unable to sort on {} - {}".format(sort_field, err))
+                    log.error("Unable to sort on {0} - {1}".format(sort_field, err))
 
             object_list._dtv_unpaged_total = len(object_list)
 
@@ -275,9 +320,7 @@ class DatatableMixin(MultipleObjectMixin):
         Returns the helper object that can be used in the template to render the datatable skeleton.
 
         """
-
-        options = self._get_datatable_options()
-        return get_datatable_structure(self.request.path, options, model=self.model)
+        return self.get_datatable_structure()
 
     def get_context_data(self, **kwargs):
         context = super(DatatableMixin, self).get_context_data(**kwargs)
@@ -299,8 +342,6 @@ class DatatableMixin(MultipleObjectMixin):
         response_data = self.get_json_response_object(object_list, total, filtered_total)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
-
-        #add_never_cache_headers(response)
 
         return response
 
@@ -333,9 +374,9 @@ class DatatableMixin(MultipleObjectMixin):
         options = self._get_datatable_options()
 
         # Narrow the results to the appropriate page length for serialization
-        if options.page_length != -1:
-            i_begin = options.start_offset
-            i_end = options.start_offset + options.page_length
+        if options['page_length'] != -1:
+            i_begin = options['start_offset']
+            i_end = options['start_offset'] + options['page_length']
             object_list = object_list[i_begin:i_end]
 
         return object_list
@@ -364,11 +405,11 @@ class DatatableMixin(MultipleObjectMixin):
         data = {
             'DT_RowId': obj.pk,
         }
-        for i, name in enumerate(options.columns):
+        for i, name in enumerate(options['columns']):
             column_data = self.get_column_data(i, name, obj)[0]
-            if isinstance(column_data, str):  # not unicode
+            if six.PY2 and isinstance(column_data, str):  # not unicode
                 column_data = column_data.decode('utf-8')
-            data[str(i)] = unicode(column_data)
+            data[str(i)] = six.text_type(column_data)
         return data
 
     def get_column_data(self, i, name, instance):
@@ -388,11 +429,12 @@ class DatatableMixin(MultipleObjectMixin):
             values = f(instance, column)
 
         if not isinstance(values, (tuple, list)):
-            if isinstance(values, str):  # not unicode
-                unicode_value = values.decode('utf-8')
-            else:
-                unicode_value = unicode(values)
-            values = (values, re.sub(r'<[^>]+>', '', unicode_value))
+            if six.PY2:
+                if isinstance(values, str):  # not unicode
+                    values = values.decode('utf-8')
+                else:
+                    values = unicode(values)
+            values = (values, re.sub(r'<[^>]+>', '', six.text_type(values)))
 
         return values
 
@@ -463,11 +505,11 @@ class DatatableMixin(MultipleObjectMixin):
             return True, getattr(self, callback)
 
         # Treat the 'nice name' as the starting point for looking up a method
-        name = column.pretty_name
+        name = force_text(column.pretty_name, errors="ignore")
         if not name:
             name = column.fields[0]
 
-        mangled_name = re.sub(r'[\W_]+', '_', name)
+        mangled_name = re.sub(r'[\W_]+', '_', force_text(name))
 
         f = getattr(self, 'get_column_%s_data' % mangled_name, None)
         if f:
@@ -489,7 +531,9 @@ class DatatableMixin(MultipleObjectMixin):
                 value = None
             else:
                 if callable(value):
-                    if not hasattr(value, 'alters_data') or value.alters_data is not True:
+                    if isinstance(value, Manager):
+                        pass
+                    elif not hasattr(value, 'alters_data') or value.alters_data is not True:
                         value = value()
             return value
 
@@ -498,7 +542,7 @@ class DatatableMixin(MultipleObjectMixin):
             value = reduce(chain_lookup, [instance] + field_name.split('__'))
 
             if isinstance(value, Model):
-                value = unicode(value)
+                value = six.text_type(value)
 
             if value is not None:
                 values.append(value)
@@ -506,7 +550,7 @@ class DatatableMixin(MultipleObjectMixin):
         if len(values) == 1:
             value = values[0]
         else:
-            value = ' '.join(map(unicode, values))
+            value = u' '.join(map(six.text_type, values))
 
         return value, value
 
@@ -530,10 +574,6 @@ class XEditableMixin(object):
     def get_ajax_xeditable_choices(self, request, *args, **kwargs):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
         field_name = request.GET[self.xeditable_fieldname_param]
-
-        if not self.model:
-            self.model = self.get_queryset().model
-
         # Sanitize the requested field name by limiting valid names to the datatable_options columns
         columns = self._get_datatable_options()['columns']
         for name in columns:
@@ -544,7 +584,7 @@ class XEditableMixin(object):
         else:
             return HttpResponseBadRequest()
 
-        field = self.model._meta.get_field_by_name(field_name)[0]
+        field = self.get_model()._meta.get_field_by_name(field_name)[0]
 
         choices = self.get_field_choices(field, field_name)
         return HttpResponse(json.dumps(choices))

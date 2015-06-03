@@ -103,11 +103,28 @@ var datatableview = {
                 "aoColumns": column_options,
                 "sAjaxSource": datatable.attr('data-source-url'),
                 "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
-                    $("#" + datatable.attr('data-result-counter-id')).html(iTotal);
-                    var infoString = "Showing "+iStart +" to "+ iEnd+" of "+iTotal+" entries";
+                    $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
+                    var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
                     if (iMax != iTotal) {
-                        infoString +=  " (filtered from "+iMax+" total entries)";
+                        infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
                     }
+                    // /******************************************************************
+                    //  * ##########       ###       ######         ###
+                    //  * ##########     ###  ##     ###   ##     ###  ##
+                    //  *    ###        ###   ###    ###   ##    ###   ###
+                    //  *    ###        ###   ###    ###   ##    ###   ###
+                    //  *    ###        ###   ###    ###   ##    ###   ###
+                    //  *    ###         ######      ######       ######
+                    //  * ===============================================================
+                    //  * The string at the bottom of the table showing entries being
+                    //  * looked at is always updated, but not always rendered in all
+                    //  * browsers *cough cough* Chrome, Safari.
+                    //  * This makes it so that results string always updates.
+                    //  *****************************************************************/
+                    // var n = oSettings.aanFeatures.i;
+                    // for (var i = 0, iLen = n.length; i < j; i++) {
+                    //     $(n[i]).empty();
+                    // }
                     return infoString;
                 }
             });
