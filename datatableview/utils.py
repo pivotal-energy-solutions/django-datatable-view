@@ -237,12 +237,10 @@ class DatatableStructure(object):
         for column in self.options['columns']:
             column = get_field_definition(column)
             pretty_name = column.pretty_name
-            column_name = column.pretty_name
             if column.fields and column.fields[0] in model_fields:
                 ordering_name = column.fields[0]
                 if not pretty_name:
                     field = self.model._meta.get_field_by_name(column.fields[0])[0]
-                    column_name = field.name
                     pretty_name = field.verbose_name
             else:
                 ordering_name = pretty_name

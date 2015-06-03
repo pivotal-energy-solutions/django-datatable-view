@@ -14,9 +14,7 @@ except ImportError:
 from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.db.models import Model, Manager, Q
-from django.utils.cache import add_never_cache_headers
 from django.utils.encoding import force_text
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -341,8 +339,6 @@ class DatatableMixin(MultipleObjectMixin):
         response_data = self.get_json_response_object(object_list, total, filtered_total)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
-
-        #add_never_cache_headers(response)
 
         return response
 
