@@ -14,7 +14,7 @@ from .example_project.example_project.example_app import models
 if get_version().split('.') < ['1', '7']:
     test_data_fixture = 'initial_data_legacy.json'
 else:
-    test_data_fixture = 'initial_data.json'
+    test_data_fixture = 'initial_data_modern.json'
 
 
 class ViewsTests(DatatableViewTestCase):
