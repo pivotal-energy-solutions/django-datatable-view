@@ -1,0 +1,19 @@
+[
+    { "model": "test_app.RelatedModel", "pk": 1, "fields": {
+        "name": "Related 1"
+    }},
+
+    { "model": "test_app.RelatedM2MModel", "pk": 1, "fields": {
+        "name": "RelatedM2M 1"
+    }},
+
+    { "model": "test_app.ExampleModel", "pk": 1, "fields": {
+        "name": "Example 1",
+        "date_created": "2013-01-01"
+    }},
+    { "model": "test_app.ExampleModel", "pk": 2, "fields": {
+        "name": "Example 2",
+        "date_created": "2013-01-01",
+        "related": 1
+    }}
+]

@@ -2,6 +2,7 @@
 
 import json
 
+from django import get_version
 from django.core.urlresolvers import reverse
 
 import six
@@ -10,8 +11,16 @@ from .testcase import DatatableViewTestCase
 from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
 
+if get_version().split('.') < ['1', '7']:
+    test_data_fixture = 'initial_data_legacy.json'
+else:
+    test_data_fixture = 'initial_data.json'
+
+
 class ViewsTests(DatatableViewTestCase):
     urls = 'datatableview.tests.example_project.example_project.example_app.urls'
+
+    fixtures = [test_data_fixture]
 
     def get_json_response(self, url):
         response = self.client.get(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
