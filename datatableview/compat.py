@@ -3,6 +3,7 @@
 
 import six
 
+
 # Django 1.7 removed StrAndUnicode, so it has been purged from this project as well.  To bridge the
 # gap, we will rely on this utility directly, instead of trying to generate our own replacement
 # StrAndUnicode class.
