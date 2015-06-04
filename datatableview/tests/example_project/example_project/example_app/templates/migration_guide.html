@@ -11,6 +11,9 @@
         <div class="col-md-4">
             <div class="list-group">
                 <a class="list-group-item" href="#configuration-style">Update configuration style</a>
+                <a class="list-group-item" href="#new-vocabulary">New vocabulary</a>
+                <a class="list-group-item" href="#no-automatic-column-processors">No more automatic column callbacks</a>
+                <a class="list-group-item" href="#no-automatic-datatable-initialization">No more automatic DataTables.js initialization</a>
                 <a class="list-group-item" href="#default-structure-template">Double check any structure templates</a>
                 <a class="list-group-item" href="#complex-columns">Update complex column definitions</a>
                 <a class="list-group-item" href="#values-datatable">Experiment with the new <code>ValuesDatatable</code></a>
@@ -29,7 +32,7 @@
         The preferred way to configure columns for a view is now to use the
         <code>datatableview.Datatable</code> class.  It has similarities to the Django
         <code>ModelForm</code>: the class uses an inner <code>Meta</code> class to specify all of
-        the options we used to specify in your view's <code>View.datatable_options</code> dict.
+        the options we used to provide in your view's <code>datatable_options</code> dict.
     </p>
     <p>
         You're essentially looking to just unpack the keys and values from your existing
@@ -52,6 +55,64 @@ class MyDatatableView(DatatableView):
         declaring anything fancier than simple model fields or methods as columns (typically
         anything that would have required the 2-tuple or 3-tuple column syntax), please use the new
         <code>Datatable</code> object strategy.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="new-vocabulary" name="new-vocabulary" href="#new-vocabulary">
+            New vocabulary
+        </a>
+    </h3>
+    <h6>We're becoming more sophisticated!</h6>
+    <p>
+        Now that we spent a bunch of time learning how to use the tools we created, it felt like a
+        good time to change some of the terms used internally.
+    </p>
+    <p>
+        In connection with <a href="{% url "configure-datatable-object" %}">the new
+        <code>Datatable</code></a> object that helps you design the datatable,
+        <strong>we've started referring to column data callbacks as "processors"</strong>.  This
+        means that we will be using column callbacks names that aren't patterned after the old style
+        of <code>"get_column_FOO_data()"</code>.  Instead, you'll likely notice names like
+        <code>"get_FOO_data()"</code>, and we'll be specifying the callback in a column definition
+        via a <code>processor</code> keyword argument.  See
+        <a href="{% url "compound-columns" %}">Compound columns</a> for an example of this.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="no-automatic-column-processors" name="no-automatic-column-processors" href="#no-automatic-column-processors">
+            No more automatic column callbacks
+        </a>
+    </h3>
+    <h6>
+        <em>Explicit is better than implicit.</em> -- The Zen of Python (that thing you knew you
+        should be following, but inevitably lazily ignored)
+    </h6>
+    <p>
+        We knew that implicit callbacks was a bad idea, but in our defense,
+        <a href="{% url "column-formats" %}">the deprecated column format was really cumbersome to
+        use</a>.  <strong>This behavior is going away.</strong>  If you have any column callbacks
+        (we're calling them "processors" now) that aren't explicitly named in the column definition,
+        it won't be used.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="no-automatic-datatable-initialization" name="no-automatic-datatable-initialization" href="#no-automatic-datatable-initialization">
+            No more automatic DataTables.js initialization
+        </a>
+    </h3>
+    <h6>Bye bye <code>function confirm_datatable_options(options){ ... }</code></h6>
+    <p>
+        Automatic initialization has gone the way of the buffalo, meaning that it doesn't exist
+        anymore.  The global JavaScript function <code>confirm_datatable_options</code> only ever
+        existed because auto initialization took away your chance to set custom options during the
+        init process.  You should initialize your datatables via a simple call to the global
+        function <code>datatableview.initialize($('.datatable'), opts)</code>.  This JS function
+        reads DOM attributes from the table structure and builds some of the column options for
+        you, but you can pass literally any other supported option in as the second argument. Just
+        give it an object, and everything will be normal.
     </p>
 
     <br><br>
@@ -95,5 +156,19 @@ class MyDatatableView(DatatableView):
             Experiment with the new <code>ValuesDatatable</code>
         </a>
     </h3>
-    <h6>See <a href="#FIXME">FILL IN LATER</a> for examples.</h6>
+    <h6>See <a href="{% url "configure-values-datatable-object" %}">ValuesDatatable object</a> for examples.</h6>
+
+    <p>
+        An elegant simplification of the datatable strategy is to select the values you want to show
+        directly from the database and just put them through to the frontend with little or no
+        processing.  If you can give up declaration of column sources as model methods and
+        properties and rely just on the data itself to be usable, try dropping a
+        <code>ValuesDatatable</code> in as the base class for your table, rather than the default
+        <code>Datatable</code>.
+    </p>
+    
+    <p>
+        This saves Django the trouble of instantiating model instances for each row, and might even
+        encourage the developer to think about their data with fewer layers of abstraction.
+    </p>
 {% endblock content %}
