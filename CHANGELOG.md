@@ -2,6 +2,34 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.8.2
+#### Important future note
+This is the last planned release for the 0.8 series!  0.9 and 1.0 will arrive simultaneously sometime during the next couple of weeks, and the entire declaration process for datatableview options has been modernized.
+
+0.9 will include all of the existing "legacy" configuration code from the 0.8 releases, powered by brand new internals.  0.9 will be a no-fuss update, but if you plan to jump up to 1.0, you will need to following the forthcoming migration guide to get away from these "legacy" delcaration syntaxes.
+
+#### Release notes
+
+This release fixes a number of internal issues for newer versions of Django, most notably the tests!   With the introduction of Django's AppConfig system, the hack we've been using (keeping a testing-only app with testing-only models nested inside of the main datatableview app) was broken by a change concerning which app label Django thought the model belonged to.  The tests themselves were doing okay, had they not been failing during the fixture loading process.
+
+@PamelaM has added initial support for including Travis testing into the repository, which is long overdue for a repository that has been gaining popularity over the last couple of years.  I will commit to keeping up with it since, as they sometimes say, an untested app is considered broken by default.
+
+Another Django 1.7 bug with related model fields was fixed, also thanks to @PamelaM.
+
+Other miscellaneous changes:
+
+* The ``datatableview.utils.FIELD_TYPES`` dictionary is now a ``defaultdict(list)`` (@davidfischer-ch)
+* PEP-8 spacing changes (@davidfischer-ch)
+* Added a ``queryset.distinct()`` to get around some funny ``Q()`` math (@@davidfischer-ch)
+* Added/fixed various utf-8 encoding declarations on source files (@davidfischer-ch)
+* Preemptive fixes for Django 1.8 and 1.9 import locations (@greenbender)
+* Corrected string coercion when ugettext strings were being used as the starting point for looking up a method name (@akx)
+
+## 0.8.1
+This release fixes a Django >=1.7 compatibility bug where ORM query lookups would traverse a m2m relationship and incorrectly discover the manager to be a callable value function.
+
+A small translation fix was provided, a wasteful ``count()`` query removed, ``NullBooleanField`` is now added to the 'boolean' FIELD_TYPES, and we fixed a documentation typo that referred users to the wrong javascript callback name.
+
 ## 0.8.0
 This release modifies the way model fields are detected for ORM queries when submitting a search.  Previously, the approach was primarily hard-coded to support only the core Django fields that served as base classes for all others, but this approach failed to provide any value for third-party fields that were built from scratch.
 
