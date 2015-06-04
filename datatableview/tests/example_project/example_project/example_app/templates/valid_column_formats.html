@@ -1,12 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>Valid column definition formats</h2>
+    <h2>Deprecated column definition guide</h2>
 
     <p>
-        There are numerous ways to specify a column for a datatable, depending on what you need to
-        accomplish.  The following formats are all valid ways to write a column definition in a
-        view's <code>datatable_options</code>:
+        Before version 0.9 and the ``DatatableOptions`` class it introduced, all options had to be
+        specified in one big dictionary and assigned as an attribute on the view.  For simple
+        datatables, this wasn't that bad, but it didn't take much to get out of control.
+    </p>
+
+    <p>
+        The guiding idea of this configuration style was to allow you to name a model field and the
+        table would just use its verbose name for display purposes, and the data would be read off
+        of the field value.  However, if you needed a custom header or had a more complex data
+        source (method, property, two concatenated field values, etc) then the column had to become
+        a 2- or 3-tuple of settings.
+    </p>
+
+    <p>
+        The following formats are all valid (but deprecated) ways to write a column definition on
+        a ``LegacyConfigurationDatatableView`` or ``LegacyDatatableView``, via the
+        <code>datatable_options</code> class attribute:
     </p>
     <pre class="brush: python">
 datatable_options = {
