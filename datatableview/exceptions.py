@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 class ColumnError(Exception):
     """ Some kind of problem with a datatable column. """
 

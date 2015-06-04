@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import json
 import re
 import operator
@@ -14,6 +16,7 @@ from django.db.models import ForeignKey
 log = logging.getLogger(__name__)
 
 CAN_UPDATE_FIELDS = get_version().split('.') >= ['1', '5']
+
 
 class XEditableMixin(object):
     xeditable_form_class = XEditableUpdateForm

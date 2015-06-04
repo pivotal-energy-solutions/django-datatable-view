@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 from django import get_version
 from django.test import TestCase
 from django.core.management import call_command

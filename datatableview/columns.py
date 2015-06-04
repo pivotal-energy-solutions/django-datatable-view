@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import re
 import operator
 from collections import defaultdict

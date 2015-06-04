@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import json
 import logging
 
@@ -9,7 +11,6 @@ from django.conf import settings
 from ..datatables import Datatable, DatatableOptions
 
 log = logging.getLogger(__name__)
-
 
 
 class DatatableJSONResponseMixin(object):
