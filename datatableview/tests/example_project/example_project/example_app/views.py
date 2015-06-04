@@ -486,7 +486,7 @@ class ColumnBackedByMethodDatatableView(DemoMixin, DatatableView):
         pub_date = columns.DateColumn("Publication date", sources=['get_pub_date'])
 
         class Meta:
-            columns = ['blog', 'headline', 'pub_date]
+            columns = ['blog', 'headline', 'pub_date']
 
     class ColumnBackedByMethodDatatableView(DatatableView):
         model = Entry
