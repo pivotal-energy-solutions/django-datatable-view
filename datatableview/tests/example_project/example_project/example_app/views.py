@@ -2,7 +2,7 @@ from os import sep
 import os.path
 import re
 
-import django
+from django import get_version
 from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -16,12 +16,20 @@ from datatableview import helpers
 
 from .models import Entry, Blog
 
+
+if get_version().split('.') < ['1', '7']:
+    initial_data_fixture = 'initial_data_legacy.json'
+else:
+    initial_data_fixture = 'initial_data_modern.json'
+
+
 class ResetView(View):
     """ Google App Engine view for reloading the database to a fresh state every 24 hours. """
     def get(self, request, *args, **kwargs):
         from django.core.management import call_command
         from django.http import HttpResponse
         call_command('syncdb')
+        call_command('loaddata', initial_data_fixture)
         return HttpResponse("Done.")
 
 
@@ -46,7 +54,7 @@ class IndexView(TemplateView):
         # Versions
         context.update({
             'datatableview_version': '.'.join(map(str, datatableview.__version_info__)),
-            'django_version': django.get_version(),
+            'django_version': get_version(),
             'datatables_version': '1.10.0',
         })
 

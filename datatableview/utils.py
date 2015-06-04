@@ -32,7 +32,8 @@ OPTION_NAME_MAP = {
 # Mapping of Django field categories to the set of field classes falling into that category.
 # This is used during field searches to know which ORM language queries can be applied to a field,
 # such as "__icontains" or "__year".
-FIELD_TYPES = {
+FIELD_TYPES = defaultdict(list)
+FIELD_TYPES.update({
     'text': [models.CharField, models.TextField, models.FileField],
     'date': [models.DateField],
     'boolean': [models.BooleanField, models.NullBooleanField],
@@ -42,7 +43,7 @@ FIELD_TYPES = {
     # This is a special type for fields that should be passed up, since there is no intuitive
     # meaning for searches done agains the FK field directly.
     'ignored': [models.ForeignKey],
-}
+})
 if hasattr(models, 'GenericIPAddressField'):
     FIELD_TYPES['text'].append(models.GenericIPAddressField)
 
