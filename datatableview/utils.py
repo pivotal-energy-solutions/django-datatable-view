@@ -112,7 +112,7 @@ def get_model_at_related_field(model, attr):
             return field.model
 
     if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
-        model = field.rel.to
+        return field.rel.to
 
     raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
             field.__class__.__name__))
