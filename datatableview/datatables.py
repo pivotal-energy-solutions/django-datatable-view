@@ -21,7 +21,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from . import columns
-from .utils import apply_options, OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH
+from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH
 
 COLUMN_TYPES = {
     columns.TextColumn: [models.CharField, models.TextField, models.FileField],
