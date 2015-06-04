@@ -103,14 +103,19 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if not direct and hasattr(field, 'model'):  # Reverse relationship
-        model = field.model
-    elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
+    if not direct:
+        if hasattr(field, 'related_model'):  # Reverse relationship
+            # -- Django >=1.8 mode
+            return field.related_model
+        elif hasattr(field, "model"):
+            # -- Django <1.8 mode
+            return field.model
+
+    if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
         model = field.rel.to
-    else:
-        raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                field.__class__.__name__))
-    return model
+
+    raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
+            field.__class__.__name__))
 
 
 def get_first_orm_bit(column):
@@ -215,13 +220,16 @@ def apply_options(object_list, spec):
                         raise ValueError("Unhandled field type for %s (%r) in search." % (component_name, type(field)))
 
                     # Append each field inspection for this term
-                    term_queries.extend(map(lambda q: Q(**q), field_queries))
+                    if len(field_queries):
+                        term_queries.extend(map(lambda q: Q(**q), field_queries))
             # Append the logical OR of all field inspections for this term
             if len(term_queries):
                 queries.append(reduce(operator.or_, term_queries))
         # Apply the logical AND of all term inspections
         if len(queries):
             object_list = object_list.filter(reduce(operator.and_, queries))
+
+    queryset = queryset.distinct()
 
     # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
     if not virtual_ordering and not virtual_searches:
