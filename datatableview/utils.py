@@ -229,7 +229,7 @@ def apply_options(object_list, spec):
         if len(queries):
             object_list = object_list.filter(reduce(operator.and_, queries))
 
-    queryset = queryset.distinct()
+    object_list = object_list.distinct()
 
     # TODO: Remove "and not searches" from this conditional, since manual searches won't be done
     if not virtual_ordering and not virtual_searches:
