@@ -44,6 +44,7 @@ $ cd django-datatable-view
 $ mkvirtualenv datatableview
 (datatableview)$ pip install -r requirements.txt
 (datatableview)$ datatableview/tests/example_project/manage.py syncdb
+(datatableview)$ datatableview/tests/example_project/manage.py loaddata initial_data_modern
 (datatableview)$ datatableview/tests/example_project/manage.py runserver
 ```
 
