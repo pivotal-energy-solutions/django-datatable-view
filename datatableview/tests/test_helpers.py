@@ -3,6 +3,8 @@
 from datetime import datetime
 from functools import partial
 
+from django import get_version
+
 from datatableview import helpers
 
 import six

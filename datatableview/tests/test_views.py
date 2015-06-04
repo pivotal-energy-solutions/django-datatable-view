@@ -2,6 +2,7 @@
 
 import json
 
+from django import get_version
 from django.core.urlresolvers import reverse
 
 import six
