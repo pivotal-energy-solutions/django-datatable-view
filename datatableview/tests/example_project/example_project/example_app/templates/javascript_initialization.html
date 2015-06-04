@@ -2,8 +2,8 @@
 
 {% block static %}
     {{ block.super }}
-    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushXML.js" type="text/javascript"></script>
-    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushJScript.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushXML.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushJScript.js" type="text/javascript"></script>
 {% endblock static %}
 
 {% block content %}
