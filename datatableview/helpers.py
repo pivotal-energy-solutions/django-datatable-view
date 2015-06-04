@@ -144,10 +144,10 @@ def attrgetter(attr, key=None):
     return helper
 
 
-
 def format_date(format_string, localize=False, key=None):
     if localize is not False and localtime is None:
         raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
+
     def helper(value, *args, **kwargs):
         if key:
             value = key(value)
@@ -172,6 +172,7 @@ def format(format_string, cast=lambda x: x):
         value = cast(value)
         return format_string.format(value, obj=instance)
     return helper
+
 
 def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     if instance is None:
@@ -266,6 +267,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
     data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
+
 
 def through_filter(template_filter, arg=None):
     def helper(instance, *args, **kwargs):

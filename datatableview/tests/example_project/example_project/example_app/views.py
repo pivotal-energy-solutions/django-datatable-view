@@ -144,10 +144,10 @@ class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
     """
     ``ValuesDatatable`` is a variant of the standard ``Datatable`` configuration object that
     leverages the very same interaction model.
-    
+
     This version of the datatable object gets to make three very helpful assumptions about the data
     being displayed:
-    
+
     <ol>
     <li>You want faster, smaller queries.</li>
     <li>``object_list`` is a QuerySet, not just a ``list``.</li>
@@ -229,7 +229,7 @@ class ConfigureInline(DemoMixin, DatatableView):
         columns = ['headline', 'pub_date']
     """
 
-    
+
 class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     """
     WARNING:
@@ -311,7 +311,7 @@ class SpecificColumnsDatatableView(DemoMixin, DatatableView):
     To target specific columns that should appear on the table, use the
     ``datatable_options['columns']`` key in the configuration.  Specify a tuple or list of model
     field names, in the order that they are to appear on the table.
-    
+
     Note that fields will attempt to use their ``verbose_name``, if available.
     """
     model = Entry
@@ -335,7 +335,7 @@ class PrettyNamesDatatableView(DemoMixin, DatatableView):
     By converting a column's definition to a 2-tuple, you can specify a verbose name that should
     appear as the column header.  In this example, the ``pub_date`` field has been given a special
     verbose name ``"Publication date"``.
-    
+
     This becomes particularly useful when the field is virtualized (i.e., not tied to a specific
     model field).
     """
@@ -366,7 +366,7 @@ class PresentationalChangesDatatableView(DemoMixin, DatatableView):
     This table actually uses the same column twice; the first time is for a raw display of the
     ``pub_date`` value, and the second is for a humanized version of the same information via the
     template filter ``timesince``.
-    
+
     Note that the ``Age`` column is sortable using the underlying data from the ``pub_date`` field,
     and is not actually sorting the presentionally modified text of the frontend.
 
@@ -532,7 +532,7 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
     """
     The standard ``"__"`` related field syntax is supported in the model field names for a column.
     The only limitation is that the field's pretty-name should be explicitly given.
-    
+
     Sorting, searching, and value callbacks work on these columns as well.
 
     INFO:
@@ -548,7 +548,7 @@ class RelatedFieldsDatatableView(DemoMixin, DatatableView):
 
         class Meta:
             columns = ['id', 'headline', 'blog_name', 'blog_id', 'pub_date']
-    
+
     implementation = u"""
     class MyDatatable(Datatable):
         blog_name = columns.TextColumn("Blog name", ["blog__name"])
@@ -616,7 +616,7 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     If the field has defined a "pretty name" in the tuple format, the pretty name will be used for
     the basis of looking up this default callback.  This is to avoid the complexities of mangling an
     automatic name that makes sense for compound and virtual columns.
-    
+
     "Pretty names" put through the mangling process essentially normalize non-letter non-number
     characters to underscores, and multiple adjacent underscores are collapsed to a single
     underscore.  It's like a slugify process, but using ``"_"`` and without lowercasing.
@@ -771,7 +771,7 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
     Care must be taken to modify the options object on the View class: because it is defined as a
     class attribute, there is only one copy of it in memory, and changing it is not thread safe.
-    
+
     To safely change the options at runtime, always make sure to fully copy the data before making
     changes.  The simplest way to do this is via a call to the built-in ``copy.deepcopy`` function.
     """
@@ -941,9 +941,9 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
     all of the options and machinery for getting the structure object for the context.
 
     Just add a ``get_context_data()`` method, instantiate the other view, and ask it to generate
-    the options object via ``get_datatable_options()``.  You can feed this options object into 
+    the options object via ``get_datatable_options()``.  You can feed this options object into
     the ``datatableview.utils.get_datatable_structure()`` utility.
-    
+
     ``get_datatable_structure()`` takes at least two arguments, and is the mechanism that a regular
     call to a ``DatatableView.get_datatable()`` uses to get the context variable: the ``ajax_url``
     the table will target, and the ``options`` object.  Unless there are ordering options set in
@@ -1108,7 +1108,7 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     specify the template directly in ``datatable_options["structure_template"]``, or you can create
     your own ``datatableview/default_structure.html`` template and simply paste the contents of the
     bootstrap version into it.
-    
+
     WARNING:
     Overriding ``datatableview/default_structure.html`` will affect all datatables using the default
     template!
@@ -1116,7 +1116,7 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     This gets the table itself looking better, but the rest of the controls added by dataTables.js
     are a little lackluster by comparison.  To fix this, reference the latest integration helper CSS
     and javascript support files in the template:
-    
+
     <pre>
     &lt;link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" /&gt;
     </pre>

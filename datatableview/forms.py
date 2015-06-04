@@ -2,6 +2,7 @@ from django import forms
 from django.forms import ValidationError
 from django.forms.models import fields_for_model
 
+
 class XEditableUpdateForm(forms.Form):
     """ Enforces a valid x-editable request. """
 
