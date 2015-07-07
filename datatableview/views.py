@@ -27,7 +27,7 @@ import dateutil.parser
 from .forms import XEditableUpdateForm
 from .utils import (FIELD_TYPES, ObjectListResult, DatatableOptions, DatatableStructure,
                     split_real_fields, filter_real_fields, resolve_orm_path, get_first_orm_bit,
-                    get_field_definition)
+                    get_field_definition, MINIMUM_YEAR)
 
 log = logging.getLogger(__name__)
 
@@ -191,7 +191,7 @@ class DatatableMixin(MultipleObjectMixin):
                             except ValueError:
                                 pass
                             else:
-                                if datetime.MINYEAR < numerical_value < datetime.MAXYEAR - 1:
+                                if MINIMUM_YEAR < numerical_value < datetime.MAXYEAR - 1:
                                     field_queries.append({component_name + '__year': numerical_value})
                                 if 0 < numerical_value <= 12:
                                     field_queries.append({component_name + '__month': numerical_value})

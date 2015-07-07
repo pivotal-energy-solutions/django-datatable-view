@@ -13,6 +13,7 @@ except ImportError:
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
+from django.conf import settings
 try:
     from django.forms.utils import flatatt
 except ImportError:
@@ -27,6 +28,8 @@ import six
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
+
+MINIMUM_YEAR = getattr(settings, 'DATATABLEVIEW_MINIMUM_YEAR', 1900)
 
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
