@@ -2,14 +2,19 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
-## 0.8.2
+## 0.8.3
 #### Important future note
 This is the last planned release for the 0.8 series!  0.9 and 1.0 will arrive simultaneously sometime during the next couple of weeks, and the entire declaration process for datatableview options has been modernized.
 
 0.9 will include all of the existing "legacy" configuration code from the 0.8 releases, powered by brand new internals.  0.9 will be a no-fuss update, but if you plan to jump up to 1.0, you will need to following the forthcoming migration guide to get away from these "legacy" delcaration syntaxes.
 
 #### Release notes
+Added an optional setting named ``DATATABLEVIEW_MINIMUM_DATE`` to try and combat an issue with some databases not liking ``datetime.MINYEAR`` as a valid number for the year of a date column.
 
+Added a fix for some versions of Django misunderstanding a GenericForeignKey when inspecting object relationships for column data.
+
+
+## 0.8.2
 This release fixes a number of internal issues for newer versions of Django, most notably the tests!   With the introduction of Django's AppConfig system, the hack we've been using (keeping a testing-only app with testing-only models nested inside of the main datatableview app) was broken by a change concerning which app label Django thought the model belonged to.  The tests themselves were doing okay, had they not been failing during the fixture loading process.
 
 @PamelaM has added initial support for including Travis testing into the repository, which is long overdue for a repository that has been gaining popularity over the last couple of years.  I will commit to keeping up with it since, as they sometimes say, an untested app is considered broken by default.
