@@ -143,6 +143,9 @@ def get_model_at_related_field(model, attr):
     if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
         return field.rel.to
 
+    if hasattr(field, 'field'):  # Forward GenericForeignKey in Django 1.6+
+        return field.field.rel.to
+
     raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
             field.__class__.__name__))
 
