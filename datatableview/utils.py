@@ -13,7 +13,11 @@ except ImportError:
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
-from django.forms.util import flatatt
+from django.conf import settings
+try:
+    from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
 
 try:
     from django.utils.encoding import python_2_unicode_compatible
@@ -26,6 +30,8 @@ from . import handlers
 
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
+
+MINIMUM_YEAR = getattr(settings, 'DATATABLEVIEW_MINIMUM_YEAR', 1900)
 
 DEFAULT_OPTIONS = {
     'columns': [],  # table headers
@@ -133,7 +139,6 @@ def get_model_at_related_field(model, attr):
     """
     Looks up ``attr`` as a field of ``model`` and returns the related model class.  If ``attr`` is
     not a relationship field, ``ValueError`` is raised.
-
     """
 
     try:
@@ -141,14 +146,22 @@ def get_model_at_related_field(model, attr):
     except FieldDoesNotExist:
         raise
 
-    if not direct and hasattr(field, 'model'):  # Reverse relationship
-        model = field.model
-    elif hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
-        model = field.rel.to
-    else:
-        raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-                         field.__class__.__name__))
-    return model
+    if not direct:
+        if hasattr(field, 'related_model'):  # Reverse relationship
+            # -- Django >=1.8 mode
+            return field.related_model
+        elif hasattr(field, "model"):
+            # -- Django <1.8 mode
+            return field.model
+
+    if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
+        return field.rel.to
+
+    if hasattr(field, 'field'):  # Forward GenericForeignKey in Django 1.6+
+        return field.field.rel.to
+
+    raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
+                     field.__class__.__name__))
 
 
 def get_first_orm_bit(field_definition):

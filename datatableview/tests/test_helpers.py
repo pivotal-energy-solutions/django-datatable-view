@@ -3,6 +3,8 @@
 from datetime import datetime
 from functools import partial
 
+from django import get_version
+
 from datatableview import helpers
 
 import six
@@ -10,9 +12,14 @@ import six
 from .testcase import DatatableViewTestCase
 from .test_app.models import ExampleModel, RelatedM2MModel
 
+if get_version().split('.') < ['1', '7']:
+    test_data_fixture = 'test_data_legacy.json'
+else:
+    test_data_fixture = 'test_data.json'
+
 
 class HelpersTests(DatatableViewTestCase):
-    fixtures = ['test_data.json']
+    fixtures = [test_data_fixture]
 
     def test_link_to_model(self):
         """ Verifies that link_to_model works. """

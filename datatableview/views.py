@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 import json
+from django.utils.encoding import force_text
 import re
 import operator
 import logging
@@ -13,7 +14,6 @@ from django.views.generic.list import ListView, MultipleObjectMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, Manager, Q
-from django.utils.encoding import force_text
 from django.utils.text import smart_split
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
@@ -297,8 +297,6 @@ class DatatableMixin(MultipleObjectMixin):
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
 
-        #add_never_cache_headers(response)
-
         return response
 
     def get_json_response_object(self, object_list, total, filtered_total):
@@ -461,7 +459,7 @@ class DatatableMixin(MultipleObjectMixin):
             return True, getattr(self, callback)
 
         # Treat the 'nice name' as the starting point for looking up a method
-        name = column.pretty_name
+        name = force_text(column.pretty_name, errors="ignore")
         if not name:
             name = column.fields[0]
 

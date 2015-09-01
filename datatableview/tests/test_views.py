@@ -2,6 +2,7 @@
 
 import json
 
+from django import get_version
 from django.core.urlresolvers import reverse
 
 import six
@@ -10,9 +11,16 @@ from .testcase import DatatableViewTestCase
 from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
 
+if get_version().split('.') < ['1', '7']:
+    initial_data_fixture = 'initial_data_legacy.json'
+else:
+    initial_data_fixture = 'initial_data_modern.json'
+
 
 class ViewsTests(DatatableViewTestCase):
     urls = 'datatableview.tests.example_project.example_project.example_app.urls'
+
+    fixtures = [initial_data_fixture]
 
     def get_json_response(self, url):
         response = self.client.get(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -148,7 +156,6 @@ class ViewsTests(DatatableViewTestCase):
             len(list(response.context['datatable'])),
             len(view.datatable_options['columns'])
         )
-
 
     # Straightforward views that call on procedural logic not worth testing.  We would effectively
     # be proving that Python strings concatenate, etc.

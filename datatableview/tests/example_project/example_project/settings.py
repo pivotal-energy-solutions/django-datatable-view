@@ -1,5 +1,8 @@
 # -*- encoding: utf-8 -*-
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
 """
 Django settings for example_project project.
 
