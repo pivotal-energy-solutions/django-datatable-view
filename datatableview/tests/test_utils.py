@@ -4,8 +4,10 @@ from .testcase import DatatableViewTestCase
 from .test_app import models
 from .. import utils
 
+
 def get_structure(columns, opts):
     return utils.get_datatable_structure('/', dict(opts, columns=columns), model=models.ExampleModel)
+
 
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
@@ -55,12 +57,12 @@ class UtilsTests(DatatableViewTestCase):
         real, fake = utils.split_real_fields(model, ['name', 'fake'])
         self.assertEqual(real, ['name'])
         self.assertEqual(fake, ['fake'])
-        
+
         # Fake first, real last
         real, fake = utils.split_real_fields(model, ['fake', 'name'])
         self.assertEqual(real, [])
         self.assertEqual(fake, ['fake', 'name'])
-        
+
     def test_filter_real_fields(self):
         model = models.ExampleModel
         fields = [

@@ -26,6 +26,8 @@ except ImportError:
 
 import six
 
+from . import handlers
+
 # Sane boundary constants
 MINIMUM_PAGE_LENGTH = 5
 
@@ -73,6 +75,15 @@ FIELD_TYPES.update({
 if hasattr(models, 'GenericIPAddressField'):
     FIELD_TYPES['text'].append(models.GenericIPAddressField)
 
+FIELD_HANDLERS = {
+    'text': handlers.text_field_handler,
+    'date': handlers.date_field_handler,
+    'boolean': handlers.boolean_field_handler,
+    'integer': handlers.integer_field_handler,
+    'float': handlers.float_field_handler,
+    'ignored': handlers.ignored_field_handler
+}
+
 # Mapping of Django's supported field types to their more generic type names.
 # These values are primarily used for the xeditable field type lookups.
 # TODO: Would be nice if we can derive these from FIELD_TYPES so there's less repetition.
@@ -109,6 +120,7 @@ FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'field
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
 ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -127,7 +139,6 @@ def get_model_at_related_field(model, attr):
     """
     Looks up ``attr`` as a field of ``model`` and returns the related model class.  If ``attr`` is
     not a relationship field, ``ValueError`` is raised.
-
     """
 
     try:
@@ -150,7 +161,7 @@ def get_model_at_related_field(model, attr):
         return field.field.rel.to
 
     raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
-            field.__class__.__name__))
+                     field.__class__.__name__))
 
 
 def get_first_orm_bit(field_definition):
@@ -474,4 +485,3 @@ def filter_real_fields(model, fields, key=None):
         else:
             virtual_fields.append(field)
     return db_fields, virtual_fields
-

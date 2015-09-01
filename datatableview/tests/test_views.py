@@ -157,7 +157,6 @@ class ViewsTests(DatatableViewTestCase):
             len(view.datatable_options['columns'])
         )
 
-
     # Straightforward views that call on procedural logic not worth testing.  We would effectively
     # be proving that Python strings concatenate, etc.
     # Instead of proving details of the callbacks we've written, we'll just ask for the views, to

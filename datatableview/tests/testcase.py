@@ -13,6 +13,7 @@ else:
     from django.test.utils import override_settings
     from django.db.models import loading
     initial_data_fixture = 'initial_data_legacy'
+
     def clear_app_cache():
         loading.cache.loaded = False
 
