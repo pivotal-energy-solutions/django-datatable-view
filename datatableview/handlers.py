@@ -3,8 +3,6 @@
 import datetime
 import dateutil.parser
 
-from .utils import MINIMUM_YEAR
-
 __all__ = (
     'boolean_field_handler', 'date_field_handler', 'float_field_handler', 'ignored_field_handler',
     'integer_field_handler', 'text_field_handler'
@@ -40,7 +38,8 @@ def date_field_handler(field, component_name, term):
     except ValueError:
         pass
     else:
-        if MINIMUM_YEAR < numerical_value < datetime.MAXYEAR - 1:
+        from . import utils  # Fix a recursive import
+        if utils.MINIMUM_YEAR < numerical_value < datetime.MAXYEAR - 1:
             field_queries.append({component_name + '__year': numerical_value})
         if 0 < numerical_value <= 12:
             field_queries.append({component_name + '__month': numerical_value})
