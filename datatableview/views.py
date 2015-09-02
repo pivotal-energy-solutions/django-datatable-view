@@ -225,6 +225,8 @@ class DatatableMixin(MultipleObjectMixin):
 
                         # Append each field inspection for this term
                         term_queries.extend(map(lambda q: Q(**q), field_queries))
+                # Apply custom field queries
+                term_queries.extend(map(lambda q: Q(**q), self.get_custom_field_queries(term)))
                 # Append the logical OR of all field inspections for this term
                 if len(term_queries):
                     queries.append(reduce(operator.or_, term_queries))
@@ -311,6 +313,9 @@ class DatatableMixin(MultipleObjectMixin):
 
         object_list._dtv_total_initial_record_count = total_initial_record_count
         return object_list
+        
+    def get_custom_field_queries(self, term):
+        return []
 
     def get_datatable_context_name(self):
         return self.datatable_context_name
