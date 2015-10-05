@@ -676,6 +676,7 @@ class LegacyConfigurationDatatableMixin(DatatableMixin):
             'object_list': self.get_queryset(),
             'view': self,
             'model': self.model,  # Potentially ``None``
+            'callback_target': self,
         })
 
         # This is provided by default, but if the view is instantiated outside of the request cycle
