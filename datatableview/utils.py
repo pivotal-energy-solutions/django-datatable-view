@@ -459,7 +459,12 @@ def filter_real_fields(model, fields, key=None):
     field_hints = tuple(zip(map(key, fields), fields))
     field_map = dict(field_hints)
     field_list = set(field_map.keys())
-    concrete_names = set(model._meta.get_all_field_names())
+    
+    # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
+    if hasattr(model._meta, 'get_fields'):
+        concrete_names = set([field.name for field in model._meta.get_fields()])
+    else:
+        concrete_names = set(model._meta.get_all_field_names())
 
     # Do some math with sets
     concrete_fields = concrete_names.intersection(field_list)
