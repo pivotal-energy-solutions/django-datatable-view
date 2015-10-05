@@ -182,6 +182,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
     # Immediate finalization, return the xeditable structure
     data = kwargs.get('default_value', instance)
+    rich_data = kwargs.get('rich_value', None)
 
     # Compile values to appear as "data-*" attributes on the anchor tag
     default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
@@ -206,10 +207,10 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                              " not {0!r}".format(field_name))
     attrs['data-name'] = field_name
 
-    if isinstance(data.get('rich_value'), Model):
-        attrs['data-value'] = data['rich_value'].pk
+    if isinstance(rich_data, Model):
+        attrs['data-value'] = rich_data.pk
     else:
-        attrs['data-value'] = data
+        attrs['data-value'] = rich_data
 
     if 'data-pk' not in attrs:
         attrs['data-pk'] = instance.pk
