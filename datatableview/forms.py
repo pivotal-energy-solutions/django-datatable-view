@@ -33,6 +33,11 @@ class XEditableUpdateForm(forms.Form):
     def clean_name(self):
         """ Validates that the field is represented on the model. """
         field_name = self.cleaned_data['name']
-        if field_name not in self.model._meta.get_all_field_names():
+        # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
+        if hasattr(self.model._meta, 'get_fields'):
+            field_names = [field.name for field in self.model._meta.get_fields()]
+        else:
+            field_names = self.model._meta.get_all_field_names()
+        if field_name not in field_names:
             raise ValidationError("%r is not a valid field." % field_name)
         return field_name

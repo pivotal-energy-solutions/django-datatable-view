@@ -138,7 +138,11 @@ class DatatableStructure(object):
 
         column_info = []
         if self.model:
-            model_fields = self.model._meta.get_all_field_names()
+            # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
+            if hasattr(self.model._meta, 'get_fields'):
+                model_fields = [field.name for field in self.model._meta.get_fields()]
+            else:
+                model_fields = self.model._meta.get_all_field_names()
         else:
             model_fields = []
 
@@ -267,7 +271,12 @@ class DatatableOptions(UserDict):
                     is_local_field = False
                     if column.fields:
                         base_field_name = column.fields[0].split('__')[0]
-                        if base_field_name in model._meta.get_all_field_names():
+                        # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
+                        if hasattr(model._meta, 'get_fields'):
+                            field_names = [field.name for field in model._meta.get_fields()]
+                        else:
+                            field_names = model._meta.get_all_field_names()
+                        if base_field_name in field_names:
                             is_local_field = True
 
                     if not column.fields or len(column.fields) > 1 or not is_local_field:
