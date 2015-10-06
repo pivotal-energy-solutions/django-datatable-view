@@ -41,6 +41,8 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
             continue
 
         column_class = columns.get_column_for_modelfield(f)
+        if column_class is None:
+            raise ColumnError("Unhandled model field %r." % (f,))
         if labels and f.name in labels:
             label = labels[f.name]
         else:
