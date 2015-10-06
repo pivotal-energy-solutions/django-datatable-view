@@ -362,6 +362,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         virtual_fields = []
         i = 0
         for i, name in enumerate(self.config['ordering']):
+            if name[0] in '+-':
+                name = name[1:]
             column = self.columns[name]
             if not column.get_db_sources(self.model):
                 break
@@ -466,10 +468,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         fields = []
         db, virtual = self.get_ordering_splits()
         for name in db:
+            sort_direction = ''
+            if name[0] in '+-':
+                sort_direction = name[0]
+                if sort_direction == '+':
+                    sort_direction = ''
+                name = name[1:]
             column = self.columns[name]
             sources = column.get_sort_fields(self.model)
             if sources:
-                fields.extend(sources)
+                fields.extend([(sort_direction + source) for source in sources])
 
         return queryset.order_by(*fields)
 
