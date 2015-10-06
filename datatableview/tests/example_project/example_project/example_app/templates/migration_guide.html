@@ -32,10 +32,10 @@
         The preferred way to configure columns for a view is now to use the
         <code>datatableview.Datatable</code> class.  It has similarities to the Django
         <code>ModelForm</code>: the class uses an inner <code>Meta</code> class to specify all of
-        the options we used to provide in your view's <code>datatable_options</code> dict.
+        the options that we used to provide in your view's <code>datatable_options</code> dict.
     </p>
     <p>
-        You're essentially looking to just unpack the keys and values from your existing
+        You want to just unpack the keys and values from your existing
         <code>datatable_options</code> dict and set those as attributes on a
         <code>Datatable.Meta</code>.  Then just assign this Datatable subclass on your view:
     </p>
@@ -50,9 +50,10 @@ class MyDatatableView(DatatableView):
     datatable_class = MyDatatable
     </pre>
     <p>
-        An alternate abbreviated style is available by setting these attributes directly on the
-        view, <a href="{% url "configure-inline" %}">shown in more detail here</a>, but if you're
-        declaring anything fancier than simple model fields or methods as columns (typically
+        An alternate abbreviated style is available: as with class-based views that use Django
+        forms, you can set these Meta attributes directly on the view class,
+        <a href="{% url "configure-inline" %}">shown in more detail here</a>.  Please note that if
+        you're declaring anything fancier than simple model fields or methods as columns (typically
         anything that would have required the 2-tuple or 3-tuple column syntax), please use the new
         <code>Datatable</code> object strategy.
     </p>
@@ -72,8 +73,8 @@ class MyDatatableView(DatatableView):
         In connection with <a href="{% url "configure-datatable-object" %}">the new
         <code>Datatable</code></a> object that helps you design the datatable,
         <strong>we've started referring to column data callbacks as "processors"</strong>.  This
-        means that we will be using column callbacks names that aren't patterned after the old style
-        of <code>"get_column_FOO_data()"</code>.  Instead, you'll likely notice names like
+        means that we will stop relying on callbacks in the documentation being named in the pattern
+        of <code>"get_column_FOO_data()"</code>.  Instead, you'll notice names like
         <code>"get_FOO_data()"</code>, and we'll be specifying the callback in a column definition
         via a <code>processor</code> keyword argument.  See
         <a href="{% url "compound-columns" %}">Compound columns</a> for an example of this.
@@ -147,7 +148,27 @@ class MyDatatableView(DatatableView):
             Update complex column definitions
         </a>
     </h3>
-    <h6>See <a href="#FIXME">FILL IN LATER</a> for examples.</h6>
+    <h6>See <a href="/pretty-names/">Custom verbose names</a>, <a href="/column-backed-by-method/">Model method-backed columns</a>, <a href="/processors/">Postprocessing values</a>, and <a href="compound-columns">Compound columns</a> for examples.</h6>
+    <p>
+        The <a href="column-formats">now-deprecated 0.8 column definition format</a> had a lot of
+        overloaded syntax.  It grew out of a desire for a simple zero-configuration example, but
+        became unweildy, using nested tuples and optional tuple lengths to mean different things.
+    </p>
+    <p>
+        The new format can be thought of as a clone of the built-in Django forms framework.  In that
+        comparison, the new <code>Datatable</code> class is like a Form, complete with Meta options
+        that describe its features, and it defines <code>Column</code> objects instead of
+        FormFields.  A <code>Datatable</code> configuration object is then given to the view in the
+        place of the old <code>datatable_options</code> dictionary.
+    </p>
+    <p>
+        In summary, the old <code>datatable_options</code> dict is replaced by making a Datatable
+        configuration object that has a <code>Meta</code>.
+    </p>
+    <p>
+        The task of <a href="/specific-columns/">showing just a few specific columns</a> is made a
+        bit heavier than before, but (as with the forms framework) the new Meta options can all be
+        provided as class attributes on the view.
 
 
     <br><br>
@@ -157,13 +178,12 @@ class MyDatatableView(DatatableView):
         </a>
     </h3>
     <h6>See <a href="{% url "configure-values-datatable-object" %}">ValuesDatatable object</a> for examples.</h6>
-
     <p>
         An elegant simplification of the datatable strategy is to select the values you want to show
         directly from the database and just put them through to the frontend with little or no
         processing.  If you can give up declaration of column sources as model methods and
-        properties and rely just on the data itself to be usable, try dropping a
-        <code>ValuesDatatable</code> in as the base class for your table, rather than the default
+        properties and rely just on the data itself to be usable, try swapping in a
+        <code>ValuesDatatable</code> as the base class for your table, rather than the default
         <code>Datatable</code>.
     </p>
     
@@ -171,4 +191,5 @@ class MyDatatableView(DatatableView):
         This saves Django the trouble of instantiating model instances for each row, and might even
         encourage the developer to think about their data with fewer layers of abstraction.
     </p>
+    <br><br>
 {% endblock content %}

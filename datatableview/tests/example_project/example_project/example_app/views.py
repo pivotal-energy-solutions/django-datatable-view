@@ -160,7 +160,7 @@ class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
 
     <ol>
     <li>You want faster, smaller queries.</li>
-    <li>``object_list`` is a QuerySet, not just a ``list``.</li>
+    <li>``object_list`` is a QuerySet, not just a python list.</li>
     <li>The column definitions are capable of displaying data without the help of any of the model's
         methods.</li>
     </ol>
@@ -181,8 +181,8 @@ class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
     with each of the values.
 
     To visualize what's being done here, here is a sample object that would be sent to column
-    processor callbacks, which has keys for all ORM source names mixed with actual column names
-    given by the configuration:
+    processor callbacks in the above demo.  Notice that it has keys for all ORM source names mixed
+    with actual column names given by the configuration Datatable object:
     """
     model = Entry
     class datatable_class(ValuesDatatable):
@@ -213,30 +213,32 @@ class ConfigureInline(DemoMixin, DatatableView):
     Someone making a view that requires little configuration might reasonably find it midly
     cumbersome to declare a full ``Datatable`` class just to specify a single setting.  In the style
     of the built-in Django generic class-based views, ``DatatableView`` will inspect its own
-    attributes before automatically constructing a plain Datatable object to power the view.
+    attributes and automatically construct a plain Datatable object to power the view if one is not
+    already given.
 
-    All of the available settings can be given in this format, and can even be combined with the use
-    of the ``datatable_class`` setting.  Attributes on the view will override the settings from a
-    Datatable instance during instantiation, which makes simple tweaks to generic Datatable objects
-    very easy.
+    All of the available settings can be given in this format, and can even be combined with a
+    ``datatable_class`` configuration object.  Attributes on the view will override the settings
+    from a Datatable instance during instantiation, which makes simple tweaks to generic Datatable
+    objects very easy.
     """
     model = Entry
     columns = ['id', 'headline', 'pub_date']
 
     implementation = u"""
+    # Specifying Datatable.Meta options directly on the view
     class ConfigureInlineDatatableView(DatatableView):
         model = Entry
         columns = ['id', 'headline', 'pub_date']
 
 
-    # Specifying a datatable_class does not harm the configuration, but combines them
+    # View attributes will override Datatable.Meta settings if they conflict
     class MyDatatable(Datatable):
         class Meta:
-            columns = ['id', 'headline', 'pub_date']
+            columns = ['headline']
     class ConfigureCombinedDatatableView(DatatableView):
         model = Entry
         datatable_class = MyDatatable
-        columns = ['headline', 'pub_date']
+        columns = ['id', 'headline', 'pub_date']
     """
 
 
@@ -249,19 +251,14 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     view's class attributes, except that all of the available settings were put inside of one
     dictionary called ``datatable_options``.
 
-    This strategy is still made available for migration purposes by importing and subclassing your
-    view from one of ``LegacyConfigurationDatatableView`` or ``LegacyDatatableView`` from
-    ``datatableview.views.legacy``.
+    Use ``datatableview.views.legacy.LegacyConfigurationDatatableView`` if all you want is to allow
+    your ``datatable_options`` dict to be discovered, but use
+    ``datatableview.views.legacy.LegacyDatatableView`` if you were hacking the old view and crying
+    like it was made of onions.
 
-    INFO:
-    Use ``LegacyConfigurationDatatableView`` if all you want is to allow your ``datatable_options``
-    dict to be discovered, but use ``LegacyDatatableView`` if you were hacking the old view up and
-    crying like it was onions.
-
-    ``LegacyDatatableView`` not only uses the legacy configuration style but also preserves the
-    method structure of the old DatatableView. A few private imports were moved from
-    ``datatableview.utils`` into ``datatableview.views.legacy``, but aside from that, method
-    overrides on the old view should work the same on this one.
+    A few private imports were moved from ``datatableview.utils`` into
+    ``datatableview.views.legacy``, but aside from that, method overrides from version 0.8 should
+    work in 0.9.
     """
     model = Entry
     datatable_options = {
@@ -294,18 +291,18 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
 # Column configurations
 class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
     """
-    If no columns are specified in the view's ``datatable_options`` attribute, ``DatatableView``
-    will use all of the model's local fields. Note that this does not include reverse
-    relationships, many-to-many fields (even if the ``ManyToManyField`` is defined on the model
-    directly), or the special ``pk`` field.
+    If no columns are specified by the view's ``Datatable`` configuration object (or no
+    ``datatable_class`` is given at all), ``DatatableView`` will use all of the model's local
+    fields.  Note that this does not include reverse relationships, many-to-many fields (even if the
+    ``ManyToManyField`` is defined on the model directly), nor the special ``pk`` field, but DOES
+    include ``ForeignKey`` fields defined directly on the model.
 
-    Note that fields will attempt to use their ``verbose_name``, if available.
+    Note that fields will automatically use their ``verbose_name`` for the frontend table headers.
 
     WARNING:
-    Having ``ForeignKey`` as a visible column will generate extra queries per displayed row, due to
-    the way attribute lookup will cause Django to go fetch the related object. Implement a
-    ``get_queryset()`` method on your view that returns a queryset with the appropriate call to
-    ``select_related()``.
+    When no columns list is explicitly given, the table will end up trying to show foreign keys as
+    columns, generating at least one extra query per displayed row.  Implement a ``get_queryset()``
+    method on your view that returns a queryset with the appropriate call to ``select_related()``.
     """
 
     model = Entry
@@ -318,11 +315,18 @@ class ZeroConfigurationDatatableView(DemoMixin, DatatableView):
 
 class SpecificColumnsDatatableView(DemoMixin, DatatableView):
     """
-    To target specific columns that should appear on the table, use the
-    ``datatable_options['columns']`` key in the configuration.  Specify a tuple or list of model
-    field names, in the order that they are to appear on the table.
+    To target specific columns that should appear on the table, use the ``columns`` configuration
+    option.  Specify a tuple or list of model field names, in the order that they are to appear on
+    the table.
 
-    Note that fields will attempt to use their ``verbose_name``, if available.
+    Items in the columns list can name either a model field directly, or a custom column defined
+    locally on the ``Datatable`` object (which can be a customized version of a model field, or a
+    virtual field that is supplying a value via a model property or method).  See
+    <a href="/virtual-column-definitions/">Non-field columns</a> and
+    <a href="/column-backed-by-method/">Model method-backed columns</a> for help defining custom
+    columns.
+
+    Note that fields will use their ``verbose_name`` when the named field is a simple model field.
     """
     model = Entry
     class datatable_class(Datatable):
@@ -342,12 +346,9 @@ class SpecificColumnsDatatableView(DemoMixin, DatatableView):
 
 class PrettyNamesDatatableView(DemoMixin, DatatableView):
     """
-    By converting a column's definition to a 2-tuple, you can specify a verbose name that should
-    appear as the column header.  In this example, the ``pub_date`` field has been given a special
-    verbose name ``"Publication date"``.
-
-    This becomes particularly useful when the field is virtualized (i.e., not tied to a specific
-    model field).
+    As with the Django forms framework, verbose names can be given or overridden via the ``labels``
+    configuration option, which is a dict mapping the column name to the desired string.  In this
+    example, the ``pub_date`` field has been given the label ``"Publication date"``.
     """
     model = Entry
     class datatable_class(Datatable):
@@ -371,69 +372,52 @@ class PrettyNamesDatatableView(DemoMixin, DatatableView):
     """
 
 
-class PresentationalChangesDatatableView(DemoMixin, DatatableView):
+class CustomColumnsDatatableView(DemoMixin, DatatableView):
     """
-    This table actually uses the same column twice; the first time is for a raw display of the
-    ``pub_date`` value, and the second is for a humanized version of the same information via the
-    template filter ``timesince``.
+    As in the Django forms framework, extra columns can be added to a ``Datatable`` by defining them
+    directly on the class, and then adding that column's name into the Meta ``columns`` list.  (With
+    built-in forms, Django doesn't force you to name the extra field in the Meta list of fields, but
+    we prefer to make you add the column name to the full ``columns`` list to ensure the order is
+    good.)
 
-    Note that the ``Age`` column is sortable using the underlying data from the ``pub_date`` field,
-    and is not actually sorting the presentionally modified text of the frontend.
-
-    Callbacks should take the ``instance`` represented by the row, and ``*args`` and ``**kwargs``
-    to maximize flexibility with future data arguments sent by the callback dispatcher.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
-
-        class Meta:
-            columns = ['blog', 'headline', 'pub_date', 'age']
-            labels = {
-                'pub_date': "Publication date",
-            }
-
-        def get_entry_age(self, instance, **kwargs):
-            return timesince(instance.pub_date)
-
-    implementation = u"""
-    from django.template.defaultfilters import timesince
-
-    class MyDatatable(Datatable):
-        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
-
-        class Meta:
-            columns = ['blog', 'headline', 'pub_date', 'age']
-            labels = {
-                'pub_date': "Publication date",
-            }
-
-        def get_entry_age(self, instance, **kwargs):
-            return timesince(instance.pub_date)
-
-    class PresentationalChangesDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
-class VirtualColumnDefinitionsDatatableView(DemoMixin, DatatableView):
-    """
-    Columns that have values derived at runtime by callbacks located on the view should specify
-    their field as ``None``, and then provide a callback name or function reference.
-
-    Callbacks should take the ``instance`` represented by the row, and ``*args`` and ``**kwargs``
-    to maximize flexibility with future data arguments sent by the callback dispatcher.
-
-    Callbacks can be used for concrete fields too.
+    The various parts of a column definition can be given within Meta as dictionaries (see
+    <a href="/pretty-names/">Custom verbose names</a>, for example), but of course a column can be
+    defined explicitly all in one go.
 
     INFO:
-    The ``Age`` column could actually still specify its model field as ``pub_date``, but it was
-    omitted specifically to demonstrate the bridging of the gap by the callback.  In this situation,
-    the column is not searchable or sortable at the database level.
+    See the <a href="columns-reference">``columns`` reference</a> page for the full list of
+    ``Column`` classes available for use.
+
+    When a column is virtual (computed), <a href="/compound-columns/">compound</a>, or requires a
+    specifically chosen ``Column`` type, the column should be declared in explicit syntax.
+
+    The arguments to a ``Column`` are the verbose name for the column header, the ``sources`` list
+    of model fields/methods/properties that power the column's data, and optionally a ``processor``.
+
+    The ``sources`` list can name fields that span model relationships via the traditional ``"__"``
+    syntax.  The "Blog" column does this to retrieve the ``entry.blog.name`` value.
+
+    Some columns may need to represent a value that is be entirely computed.  In this situation, the
+    column's ``sources`` list can be given as ``None``, handing all of the work to data retrieval to
+    the ``processor`` callback.  The processor will receive the object instance, allowing it to
+    return whatever arbitrary data the column needs to display.
+
+    INFO:
+    In this particular example, the better approach might simply be to give ``['pub_date']`` as the
+    ``sources`` list, but it was omitted specifically to demonstrate the bridging of the gap by the
+    callback.
+
+    WARNING:
+    Columns without a ``sources`` list cannot be searched or sorted at the database level.  Even if
+    your processor function were to return a simple model field value, the Datatable lacks the
+    necessary hints to know this.  Always give ``sources`` where they exist.
+
+    See <a href="/processors/">Postprocessing values</a> for more information on processor
+    functions.
     """
     model = Entry
     class datatable_class(Datatable):
+        blog = columns.TextColumn("Blog", sources=['blog__name'])
         age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
         class Meta:
@@ -446,6 +430,7 @@ class VirtualColumnDefinitionsDatatableView(DemoMixin, DatatableView):
     from django.template.defaultfilters import timesince
 
     class MyDatatable(Datatable):
+        blog = columns.TextColumn("Blog", sources=['blog__name'])
         age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
         class Meta:
@@ -462,16 +447,20 @@ class VirtualColumnDefinitionsDatatableView(DemoMixin, DatatableView):
 
 class ColumnBackedByMethodDatatableView(DemoMixin, DatatableView):
     """
-    Model methods can power columns instead of concrete fields.  This approach is similar to using
-    a callback to supply a value for a virtual column, but demonstrates that non-field data sources
-    may be used on the model without custom callbacks.
+    Model methods and properties can also be given in a column's ``sources`` list, not just real
+    model field names.  If the source is resolved on the model to be a callable method, it will be
+    called with no arguments to obtain the real value.
 
-    In this situation, the ``pub_date`` is fetched using an example method ``get_pub_date()``. The
-    column is technically sortable by default, but the operation takes place in code, rather than
-    in the database.  Searching is not currently possible because of prohibitive performance
-    penalties for large data sets.
+    INFO:
+    Because methods and properties aren't actual model fields, these sources won't be able to
+    contribute to database sorting and filtering.  The same effect would be acheived by using
+    ``sources=None`` and ``processor='some_callback'``, where the ``some_callback`` function simply
+    called the object method on its own.
 
-    This strategy works nicely for fields that have a ``choices`` list, allowing you to use the
+    In this situation, the ``pub_date`` is fetched using a hypothetical model method
+    ``get_pub_date()``, which is why it is not given on the datatable definition.
+
+    This strategy is convenient for fields that have a ``choices`` list, allowing you to use the
     ``get_FOO_display()`` method Django puts on the model instance.
     """
     model = Entry
@@ -494,24 +483,102 @@ class ColumnBackedByMethodDatatableView(DemoMixin, DatatableView):
     """
 
 
-class CompoundColumnsDatatableView(DemoMixin, DatatableView):
+class ProcessorsDatatableView(DemoMixin, DatatableView):
     """
-    Simple columns might only need one model field to represent their data, even when marked up by
-    a callback function.  However, if a column actually represents more than one model field, the
-    list of those fields can be given in place of a single field name.
+    After the column data is fetched from the database, but before it is serialized to JSON, each
+    column can be sent to a processor callback.
+
+    The processor can be given as a string or as a direct reference.  If the processor is a string,
+    the ``Datatable`` (or the orignating ``DatatableView``) should have a method with that name.
+
+    As is the trend with the Django forms framework, a ``processors`` configuration dict can be
+    given to provide processors for columns that aren't being explicitly constructed on the
+    Datatable.
 
     INFO:
-    You'll probably want to use a callback in order to decide how these values should be sorted out.
-    The default strategy if no callback is supplies is to join the values with ``" "``.  The utility
-    of this might be limited, but it's a reasonable default to give you a starting point.
+    Processors receive the ``instance`` object that is providing data for the current row, and
+    should somehow return the final string that should be serialized to JSON for the AJAX response
+    to the client.
 
-    Compound columns should target fields, not merely foreign keys.  For example, you might indeed
-    want the ``unicode(entry.blog)`` representation to appear in the marked-up column data, but be
-    sure to target the specific fields on ``Blog`` that are represented in that display.
+    INFO:
+    Processors should also always receive ``**kwargs``, to maximize forward compatibility with how
+    processors are called.  There are a few internal references provided by default that help the
+    default global processor to do the right thing, but the typical processor function shouldn't
+    need to concern itself with those values.
+
+    This example actually uses the same column twice; the first time is for a raw display of the
+    ``pub_date`` value, and the second is for an "Age" column, representing the same original data,
+    but sent through the template filter ``timesince``.
+
+    Note that the ``Age`` column is sortable and searchable based on the ``sources`` list, which is
+    ``pub_date`` in this example.  We avoid sorting the presentionally modified text because of the
+    performance implications of processing every row in the entire database table in order to sort
+    and show only one page of results.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
+
+        class Meta:
+            columns = ['blog', 'headline', 'pub_date', 'age']
+            processors = {
+                'pub_date': 'format_pub_date',
+            }
+
+        def format_pub_date(self, instance, **kwargs):
+            return instance.pub_date.strftime("%m/%d/%Y")
+
+        def get_entry_age(self, instance, **kwargs):
+            return timesince(instance.pub_date)
+
+    implementation = u"""
+    from django.template.defaultfilters import timesince
+
+    class MyDatatable(Datatable):
+        age = columns.TextColumn("Age", sources=['pub_date'], processor='get_entry_age')
+
+        class Meta:
+            columns = ['blog', 'headline', 'pub_date', 'age']
+            processors = {
+                'pub_date': 'format_pub_date',
+            }
+
+        def format_pub_date(self, instance, **kwargs):
+            return instance.pub_date.strftime("%m/%d/%Y")
+
+        def get_entry_age(self, instance, **kwargs):
+            return timesince(instance.pub_date)
+
+    class PresentationalChangesDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+
+class CompoundColumnsDatatableView(DemoMixin, DatatableView):
+    """
+    Simple columns only need one model field to represent their data, even when marked up by a
+    callback function.  However, if a column actually represents more than one model field the
+    list of those fields can be given in place of a single field name.  For example, imagine a model
+    ``__str__`` method that houses more than just one model field of information.
+
+    INFO:
+    You'll probably want to provide a custom ``processor`` function in order to decide how these
+    values should be rendered.  Without one, the default strategy is to join the various source
+    values with ``" "``.  The utility of this is limited, but it's a reasonable default to give you
+    a starting point.
+
+    Compound columns should target the individual fields, not merely the foreign key itself.  For
+    example, you might indeed want the ``str(entry.blog)`` representation to appear in the
+    marked-up column data, but be sure to target the specific fields (such as ``blog__name``) that
+    are actually being represented in that display.  Putting just ``blog`` as a source would imply
+    that the user would search on the ``blog.pk`` value, which is information that is not
+    necessarily available for them to know, and would certain create unpredictable sorting behavior.
 
     Specifying all of the relevent fields in a compound column helps make searching and sorting more
-    natural.  Sorting a compound column is the same as giving the field list to a call to the
-    queryset ``order_by()`` method.
+    natural.  Sorting a compound column is the same as giving the sources list to the queryset
+    ``order_by()`` method (with non-db sources stripped from the list, such as method and property
+    names).
     """
     model = Entry
     class datatable_class(Datatable):
@@ -538,50 +605,19 @@ class CompoundColumnsDatatableView(DemoMixin, DatatableView):
     """
 
 
-class RelatedFieldsDatatableView(DemoMixin, DatatableView):
-    """
-    The standard ``"__"`` related field syntax is supported in the model field names for a column.
-    The only limitation is that the field's pretty-name should be explicitly given.
-
-    Sorting, searching, and value callbacks work on these columns as well.
-
-    INFO:
-    When a value callback is used on a column, it receives the row's ``instance``, and various
-    keyword arguments to give the callback some context about the value.  Callbacks always receive
-    an argument ``default_value``, which is the value as fetched from the target field.  You can
-    leverage this to avoid recalculating the same value from related lookups in your callbacks.
-    """
-    model = Entry
-    class datatable_class(Datatable):
-        blog_name = columns.TextColumn("Blog name", ["blog__name"])
-        blog_id = columns.TextColumn("Blog ID", ["blog__id"])
-
-        class Meta:
-            columns = ['id', 'headline', 'blog_name', 'blog_id', 'pub_date']
-
-    implementation = u"""
-    class MyDatatable(Datatable):
-        blog_name = columns.TextColumn("Blog name", ["blog__name"])
-        blog_id = columns.TextColumn("Blog ID", ["blog__id"])
-
-        class Meta:
-            columns = ['id', 'headline', 'blog_name', 'blog_id', 'pub_date']
-
-    class RelatedFieldsDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
-    """
-
-
 class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
     """
-    ``ManyToManyField`` relationships should not be specified directly as a column's data source.
-    There's too much missing information, and the field name or field list should enumerate the
-    real data points that are being shown.
+    ``ManyToManyField`` relationships should not be specified directly as the column's only field in
+    the ``sources`` list.
 
-    The most straightforward way to reveal a plural set of objects is to create your own callback
-    handler that handles each item in the relationship as you see fit.  For example, combined with
-    the ``helpers`` module, you can quickly make links out of the objects in the relationship.
+    The most straightforward way to reveal a plural set of objects is to create your own processor
+    that handles each item in the object list as you see fit.  For example, combined with the
+    ``helpers`` module, you can quickly make links out of the objects in the relationship.
+
+    In this demo, we are pointing the ``sources`` list at the ``"authors__name"`` field, because
+    that is the only visible data we are displaying in each column.  The ``processor`` callback
+    receives the actual row instance and can look up the full authors queryset (including pk for use
+    in url ``reverse()``).
     """
     model = Entry
     class datatable_class(Datatable):
@@ -618,8 +654,13 @@ class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
     """
 
 
-class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
+class DefaultCallbackNamesDatatableView(DemoMixin, LegacyConfigurationDatatableView):
     """
+    WARNING:
+    Implicit callbacks are a concept from version 0.8 and earlier.  The example here is shown using
+    legacy syntax because that is what it applies to.  All modern implementations using the
+    ``Datatable`` object must explicitly name their ``processor`` functions.
+
     If a column definition hasn't supplied an explicit callback value processor, there is a default
     method that will be looked up on the view instance in the format of ``get_column_FOO_data()``.
 
@@ -629,7 +670,7 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
 
     "Pretty names" put through the mangling process essentially normalize non-letter non-number
     characters to underscores, and multiple adjacent underscores are collapsed to a single
-    underscore.  It's like a slugify process, but using ``"_"`` and without lowercasing.
+    underscore.  It's like a slugify process, but using ``"_"``, and without lowercasing.
 
     If the name mangling is ever unintuitive or cumbersome to remember or guess, you can either
     supply your own callback names as the third item in a column's 3-tuple definition, or else
@@ -637,34 +678,33 @@ class DefaultCallbackNamesDatatableView(DemoMixin, DatatableView):
     ``get_column_0_data()``.
 
     INFO:
-    The default hook is only executed if there is no callback already supplied in the column
-    definition.
+    The implicit callbacks are only executed if there is no callback already supplied in the column
+    definition (which is the way we recommend doing things).
     """
     model = Entry
-    class datatable_class(Datatable):
-        class Meta:
-            columns = ['id', 'headline', 'body_text', 'blog', 'pub_date']
+    datatable_options = {
+        'columns': ['id', 'headline', 'body_text', 'blog', 'pub_date'],
+    }
 
-        def get_column_body_text_data(self, instance, *args, **kwargs):
-            return instance.body_text[:30]
+    def get_column_body_text_data(self, instance, *args, **kwargs):
+        return instance.body_text[:30]
 
-        def get_column_pub_date_data(self, instance, *args, **kwargs):
-            return instance.pub_date.strftime("%m/%d/%Y")
+    def get_column_pub_date_data(self, instance, *args, **kwargs):
+        return instance.pub_date.strftime("%m/%d/%Y")
 
     implementation = u"""
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = ['id', 'headline', 'body_text', 'blog', 'pub_date']
+    class DefaultCallbackNamesDatatableView(DatatableView):
+        model = Entry
+
+        datatable_options = {
+            'columns': ['id', 'headline', 'body_text', 'blog', 'pub_date'],
+        }
 
         def get_column_body_text_data(self, instance, *args, **kwargs):
             return instance.body_text[:30]
 
         def get_column_pub_date_data(self, instance, *args, **kwargs):
             return instance.pub_date.strftime("%m/%d/%Y")
-
-    class DefaultCallbackNamesDatatableView(DatatableView):
-        model = Entry
-        datatable_class = MyDatatable
     """
 
 
@@ -728,6 +768,57 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
     """
 
 
+class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
+    """
+    ``Column`` classes handle the rendering of a value into a JSON-ready value, and are responsible
+    for responding to search and sort queries on itself.  So while all columns could bluntly use the
+    ``TextColumn`` class, it is still important to match a column up to its correct counterpart for
+    accurate filter capabilities.
+
+    Showing a ``DateTimeField`` via a ``TextColumn`` would be a bad idea, for example, because the
+    kind of queryset language used on text does not apply to datetime fields, and the datetime
+    queries such as ``__year=xxxx`` aren't made available by a text field.
+
+    Adding new custom subclasses is a simple matter of defining your own Column and declaring on it
+    the ``model_field_class`` that it corresponds to.  Your custom column class will automatically
+    be added to the registry that maps your new column to the model field it handles, and when a
+    Datatable encounters a model field of the custom type, it will use your custom column class to
+    handle it.
+
+    The simplest custom column class just defines ``model_field_class`` as the model field it wants
+    to represent, and provides any ``lookup_types`` that the query language supports for that field
+    when searching for equality.
+
+    ``Column`` classes implement methods for handling the data they represent:
+
+    <ul>
+    <li>``search(model, terms)`` — returns a ``Q()`` object that searches the column's given sources (where the sources are fields found on ``model``), using all ``terms``, using as many database query lookup types as it can.</li>
+    <li>``get_sort_fields()`` — returns the database fields from the column's ``sources`` that are usable for sorting.</li>
+    </ul>
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        blog_name = columns.TextColumn("Blog name", sources=['blog__name'], processor=helpers.link_to_model)
+        age = columns.TextColumn("Age", sources=['pub_date'], processor=helpers.through_filter(timesince))
+        interaction = columns.IntegerColumn("Interaction", sources=['get_interaction_total'], processor=helpers.make_boolean_checkmark)
+    
+        class Meta:
+            columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
+                       'interaction', 'n_comments', 'n_pingbacks']
+            processors = {
+                'id': helpers.link_to_model,
+                'blog_name': helpers.link_to_model(key=lambda obj: obj.blog),
+                'headline': helpers.make_xeditable,
+                'body_text': helpers.itemgetter(slice(0, 30)),
+                'pub_date': helpers.format_date('%A, %b %d, %Y'),
+                'n_comments': helpers.format("{0:,}"),
+                'n_pingbacks': helpers.format("{0:,}"),
+            }
+
+    implementation = u"""
+    asdf
+    """
+
 class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
     ``datatableview.helpers`` is a module decidated to functions that can be supplied directly as
@@ -779,19 +870,26 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
 # Advanced topics
 class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
-    Care must be taken to modify the options object on the View class: because it is defined as a
-    class attribute, there is only one copy of it in memory, and changing it is not thread safe.
+    When a ``DatatableView`` is run, it builds the ``Datatable`` configuration object from the
+    information is has available about it.  In most cases, you will have supplied a simple
+    ``datatable_class`` which packages all of the configuration for you.
 
-    To safely change the options at runtime, always make sure to fully copy the data before making
-    changes.  The simplest way to do this is via a call to the built-in ``copy.deepcopy`` function.
+    To modify this configuration per-request, you can leverage the ``get_datatable_kwargs()`` hook
+    that sets up the data that will construct the ``Datatable`` object.  The returned dictionary can
+    contain any of the Meta options normally found on a ``Datatable`` object.  Options supplied by
+    the view like this will override any existing options on the given ``datatable_class``.
+
+    WARNING:
+    Care must be taken not to modify the ``datatable_class`` object directly: because it is
+    statically defined, there is only one copy of it in memory, and changing it is not thread safe.
+    To safely change the options at runtime, always make sure to fully copy the original data before
+    making changes.  The simplest way to do this is via a call to python's built-in
+    ``copy.deepcopy`` function. 
     """
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-            ]
+            columns = ['id', 'headline']
 
     def get_datatable_kwargs(self):
         from copy import deepcopy
@@ -804,10 +902,7 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-            ]
+            columns = ['id', 'headline']
 
     class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
         model = Entry
@@ -832,7 +927,7 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
 
     Another way to accomplish this effect would be to declare separate views and just pull their
     datatable specifications into the context of the one master view.  (See
-    <a href="/embedded-table/">Embdeeded on another view</a> for an example of that pattern.)
+    <a href="/embedded-table/">Embdedded on another view</a> for an example of that pattern.)
 
     To get started, instead of declaring a ``datatable_class`` attribute on the view, you will
     instead declare a ``datatable_classes`` dict.  This is a map of names to classes.  These names
@@ -951,14 +1046,7 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
     all of the options and machinery for getting the structure object for the context.
 
     Just add a ``get_context_data()`` method, instantiate the other view, and ask it to generate
-    the options object via ``get_datatable_options()``.  You can feed this options object into
-    the ``datatableview.utils.get_datatable_structure()`` utility.
-
-    ``get_datatable_structure()`` takes at least two arguments, and is the mechanism that a regular
-    call to a ``DatatableView.get_datatable()`` uses to get the context variable: the ``ajax_url``
-    the table will target, and the ``options`` object.  Unless there are ordering options set in
-    the main ``datatable_options`` object, the table won't know how to use default ordering, so you
-    can specify the third optional argument ``model``.
+    the options object via its ``get_datatable()`` method.
     """
 
     def get_context_data(self, **kwargs):
@@ -975,11 +1063,7 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
 
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'pub_date',
-            ]
+            columns = ['id', 'headline', 'pub_date']
 
     class SatelliteDatatableView(DatatableView):
         \"\"\"
@@ -1178,22 +1262,18 @@ class CSSStylingDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                ("Publication date", 'pub_date'),
-            ]
+            columns = ['id', 'headline', 'blog', 'pub_date']
+            labels = {
+                'pub_date': "Publication Date",
+            }
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                ("Publication date", 'pub_date'),
-            ]
+            columns = ['id', 'headline', 'blog', 'pub_date']
+            labels = {
+                'pub_date': "Publication Date",
+            }
 
     class CSSStylingDatatableView(DatatableView):
         model = Entry

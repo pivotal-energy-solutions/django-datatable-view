@@ -61,21 +61,26 @@ from .models import Entry
 # See third and fourth example columns just below
 xeditable_date = helpers.make_xeditable(type="date")
 
+class MyDatatable(Datatable):
+    # Standard use; supply callback directly for all default options
+    headline = columns.TextColumn("Headline", sources=['headling'],
+                                  processor=helpers.make_xeditable)
+
+    # Customize options described above via kwargs
+    headline = columns.TextColumn("Headline", sources=['headling'],
+                                  processor=helpers.make_xeditable(type="textarea"))
+
+    # Supply a previously created "partial" helper
+    pub_date = columns.TextColumn("Publication Date", sources=['pub_date'],
+                                  processor=xeditable_date)
+
+    # Add arguments to a previously created "partial" helper
+    pub_date = columns.TextColumn("Publication Date", sources=['pub_date'],
+                                  processor=xeditable_date(placeholder="Enter a valid date")
+
 class EditableDatatableView(XEditableDatatableView):
     model = Entry
-    datatable_options = {
-        'columns': [
-            # Standard use; supply callback directly for all default options
-            ("Headline", 'headline', helpers.make_xeditable),
-
-            # Customize options described above via kwargs
-            ("Headline", 'headline', helpers.make_xeditable(type="textarea")),
-
-            # Supply a previously created "partial" helper; calls chain until there is an instance
-            ("Publication Date", 'pub_date', xeditable_date),
-            ("Publication Date", 'pub_date', xeditable_date(placeholder="Enter a valid date")),
-        ],
-    }
+    datatable_class = MyDatatable
 </pre>
 <p>
     If you're using a custom callback method, you can still ask <code>make_xeditable</code> to
@@ -88,6 +93,9 @@ class EditableDatatableView(XEditableDatatableView):
     <code>**kwargs</code> from your callback to it.  Chances are good that some default value that
     the helper wants to fill out may need information that <code>XEditableDatatableView</code> is
     trying to supply to it.
+</p>
+<p>
+    Here is an example of calling the helper directly:
 </p>
 <pre class="brush: python">
 def get_column_Headline_data(self, instance, *args, **kwargs):

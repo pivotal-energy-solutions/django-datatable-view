@@ -66,7 +66,7 @@ class ViewsTests(DatatableViewTestCase):
     def test_presentational_changes_datatable_view(self):
         """ Verifies that a custom callback is used to modify the appearance of the field. """
         view = views.PresentationalChangesDatatableView
-        url = reverse('presentational-changes')
+        url = reverse('processors')
         obj = self.get_json_response(url)
         row = obj['aaData'][0]
         columns = view.datatable_options['columns']
