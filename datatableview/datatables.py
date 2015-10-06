@@ -439,6 +439,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         objects = self.search(objects)
         objects = self.sort(objects)
         self._records = objects
+        self.total_initial_record_count = len(self.object_list)
+        self.unpaged_record_count = len(self._records)
 
     def search(self, queryset):
         """ Performs db-only queryset searches. """
