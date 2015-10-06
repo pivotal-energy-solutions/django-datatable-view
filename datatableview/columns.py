@@ -207,7 +207,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                 term = None
 
         if multi_terms:
-            return filter(None, (self.prep_search_value(multi_term) for multi_term in multi_terms))
+            return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms))
 
         if lookup_type not in ('year', 'month', 'day', 'hour' 'minute', 'second', 'week_day'):
             model_field = self.model_field_class()
