@@ -23,28 +23,11 @@ from .exceptions import ColumnError, SkipRecord
 from . import columns
 from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH
 
-COLUMN_TYPES = {
-    columns.TextColumn: [models.CharField, models.TextField, models.FileField],
-    columns.DateColumn: [models.DateField],
-    columns.BooleanColumn: [models.BooleanField, models.NullBooleanField],
-    columns.IntegerColumn: [models.IntegerField, models.AutoField],
-    columns.FloatColumn: [models.FloatField, models.DecimalField],
-
-    # This is a special type for fields that should be passed up, since there is no intuitive
-    # meaning for searches done agains the FK field directly.
-    columns.ForeignKeyColumn: [models.ForeignKey],
-}
-
 def pretty_name(name):
     if not name:
         return ''
     return name[0].capitalize() + name[1:]
 
-def get_column_for_modelfield(model_field):
-    """ Return the built-in Column class for a model field class. """
-    for ColumnClass, modelfield_classes in COLUMN_TYPES.items():
-        if isinstance(model_field, tuple(modelfield_classes)):
-            return ColumnClass
 
 # Borrowed from the Django forms implementation 
 def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
@@ -57,7 +40,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
         if exclude and f.name in exclude:
             continue
 
-        column_class = get_column_for_modelfield(f)
+        column_class = columns.get_column_for_modelfield(f)
         if labels and f.name in labels:
             label = labels[f.name]
         else:

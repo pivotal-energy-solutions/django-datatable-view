@@ -32,6 +32,14 @@ from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPAR
 COLUMN_CLASSES = defaultdict(list)
 
 
+def get_column_for_modelfield(model_field):
+    """ Return the built-in Column class for a model field class. """
+    if isinstance(model_field, models.ForeignKey):
+        model_field = model_field.rel.to._meta.pk
+    for ColumnClass, modelfield_classes in COLUMN_CLASSES.items():
+        if isinstance(model_field, tuple(modelfield_classes)):
+            return ColumnClass
+
 def get_attribute_value(obj, bit):
     try:
         value = getattr(obj, bit)
@@ -49,7 +57,10 @@ class ColumnMetaclass(type):
     """ Column type for automatic registration of column types as ModelField handlers. """
     def __new__(cls, name, bases, attrs):
         new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
-        COLUMN_CLASSES[new_class].append(new_class.model_field_class)
+        if new_class.handles_field_classes:
+            COLUMN_CLASSES[new_class].extend(new_class.handles_field_classes)
+        if new_class.model_field_class:
+            COLUMN_CLASSES[new_class].append(new_class.model_field_class)
         return new_class
 
 
@@ -59,6 +70,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     """ Generic table column using CharField for rendering. """
 
     model_field_class = models.CharField
+    handles_field_classes = []
 
     lookup_types = ('exact', 'in')
 
@@ -174,14 +186,6 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             return None
 
     # Interactivity features
-    def get_column_for_source(self, model, source):
-        """ Generates a temporary searchterm-handling Column for a given ``source``. """
-        # TODO: Get this method on the Datatable instead of the Column
-        modelfield = resolve_orm_path(model, source)
-        for Column, modelfields in COLUMN_CLASSES.items():
-            if isinstance(modelfield, tuple(modelfields)):
-                return Column()
-
     def prep_search_value(self, term, lookup_type):
         """ Coerce the input term to work for the given lookup_type. """
 
@@ -241,7 +245,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         for term in terms:
             term_queries = []
             for source in sources:
-                handler = self.get_column_for_source(model, source)
+                modelfield = resolve_orm_path(model, source)
+                handler = get_column_for_modelfield(modelfield)()
                 lookup_types = self.get_lookup_types(handler=handler)
                 for lookup_type in lookup_types:
                     coerced_term = (handler or self).prep_search_value(term, lookup_type)
@@ -295,11 +300,13 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
+    handles_field_classes = [models.CharField, models.TextField, models.FileField]
     lookup_types = ('iexact', 'in', 'icontains')
 
 
 class DateColumn(Column):
     model_field_class = models.DateField
+    handles_field_classes = [models.DateField]
     lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
 
     def prep_search_value(self, term, lookup_type):
@@ -319,6 +326,7 @@ class DateColumn(Column):
 
 class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
+    handles_field_classes = [models.DateTimeField]
     lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
 
 
@@ -328,19 +336,14 @@ if get_version().split('.') >= ['1', '6']:
 
 class BooleanColumn(Column):
     model_field_class = models.BooleanField
+    handles_field_classes = [models.BooleanField, models.NullBooleanField]
 
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
+    handles_field_classes = [models.IntegerField, models.AutoField]
 
 
 class FloatColumn(Column):
     model_field_class = models.FloatField
-
-
-class ForeignKeyColumn(Column):
-    model_field_class = models.ForeignKey
-
-
-# Modifications to built-in column mapping
-COLUMN_CLASSES[IntegerColumn].append(models.AutoField)
+    handles_field_classes = [models.FloatField, models.DecimalField]
