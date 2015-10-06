@@ -34,7 +34,12 @@ COLUMN_CLASSES = defaultdict(list)
 
 def get_column_for_modelfield(model_field):
     """ Return the built-in Column class for a model field class. """
-    if isinstance(model_field, models.ForeignKey):
+
+    # If the field points to another model, we want to get the pk field of that other model and use
+    # that as the real field.  It is possible that a ForeignKey points to a model with table
+    # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
+    # climb the 'pk' field chain until we have something real.
+    while model_field.rel:
         model_field = model_field.rel.to._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES.items():
         if isinstance(model_field, tuple(modelfield_classes)):
