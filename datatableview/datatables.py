@@ -684,13 +684,15 @@ class LegacyDatatable(Datatable):
             field = get_field_definition(name)
             column = columns.TextColumn(sources=field.fields, label=field.pretty_name,
                                         processor=field.callback)
+            column.name = field.fields[0] if field.fields else field.pretty_name
             virtual_columns[name] = column
 
         # Make sure it's in the same order as originally defined
         new_columns = OrderedDict()
         for name in self._meta.columns:  # Can't use self.config yet, hasn't been generated
             if name in self.columns:
-                new_columns[name] = self.columns[name]
+                column = self.columns[name]
             else:
-                new_columns[name] = virtual_columns[name]
+                column = virtual_columns[name]
+            new_columns[column.name] = column
         self.columns = new_columns
