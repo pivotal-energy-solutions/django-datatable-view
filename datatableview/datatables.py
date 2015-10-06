@@ -427,7 +427,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         records.  Note that there is no memoization here; calling this method means work will be
         performed.
 
-        The if ``self.object_list`` is a queryset instead of a list, the queryset will lazily avoid
+        If ``self.object_list`` is a queryset instead of a list, the queryset will lazily avoid
         executing any queries as long as the operations requested by the configuration are call
         database-backed operations.  If they are not, the queryset will be evaluated and then
         converted to a list for clarity about what has taken place.
