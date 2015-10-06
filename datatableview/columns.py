@@ -275,8 +275,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             q = None
         return q
 
-    def get_sort_fields(self):
-        return self.get_db_sources()
+    def get_sort_fields(self, model):
+        return self.get_db_sources(model)
 
     # Template rendering
     def __str__(self):

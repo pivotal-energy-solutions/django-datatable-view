@@ -363,7 +363,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         i = 0
         for i, name in enumerate(self.config['ordering']):
             column = self.columns[name]
-            if column.get_db_sources():
+            if not column.get_db_sources(self.model):
                 break
         else:
             i = len(self.config['ordering'])
@@ -467,7 +467,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         db, virtual = self.get_ordering_splits()
         for name in db:
             column = self.columns[name]
-            sources = column.get_sort_fields()
+            sources = column.get_sort_fields(self.model)
             if sources:
                 fields.extend(sources)
 
