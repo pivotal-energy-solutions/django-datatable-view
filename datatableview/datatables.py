@@ -489,7 +489,11 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         of the ``get_column_FIELD_NAME_data()`` methods.
         """
 
-        return {}
+        kwargs = {}
+        if self.forward_callback_target and \
+                getattr(self.forward_callback_target, 'preload_record_data'):
+            kwargs.update(self.forward_callback_target.preload_record_data(obj))
+        return kwargs
 
     def get_object_pk(self, obj):
         """ Returns the object's ``pk`` value. """
