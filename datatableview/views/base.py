@@ -129,6 +129,11 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
                 kwargs[k] = getattr(self, k)
         return kwargs
 
+
+    # Runtime per-object hook
+    def preload_record_data(self, obj):
+        return {}
+
     # Extra getters
     def get_datatable_context_name(self):
         return self.context_datatable_name
