@@ -6,6 +6,10 @@ try:
     from functools import reduce
 except ImportError:
     pass
+try:
+    from collections import UserDict
+except ImportError:
+    from UserDict import UserDict
 
 from django.db import models
 from django.db.models import Q
@@ -309,6 +313,7 @@ def apply_options(object_list, spec):
     return object_list
 
 
+##
 # Legacy only
 def get_datatable_structure(ajax_url, options, model=None):
     """
@@ -319,3 +324,148 @@ def get_datatable_structure(ajax_url, options, model=None):
         options = DatatableOptions(model, {}, **options)
 
     return DatatableStructure(ajax_url, options, model=model)
+
+
+class DatatableOptions(UserDict):
+    """ Normalizes all options to values that are guaranteed safe. """
+
+    def __init__(self, model, query_parameters, *args, **kwargs):
+        from datatableview.views.legacy import DEFAULT_OPTIONS, get_field_definition
+
+        self._model = model
+
+        # Core options, not modifiable by client updates
+        if 'columns' not in kwargs:
+            model_fields = model._meta.local_fields
+            kwargs['columns'] = list(map(lambda f: (six.text_type(f.verbose_name), f.name), model_fields))
+
+        if 'hidden_columns' not in kwargs or kwargs['hidden_columns'] is None:
+            kwargs['hidden_columns'] = []
+
+        if 'search_fields' not in kwargs or kwargs['search_fields'] is None:
+            kwargs['search_fields'] = []
+
+        if 'unsortable_columns' not in kwargs or kwargs['unsortable_columns'] is None:
+            kwargs['unsortable_columns'] = []
+
+        # Absorb query GET params
+        kwargs = self._normalize_options(query_parameters, kwargs)
+
+        UserDict.__init__(self, DEFAULT_OPTIONS, *args, **kwargs)
+
+        self._flat_column_names = []
+        for column in self['columns']:
+            column = get_field_definition(column)
+            flat_name = column.pretty_name
+            if column.fields:
+                flat_name = column.fields[0]
+            self._flat_column_names.append(flat_name)
+
+    def _normalize_options(self, query_config, config):
+        """ Validates incoming options in the request query parameters. """
+        from datatableview.views.legacy import get_field_definition
+
+        model = self._model
+
+        # Search
+        config['search'] = query_config.get(OPTION_NAME_MAP['search'], '').strip()
+
+        # Page start offset
+        try:
+            start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], 0)
+            start_offset = int(start_offset)
+        except ValueError:
+            start_offset = 0
+        else:
+            if start_offset < 0:
+                start_offset = 0
+        config['start_offset'] = start_offset
+
+        # Page length
+        try:
+            page_length = query_config.get(OPTION_NAME_MAP['page_length'],
+                                           config.get('page_length', DEFAULT_PAGE_LENGTH))
+            page_length = int(page_length)
+        except ValueError:
+            page_length = config.get('page_length', DEFAULT_PAGE_LENGTH)
+        else:
+            if page_length == -1:  # datatable's way of asking for all items, no pagination
+                pass
+            elif page_length < MINIMUM_PAGE_LENGTH:
+                page_length = MINIMUM_PAGE_LENGTH
+        config['page_length'] = page_length
+
+        # Ordering
+        # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
+        # column indices to check the values of sSortDir_X and bSortable_X
+        default_ordering = config.get('ordering')
+        config['ordering'] = []
+        try:
+            num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
+        except ValueError:
+            num_sorting_columns = 0
+
+        # Default sorting from view or model definition
+        if not num_sorting_columns:
+            config['ordering'] = default_ordering
+        else:
+            for sort_queue_i in range(num_sorting_columns):
+                try:
+                    column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+                except ValueError:
+                    continue
+                else:
+                    # Reject out-of-range sort requests
+                    if column_index >= len(config['columns']):
+                        continue
+
+                    column = config['columns'][column_index]
+                    column = get_field_definition(column)
+                    is_local_field = False
+                    if column.fields:
+                        base_field_name = column.fields[0].split('__')[0]
+                        # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
+                        if hasattr(model._meta, 'get_fields'):
+                            field_names = [field.name for field in model._meta.get_fields()]
+                        else:
+                            field_names = model._meta.get_all_field_names()
+                        if base_field_name in field_names:
+                            is_local_field = True
+
+                    if not column.fields or len(column.fields) > 1 or not is_local_field:
+                        field_name = '!{0}'.format(column_index)
+
+                    if is_local_field:
+                        name = column.fields[0]
+                        field_name = name
+                    else:
+                        name = column.pretty_name
+
+                    # Reject requests for unsortable columns
+                    if config['unsortable_columns'] and name in config['unsortable_columns']:
+                        continue
+
+                    # Get the client's requested sort direction
+                    sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+
+                    sort_modifier = None
+                    if sort_direction == 'asc':
+                        sort_modifier = ''
+                    elif sort_direction == 'desc':
+                        sort_modifier = '-'
+                    else:
+                        continue
+
+                    config['ordering'].append('%s%s' % (sort_modifier, field_name))
+        if not config['ordering'] and model:
+            config['ordering'] = model._meta.ordering
+
+        return config
+
+    def get_column_index(self, name):
+        if name.startswith('!'):
+            return int(name[1:])
+        try:
+            return self._flat_column_names.index(name)
+        except ValueError:
+            return -1
