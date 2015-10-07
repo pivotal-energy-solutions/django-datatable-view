@@ -182,7 +182,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
     # Immediate finalization, return the xeditable structure
     data = kwargs.get('default_value', instance)
-    rich_data = kwargs.get('rich_value', None)
+    rich_data = kwargs.get('rich_value', data)
 
     # Compile values to appear as "data-*" attributes on the anchor tag
     default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
