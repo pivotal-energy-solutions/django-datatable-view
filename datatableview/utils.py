@@ -13,6 +13,7 @@ except ImportError:
 
 from django.db import models
 from django.db.models import Q
+from django.db.models.related import RelatedObject
 from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import smart_split
@@ -131,6 +132,19 @@ def get_first_orm_bit(column):
         return None
 
     return column.sources[0].split('__')[0]
+
+
+def contains_plural_field(model, fields):
+    """ Returns a boolean indicating if ``fields`` contains a relationship to multiple items. """
+    for orm_path in fields:
+        bits = orm_path.lstrip('+-').split('__')
+        for bit in bits[:-1]:
+            field, _, direct, m2m = model._meta.get_field_by_name(bit)
+            if isinstance(field, models.ManyToManyField) or \
+                    (isinstance(field, RelatedObject) and field.field.rel.multiple):
+                return True
+            model = get_model_at_related_field(model, bit)
+    return False
 
 
 def apply_options(object_list, spec):

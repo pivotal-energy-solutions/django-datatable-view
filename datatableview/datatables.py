@@ -10,6 +10,7 @@ except ImportError:
     pass
 
 from django.db import models
+from django.db.models import Count
 from django.template.loader import render_to_string
 from django.utils.text import smart_split
 try:
@@ -21,7 +22,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from . import columns
-from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH
+from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field
 
 def pretty_name(name):
     if not name:
@@ -184,7 +185,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     options_class = DatatableOptions
 
     def __init__(self, object_list, url, view=None, callback_target=None, model=None,
-                 query_config=None, **kwargs):
+                 query_config=None, force_distinct=True, **kwargs):
         self.object_list = object_list
         self.url = url
         self.view = view
@@ -197,6 +198,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.columns = copy.deepcopy(self.base_columns)
         self.configure(self._meta.__dict__, kwargs, query_config)
 
+        self._force_distinct = force_distinct
         self.total_initial_record_count = None
         self.unpaged_record_count = None
 
@@ -481,7 +483,23 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if sources:
                 fields.extend([(sort_direction + source) for source in sources])
 
-        return queryset.order_by(*fields)
+        queryset = queryset.order_by(*fields)
+
+        # When sorting a plural relationship field, we get duplicate rows for each item on the other
+        # end of that relationship, which can't be removed with a call to distinct().
+        if self._force_distinct and contains_plural_field(self.model, fields):
+            queryset = self.force_distinct(queryset)
+
+        return queryset
+
+    def force_distinct(self, object_list):
+        seen = set()
+        def is_unseen(obj):
+            if obj.pk in seen:
+                return False
+            seen.add(obj.pk)
+            return True
+        return tuple(obj for obj in object_list if is_unseen(obj))
 
     # Per-record callbacks
     def preload_record_data(self, obj):
@@ -625,6 +643,9 @@ class ValuesDatatable(Datatable):
     Variant of the standard Datatable that terminates its queryset with ``.values()`` and assigns
     the results to the column values.
     """
+    def get_valuesqueryset(self, queryset):
+        return queryset.values(*self.column_queries.keys())
+
     def populate_records(self):
         """
         Switches the object_list to a ValuesQuerySet with the given columns' ``sources`` lists.
@@ -637,9 +658,13 @@ class ValuesDatatable(Datatable):
             ]))
 
         # Convert to a ValuesQuerySet
-        self.object_list = self.object_list.values(*self.column_queries.keys())
+        self.object_list = self.get_valuesqueryset(self.object_list)
 
         super(ValuesDatatable, self).populate_records()
+
+    # def reload_queryset(self, queryset):
+    #     queryset = super(ValuesDatatable, self).reload_queryset(queryset)
+    #     return self.get_valuesqueryset(queryset)
 
     def get_object_pk(self, obj):
         """ Reads the pk from the ValuesQuerySet entry. """
@@ -698,3 +723,7 @@ class LegacyDatatable(Datatable):
                 column = virtual_columns[name]
             new_columns[column.name] = column
         self.columns = new_columns
+
+
+class ValuesLegacyDatatable(LegacyDatatable, ValuesDatatable):
+    pass
