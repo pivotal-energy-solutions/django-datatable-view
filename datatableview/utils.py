@@ -13,10 +13,15 @@ except ImportError:
 
 from django.db import models
 from django.db.models import Q
-from django.db.models.related import RelatedObject
 from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import smart_split
+try:
+    from django.db.models.related import RelatedObject
+    USE_RELATED_OBJECT = True
+except ImportError:
+    from django.db.models.fields.related import RelatedField
+    USE_RELATED_OBJECT = False
 
 import dateutil.parser
 
@@ -140,8 +145,9 @@ def contains_plural_field(model, fields):
         bits = orm_path.lstrip('+-').split('__')
         for bit in bits[:-1]:
             field, _, direct, m2m = model._meta.get_field_by_name(bit)
-            if isinstance(field, models.ManyToManyField) or \
-                    (isinstance(field, RelatedObject) and field.field.rel.multiple):
+            if isinstance(field, models.ManyToManyField) \
+                    or (USE_RELATED_OBJECT and isinstance(field, RelatedObject) and field.field.rel.multiple) \
+                    or (not USE_RELATED_OBJECT and isinstance(field, RelatedField) and field.one_to_many):
                 return True
             model = get_model_at_related_field(model, bit)
     return False
