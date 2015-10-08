@@ -168,7 +168,7 @@ class HelpersTests(DatatableViewTestCase):
         helper = helpers.make_xeditable
         
         # Items that the helper normally expects in a callback context
-        internals = {'field_data': ("Name", 'name', None)}
+        internals = {'field_name': 'name'}
 
         # Verify chain calls don't trigger rendering
         secondary_helper = helper()
@@ -221,7 +221,7 @@ class HelpersTests(DatatableViewTestCase):
                     data-title="TITLE DATA"
                     data-type="TYPE DATA"
                     data-url="URL DATA"
-                    data-value="ExampleModel object"
+                    data-value="1"
                     data-xeditable="xeditable">
             ExampleModel object
         </a>
@@ -240,7 +240,7 @@ class HelpersTests(DatatableViewTestCase):
                     data-title="TITLE DATA"
                     data-type="TYPE DATA"
                     data-url="URL DATA"
-                    data-value="ExampleModel object"
+                    data-value="1"
                     data-special="SPECIAL DATA"
                     data-custom="DATA-CUSTOM DATA"
                     data-xeditable="xeditable">
