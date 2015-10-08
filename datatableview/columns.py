@@ -2,7 +2,6 @@
 
 import re
 import operator
-from collections import defaultdict
 try:
     from functools import reduce
 except ImportError:
@@ -27,9 +26,10 @@ import dateutil
 
 from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
-# Registry of Column subclasses to their declared corresponding ModelField.
-# There are manual additions to this setting after the column definitions below.
-COLUMN_CLASSES = defaultdict(list)
+# Registry of Column subclasses to their declared corresponding ModelFields.
+# The registery is an ordered priority list, containing 2-tuples of a Column subclass and a list of
+# classes that the column will service.
+COLUMN_CLASSES = []
 
 
 def get_column_for_modelfield(model_field):
@@ -41,7 +41,7 @@ def get_column_for_modelfield(model_field):
     # climb the 'pk' field chain until we have something real.
     while model_field.rel:
         model_field = model_field.rel.to._meta.pk
-    for ColumnClass, modelfield_classes in COLUMN_CLASSES.items():
+    for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
 
@@ -62,10 +62,9 @@ class ColumnMetaclass(type):
     """ Column type for automatic registration of column types as ModelField handlers. """
     def __new__(cls, name, bases, attrs):
         new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
+        COLUMN_CLASSES.insert(0, (new_class, [new_class.model_field_class]))
         if new_class.handles_field_classes:
-            COLUMN_CLASSES[new_class].extend(new_class.handles_field_classes)
-        if new_class.model_field_class:
-            COLUMN_CLASSES[new_class].append(new_class.model_field_class)
+            COLUMN_CLASSES.insert(0, (new_class, new_class.handles_field_classes))
         return new_class
 
 
