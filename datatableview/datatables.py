@@ -604,7 +604,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if f:
                 return f
             return getattr(self, callback)
-                
 
         if self.forward_callback_target:
             f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column.name,), None)
@@ -683,7 +682,7 @@ class ValuesDatatable(Datatable):
         source, so that it's more natural to deal with long ORM query paths.
 
         Example conversion:
-        
+
             {'pk': 1, 'blog__name': "My Blog"}
 
         becomes:

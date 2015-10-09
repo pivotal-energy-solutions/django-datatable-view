@@ -160,7 +160,6 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             value = self.empty_value
 
         return value
-        
 
     def get_processor_kwargs(self, **kwargs):
         return kwargs

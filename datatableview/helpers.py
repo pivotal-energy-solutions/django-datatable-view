@@ -261,7 +261,6 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                     attrs['data-source'] += '&select2=true'
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'source'.")
-            
 
         # Choice fields will want to display their readable label instead of db data
         data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()

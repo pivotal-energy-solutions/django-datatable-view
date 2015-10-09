@@ -802,7 +802,7 @@ class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
         blog_name = columns.TextColumn("Blog name", sources=['blog__name'], processor=helpers.link_to_model)
         age = columns.TextColumn("Age", sources=['pub_date'], processor=helpers.through_filter(timesince))
         interaction = columns.IntegerColumn("Interaction", sources=['get_interaction_total'], processor=helpers.make_boolean_checkmark)
-    
+
         class Meta:
             columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
                        'interaction', 'n_comments', 'n_pingbacks']

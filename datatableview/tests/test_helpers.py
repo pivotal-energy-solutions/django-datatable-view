@@ -30,7 +30,7 @@ class HelpersTests(DatatableViewTestCase):
         with self.assertRaises(AttributeError) as cm:
             helper(related)
         self.assertEqual(str(cm.exception), "'RelatedM2MModel' object has no attribute 'get_absolute_url'")
-        
+
         # Verify simple use
         instance = ExampleModel.objects.get(pk=1)
         output = helper(instance)
@@ -135,7 +135,7 @@ class HelpersTests(DatatableViewTestCase):
         secondary_helper = helper(slice(0, 5), ellipsis=True)
         output = secondary_helper(data)
         self.assertEqual(output, data[:5] + "...")
-        
+
         # Verify ellipsis can be customized
         secondary_helper = helper(slice(0, 5), ellipsis="custom")
         output = secondary_helper(data)
@@ -166,7 +166,7 @@ class HelpersTests(DatatableViewTestCase):
     def test_make_xeditable(self):
         """ Verifies that make_xeditable works. """
         helper = helpers.make_xeditable
-        
+
         # Items that the helper normally expects in a callback context
         internals = {'field_name': 'name'}
 
@@ -206,7 +206,7 @@ class HelpersTests(DatatableViewTestCase):
             'source': "SOURCE DATA",
             'title': "TITLE DATA",
             'placeholder': "PLACEHOLDER DATA",
-            
+
             # Extra stuff not in anticipated to appear in rendered string
             'special': "SPECIAL DATA",
             'data_custom': "DATA-CUSTOM DATA",
