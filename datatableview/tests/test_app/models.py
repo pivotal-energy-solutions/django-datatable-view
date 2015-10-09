@@ -8,6 +8,12 @@ class ExampleModel(models.Model):
     related = models.ForeignKey('RelatedModel', blank=True, null=True)
     relateds = models.ManyToManyField('RelatedM2MModel', blank=True)
 
+    def __unicode__(self):
+        return "<ExampleModel: %d:'%s'>" % (self.pk, self.name,)
+
+    def __repr__(self):
+        return "<ExampleModel: %d:'%s'>" % (self.pk, self.name,)
+
     def get_absolute_url(self):
         return "#{pk}".format(pk=self.pk)
 
