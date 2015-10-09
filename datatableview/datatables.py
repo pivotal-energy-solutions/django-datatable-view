@@ -380,13 +380,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         """ Legacy utility for fetching the database columns and non-database columns. """
         db_fields = []
         virtual_fields = []
-        for name in enumerate(self.config['ordering']):
-            column = self.columns[name]
+        for name, column in self.columns.items():
             if column.get_db_sources():
                 db_fields.append(name)
             else:
                 virtual_fields.append(name)
-        return self.config['ordering'][:i], self.config['ordering'][i:]
+        return db_fields, virtual_fields
 
     # Data retrieval
     def _get_current_page(self):
