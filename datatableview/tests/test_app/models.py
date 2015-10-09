@@ -9,7 +9,7 @@ class ExampleModel(models.Model):
     relateds = models.ManyToManyField('RelatedM2MModel', blank=True)
 
     def __unicode__(self):
-        return "<ExampleModel: %d:'%s'>" % (self.pk, self.name,)
+        return "ExampleModel %d" % (self.pk,)
 
     def __repr__(self):
         return "<ExampleModel: %d:'%s'>" % (self.pk, self.name,)
