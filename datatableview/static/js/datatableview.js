@@ -55,9 +55,9 @@ var datatableview = {
             };
         }
         var options_name_map = {
-            'sortable': 'bSortable',
-            'sorting': 'aaSorting',
-            'visible': 'bVisible'
+            'config-sortable': 'bSortable',
+            'config-sorting': 'aaSorting',
+            'config-visible': 'bVisible'
         };
 
         var template_clear_button = $('<a href="#" class="clear-search">Clear</a>');

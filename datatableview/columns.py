@@ -281,12 +281,12 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     @property
     def attributes(self):
         attributes = {
-            'data-sortable': 'true' if self.sortable else 'false',
-            'data-visible': 'true' if self.visible else 'false',
+            'data-config-sortable': 'true' if self.sortable else 'false',
+            'data-config-visible': 'true' if self.visible else 'false',
         }
 
         if self.sort_priority is not None:
-            attributes['data-sorting'] = ','.join(map(six.text_type, [
+            attributes['data-config-sorting'] = ','.join(map(six.text_type, [
                 self.sort_priority,
                 self.index,
                 self.sort_direction,
