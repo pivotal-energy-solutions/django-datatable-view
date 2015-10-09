@@ -193,6 +193,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.model = model or self._meta.model
         if self.model is None and hasattr(object_list, 'model'):
             self.model = object_list.model
+        if query_config is None:
+            query_config = {}
 
         self.extra_columns = kwargs.get('columns', None)
         self.columns = copy.deepcopy(self.base_columns)
