@@ -9,6 +9,16 @@
     columns that are declared on the Datatable itself.
 </p>
 
+<p>
+    In version 0.8 and earlier, an item in this list could name a related column or a model method
+    and a column would be generated to handle the value.  In 0.9 and later, this is no longer
+    allowed.  The <code>Datatable</code> configuration object in 0.9 needs an explicit name for
+    every column, and specifying a related field such as <code>"blog__name"</code> starts mixing the
+    concepts of column names and model fields.  The <code>columns</code> list is for column names,
+    not arbitrary ORM paths.  To specify a related field, please see
+    <a href="{% url "custom-columns" %}">Related and virtual field columns</a>.
+</p>
+
 <p class="alert alert-warning">
     For legacy reasons, the <code>Meta.columns</code> setting can still be specified in the
     full-blown format that existed before version 0.9, but when 1.0 is released, this behavior will

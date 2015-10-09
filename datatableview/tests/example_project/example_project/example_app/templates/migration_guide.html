@@ -77,7 +77,7 @@ class MyDatatableView(DatatableView):
         of <code>"get_column_FOO_data()"</code>.  Instead, you'll notice names like
         <code>"get_FOO_data()"</code>, and we'll be specifying the callback in a column definition
         via a <code>processor</code> keyword argument.  See
-        <a href="{% url "compound-columns" %}">Compound columns</a> for an example of this.
+        <a href="{% url "processors" %}">Postprocessors</a> for a examples of this.
     </p>
 
     <br><br>
@@ -114,6 +114,15 @@ class MyDatatableView(DatatableView):
         reads DOM attributes from the table structure and builds some of the column options for
         you, but you can pass literally any other supported option in as the second argument. Just
         give it an object, and everything will be normal.
+    </p>
+    <p class="alert alert-info">
+        There is a configurable Javascript flag <code>datatableview.auto_initialize</code> that
+        previously defaulted to <code>true</code>, but in 0.9 its default value is now
+        <code>false</code>.  If you need 0.9 to behave the way it did in 0.8, set this flag globally
+        or per-page as needed.  (Be careful not to do it in a <code>$(document).ready()</code>
+        handler, since auto initialization runs during that hook.  You might end up flagging for
+        auto initialization after datatableview.js has already finished checking it, and nothing
+        will happen.)
     </p>
 
     <br><br>
@@ -168,7 +177,7 @@ class MyDatatableView(DatatableView):
     <p>
         The task of <a href="/specific-columns/">showing just a few specific columns</a> is made a
         bit heavier than before, but (as with the forms framework) the new Meta options can all be
-        provided as class attributes on the view.
+        provided as class attributes on the view to keep the simplest cases simple.
 
 
     <br><br>

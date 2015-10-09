@@ -322,6 +322,7 @@ class SpecificColumnsDatatableView(DemoMixin, DatatableView):
     Items in the columns list can name either a model field directly, or a custom column defined
     locally on the ``Datatable`` object (which can be a customized version of a model field, or a
     virtual field that is supplying a value via a model property or method).  See
+    <a href="/related-column-definitions/">Related field columns</a>,
     <a href="/virtual-column-definitions/">Non-field columns</a> and
     <a href="/column-backed-by-method/">Model method-backed columns</a> for help defining custom
     columns.
