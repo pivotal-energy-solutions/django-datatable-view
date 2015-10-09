@@ -24,6 +24,7 @@ except ImportError:
     USE_RELATED_OBJECT = False
 
 import dateutil.parser
+import six
 
 MINIMUM_PAGE_LENGTH = 1
 DEFAULT_PAGE_LENGTH = 25  # legacy only
