@@ -551,7 +551,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 'field_name': column.name,
             })
             value = self.get_column_value(obj, column, **kwargs)
-            processor = self._get_processor_method(i, column)
+            processor = self.get_processor_method(column, i)
             if processor:
                 value = processor(obj, default_value=value[0], rich_value=value[1], **kwargs)
 
@@ -569,7 +569,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         """ Returns whatever the column derived as the source value. """
         return column.value(obj, **kwargs)
 
-    def _get_processor_method(self, i, column):
+    def get_processor_method(self, column, i):
         """
         Using a slightly mangled version of the column's name (explained below) each column's value
         is derived.
