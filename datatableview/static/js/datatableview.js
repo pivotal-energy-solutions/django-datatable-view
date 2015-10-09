@@ -3,7 +3,8 @@
 var datatableview = {
     auto_initialize: false,
     defaults: {
-        "bServerSide": true
+        "bServerSide": true,
+        "bPaginate": true
     },
 
     make_xeditable: function(options) {
