@@ -34,7 +34,7 @@ class HelpersTests(DatatableViewTestCase):
         # Verify simple use
         instance = ExampleModel.objects.get(pk=1)
         output = helper(instance)
-        self.assertEqual(output, '<a href="#1">ExampleModel object</a>')
+        self.assertEqual(output, '<a href="#1">ExampleModel 1</a>')
 
         # Verify text override
         output = helper(instance, text="Special text")
@@ -223,7 +223,7 @@ class HelpersTests(DatatableViewTestCase):
                     data-url="URL DATA"
                     data-value="1"
                     data-xeditable="xeditable">
-            ExampleModel object
+            ExampleModel 1
         </a>
         """
         self.assertHTMLEqual(output, expected_output)
@@ -244,7 +244,7 @@ class HelpersTests(DatatableViewTestCase):
                     data-special="SPECIAL DATA"
                     data-custom="DATA-CUSTOM DATA"
                     data-xeditable="xeditable">
-            ExampleModel object
+            ExampleModel 1
         </a>
         """
         self.assertHTMLEqual(output, expected_output)

@@ -2,6 +2,8 @@
 
 from .testcase import DatatableViewTestCase
 from .test_app import models
+from ..columns import Column
+from ..views.legacy import DEFAULT_OPTIONS
 from .. import utils
 
 
@@ -12,12 +14,8 @@ def get_structure(columns, opts):
 class UtilsTests(DatatableViewTestCase):
     def test_get_first_orm_bit(self):
         """  """
-        self.assertEqual(utils.get_first_orm_bit('field'), 'field')
-        self.assertEqual(utils.get_first_orm_bit('field__otherfield'), 'field')
-        self.assertEqual(utils.get_first_orm_bit(["Pretty Name", 'field']), 'field')
-        self.assertEqual(utils.get_first_orm_bit(["Pretty Name", 'field', "callback"]), 'field')
-        self.assertEqual(utils.get_first_orm_bit(["Pretty Name", 'field__otherfield']), 'field')
-        self.assertEqual(utils.get_first_orm_bit(["Pretty Name", 'field__otherfield', "callback"]), 'field')
+        self.assertEqual(utils.get_first_orm_bit(Column(sources=['field'])), 'field')
+        self.assertEqual(utils.get_first_orm_bit(Column(sources=['field__otherfield'])), 'field')
 
     def test_resolve_orm_path_local(self):
         """ Verifies that references to a local field on a model are returned. """
@@ -38,52 +36,6 @@ class UtilsTests(DatatableViewTestCase):
         """ Verify that ExampleModel->>>RelatedM2MModel.name == RelatedM2MModel.name """
         remote_field = utils.resolve_orm_path(models.ExampleModel, 'relateds__name')
         self.assertEqual(remote_field, models.RelatedM2MModel._meta.get_field_by_name('name')[0])
-
-    def test_split_real_fields(self):
-        """ Verifies that the first non-real field causes a break in the field list. """
-        model = models.ExampleModel
-
-        # All-real fields
-        real, fake = utils.split_real_fields(model, ['name', 'date_created'])
-        self.assertEqual(real, ['name', 'date_created'])
-        self.assertEqual(fake, [])
-
-        # No real fields
-        real, fake = utils.split_real_fields(model, ['fake1', 'fake2'])
-        self.assertEqual(real, [])
-        self.assertEqual(fake, ['fake1', 'fake2'])
-
-        # Real first, fake last
-        real, fake = utils.split_real_fields(model, ['name', 'fake'])
-        self.assertEqual(real, ['name'])
-        self.assertEqual(fake, ['fake'])
-        
-        # Fake first, real last
-        real, fake = utils.split_real_fields(model, ['fake', 'name'])
-        self.assertEqual(real, [])
-        self.assertEqual(fake, ['fake', 'name'])
-        
-    def test_filter_real_fields(self):
-        model = models.ExampleModel
-        fields = [
-            'name',
-            ('name',),
-            ("Pretty Name", 'name'),
-            ("Pretty Name", 'name', 'callback'),
-        ]
-        fakes = [
-            'fake',
-            ("Pretty Name", 'fake'),
-            ("Pretty Name", 'fake', 'callback'),
-            None,
-            ("Pretty Name", None),
-            ("Pretty Name", None, 'callback'),
-        ]
-        db_fields, virtual_fields = utils.filter_real_fields(model, fields + fakes,
-                                                             key=utils.get_first_orm_bit)
-
-        self.assertEqual(db_fields, fields)
-        self.assertEqual(virtual_fields, fakes)
 
     def test_structure_ordering(self):
         """ Verifies that the structural object correctly maps configuration values. """
@@ -185,7 +137,7 @@ class UtilsTests(DatatableViewTestCase):
     def test_options_use_defaults(self):
         """ Verifies that no options normalizes to the default set. """
         options = utils.DatatableOptions(models.ExampleModel, {})
-        self.assertEqual(options, dict(utils.DEFAULT_OPTIONS, columns=options['columns']))
+        self.assertEqual(options, dict(DEFAULT_OPTIONS, columns=options['columns']))
 
     def test_options_normalize_values(self):
         """ Verifies that the options object fixes bad values. """
@@ -215,7 +167,7 @@ class UtilsTests(DatatableViewTestCase):
         self.assertEqual(options['page_length'], -1)
         data = {utils.OPTION_NAME_MAP['page_length']: 'not a number'}
         options = utils.DatatableOptions(model, data)
-        self.assertEqual(options['page_length'], utils.DEFAULT_OPTIONS['page_length'])
+        self.assertEqual(options['page_length'], DEFAULT_OPTIONS['page_length'])
 
     def test_options_sorting_validation(self):
         """ Verifies that sorting options respect configuration. """
