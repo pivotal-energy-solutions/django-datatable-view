@@ -76,7 +76,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     model_field_class = models.CharField
     handles_field_classes = []
 
-    lookup_types = ('exact', 'in')
+    lookup_types = ('iexact', 'icontains', 'in')
 
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
