@@ -20,6 +20,7 @@ except ImportError:
 
 import six
 
+
 from .exceptions import ColumnError, SkipRecord
 from . import columns
 from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field
@@ -376,7 +377,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return self.config['ordering'][:i], self.config['ordering'][i:]
 
     def get_db_splits(self):
-        """  """
+        """ Legacy utility for fetching the database columns and non-database columns. """
         db_fields = []
         virtual_fields = []
         for name in enumerate(self.config['ordering']):
