@@ -120,8 +120,9 @@ class DatatableOptions(object):
         self.search_fields = getattr(options, 'search_fields', None)  # extra searchable ORM fields
         self.unsortable_columns = getattr(options, 'unsortable_columns', None)
         self.hidden_columns = getattr(options, 'hidden_columns', None)  # generated, but hidden
-        self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
 
+        self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
+        self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
 
         # Dictionaries of column names to values

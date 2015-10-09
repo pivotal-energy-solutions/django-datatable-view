@@ -8,4 +8,13 @@
             {% endfor %}
         </tr>
     </thead>
+    {% if config.footer %}
+    <tfoot>
+        <tr>
+            {% for column in datatable %}
+                <th>{{ column.label }}</th>
+            {% endfor %}
+        </tr>
+    </tfoot>
+    {% endif %}
 </table>
