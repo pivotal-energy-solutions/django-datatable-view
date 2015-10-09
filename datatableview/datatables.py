@@ -471,7 +471,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return queryset
 
     def _search_column(self, column, terms):
-        """ Requests search queries to perform on  """
+        """ Requests search queries to be performed against the target column.  """
         return column.search(self.model, terms)
 
     def sort(self, queryset):
