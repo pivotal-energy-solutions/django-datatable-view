@@ -1149,6 +1149,29 @@ class SkippedRecordDatatableView(DemoMixin, DatatableView):
     """
 
 
+# Extension support
+class ColReorderDatatableView(DemoMixin, DatatableView):
+    """
+    The official <a href="https://datatables.net/extensions/colreorder/">``ColReorder``
+    extension</a> is easy to add to any existing table.  To use it, make sure you include the
+    appropriate javascript source file, and then use the ``R`` character in your ``sDom`` setting.
+
+    To reorder columns, drag the header onto one of the other header labels to see them shift.
+
+    INFO:
+    The ``sDom`` setting you see in most examples that add this plugin is ``'Rlfrtip'``.
+    """
+
+    model = Entry
+    class datatable_class(Datatable):
+        blog = columns.TextColumn("Blog", sources=['blog__name'])
+
+        class Meta:
+            columns = ['headline', 'blog']
+
+    implementation = u""""""
+
+
 # Template rendering
 class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
     """

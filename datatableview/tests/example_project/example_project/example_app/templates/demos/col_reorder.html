@@ -1,0 +1,32 @@
+{% extends "example_base.html" %}
+
+{% block static %}
+    {{ block.super }}
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushJScript.js" type="text/javascript"></script>
+
+    <!-- Resources for "ColReorder" demo -->
+    <link href="https://cdn.datatables.net/colreorder/1.1.0/css/colReorder.dataTables.min.css" rel="stylesheet"/>
+    <script src="https://cdn.datatables.net/colreorder/1.1.0/js/dataTables.colReorder.min.js"></script>
+
+    <!-- Initialization for ColReorder tables -->
+    <script type="text/javascript">
+        datatableview.auto_initialize = false;
+        $(function(){
+            datatableview.initialize($('.datatable'), {
+                'sDom': 'Rlfrtip'
+            });
+        });
+    </script>
+{% endblock static %}
+
+
+{% block implementation %}
+<pre class="brush: javascript">
+    datatableview.auto_initialize = false;
+    $(function(){
+        datatableview.initialize($('.datatable'), {
+            'sDom': 'Rlfrtip'
+        });
+    });
+</pre>
+{% endblock implementation %}
