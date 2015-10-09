@@ -240,36 +240,30 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             lookup_types += ('search',)
         return lookup_types
 
-    def search(self, model, terms):
+    def search(self, model, term):
         """
         Returns the ``Q`` object representing queries made against this column for the given terms.
         """
         sources = self.get_db_sources(model)
         column_queries = []
-        for term in terms:
-            term_queries = []
-            for source in sources:
-                modelfield = resolve_orm_path(model, source)
-                handler = get_column_for_modelfield(modelfield)()
-                lookup_types = self.get_lookup_types(handler=handler)
-                for lookup_type in lookup_types:
-                    coerced_term = (handler or self).prep_search_value(term, lookup_type)
-                    if coerced_term is None:
-                        # Skip terms that don't work with the lookup_type
-                        continue
-                    elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
-                        # Skip attempts to build multi-component searches if we only have one term
-                        continue
+        for source in sources:
+            modelfield = resolve_orm_path(model, source)
+            handler = get_column_for_modelfield(modelfield)()
+            lookup_types = self.get_lookup_types(handler=handler)
+            for lookup_type in lookup_types:
+                coerced_term = (handler or self).prep_search_value(term, lookup_type)
+                if coerced_term is None:
+                    # Skip terms that don't work with the lookup_type
+                    continue
+                elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
+                    # Skip attempts to build multi-component searches if we only have one term
+                    continue
 
-                    k = '%s__%s' % (source, lookup_type)
-                    term_queries.append(Q(**{k: coerced_term}))
-
-            if term_queries:
-                q = reduce(operator.or_, term_queries)
-                column_queries.append(q)
+                k = '%s__%s' % (source, lookup_type)
+                column_queries.append(Q(**{k: coerced_term}))
 
         if column_queries:
-            q = reduce(operator.or_, term_queries)
+            q = reduce(operator.or_, column_queries)
         else:
             q = None
         return q

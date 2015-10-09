@@ -446,19 +446,24 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def search(self, queryset):
         """ Performs db-only queryset searches. """
-        table_queries = []
-        for name, column in self.columns.items():
-            # TODO: Column-specific search terms
-            terms = self.config['search']
-            terms = filter(None, map(lambda t: t.strip("'\" "), smart_split(terms)))
+        # TODO: Column-specific search terms
 
-            search_f = getattr(self, 'search_%s', self._search_column)
-            q = search_f(column, terms)
-            if q is not None:
-                table_queries.append(q)
+        table_queries = []
+        terms = self.config['search']
+        terms = filter(None, map(lambda t: t.strip("'\" "), smart_split(terms)))
+
+        for term in terms:
+            term_queries = []
+            for name, column in self.columns.items():
+                search_f = getattr(self, 'search_%s', self._search_column)
+                q = search_f(column, term)
+                if q is not None:
+                    term_queries.append(q)
+            if term_queries:
+                table_queries.append(reduce(operator.or_, term_queries))
 
         if table_queries:
-            q = reduce(operator.or_, table_queries)
+            q = reduce(operator.and_, table_queries)
             queryset = queryset.filter(q)
 
         return queryset
