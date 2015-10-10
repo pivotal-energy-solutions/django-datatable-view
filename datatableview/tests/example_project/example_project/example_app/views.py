@@ -1172,6 +1172,32 @@ class ColReorderDatatableView(DemoMixin, DatatableView):
     implementation = u""""""
 
 
+class MultiFilterDatatableView(DemoMixin, DatatableView):
+    """
+    The official <a href="http://datatables.net/examples/api/multi_filter.html">per-column
+    searching</a> API is supported on the server if you can arrange for your client table to display
+    the required filter widgets.
+
+    The default datatable rendering template uses the Meta setting ``footer = True`` to reveal a
+    ``&lt;tfoot&gt;`` area that displays simple labels under each column.  This footer can be a useful
+    way to then convert the footers to search boxes, as shown in the examples at link just above.
+
+    Column searches are added to the global searches, and follow the same rules for splitting up
+    search terms when multiple words are present: words are split on spaces, unless they are quoted
+    as a phrase, and once split, the individual terms are all required in order to match a row.
+    """
+
+    model = Entry
+    class datatable_class(Datatable):
+        blog = columns.TextColumn("Blog", sources=['blog__name'])
+
+        class Meta:
+            columns = ['headline', 'blog']
+            footer = True
+
+    implementation = u""""""
+
+
 # Template rendering
 class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
     """

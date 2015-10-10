@@ -1,0 +1,50 @@
+{% extends "example_base.html" %}
+
+{% block static %}
+    {{ block.super }}
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushJScript.js" type="text/javascript"></script>
+
+    <!-- Initialization for multi-filter tables -->
+    <script type="text/javascript">
+        datatableview.auto_initialize = false;
+        $(function(){
+            var datatable = datatableview.initialize($('.datatable'), {});
+            $('.datatable tfoot th').each(function(){
+                var title = $('.datatable thead th').eq($(this).index()).text();
+                $(this).html('<input type="text" placeholder="Search '+title+'" />');
+            });
+            var table = datatable.api();
+            table.columns().every(function(){
+                var column = this;
+                $('input', column.footer()).on('keyup change', function(){
+                    if (column.search() !== this.value) {
+                        column.search(this.value).draw();
+                    }
+                })
+            })
+        });
+    </script>
+{% endblock static %}
+
+
+{% block implementation %}
+<pre class="brush: javascript">
+    datatableview.auto_initialize = false;
+    $(function(){
+        var datatable = datatableview.initialize($('.datatable'), {});
+        $('.datatable tfoot th').each(function(){
+            var title = $('.datatable thead th').eq($(this).index()).text();
+            $(this).html('<input type="text" placeholder="Search '+title+'" />');
+        });
+        var table = datatable.api();
+        table.columns().every(function(){
+            var column = this;
+            $('input', column.footer()).on('keyup change', function(){
+                if (column.search() !== this.value) {
+                    column.search(this.value).draw();
+                }
+            })
+        })
+    });
+</pre>
+{% endblock implementation %}

@@ -37,6 +37,7 @@ OPTION_NAME_MAP = {
     'start_offset': 'iDisplayStart',
     'page_length': 'iDisplayLength',
     'search': 'sSearch',
+    'search_column': 'sSearch_%d',
     'num_sorting_columns': 'iSortingCols',
     'sort_column': 'iSortCol_%d',
     'sort_column_direction': 'sSortDir_%d',
@@ -153,6 +154,9 @@ def contains_plural_field(model, fields):
             model = get_model_at_related_field(model, bit)
     return False
 
+
+def split_terms(s):
+    return filter(None, map(lambda t: t.strip("'\" "), smart_split(s)))
 
 def apply_options(object_list, spec):
     """

@@ -12,7 +12,6 @@ except ImportError:
 from django.db import models
 from django.db.models import Count
 from django.template.loader import render_to_string
-from django.utils.text import smart_split
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
@@ -23,7 +22,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from . import columns
-from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field
+from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms
 
 def pretty_name(name):
     if not name:
@@ -229,6 +228,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
         self.config = self.normalize_config(declared_config, query_config)
+
+        self.config['column_searches'] = {}
+        for i, name in enumerate(self.columns.keys()):
+            column_search = query_config.get(OPTION_NAME_MAP['search_column'] % i, None)
+            if column_search:
+                self.config['column_searches'][name] = column_search
 
         column_order = list(self.columns.keys())
         if self.config['ordering']:
@@ -449,15 +454,25 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def search(self, queryset):
         """ Performs db-only queryset searches. """
-        # TODO: Column-specific search terms
 
         table_queries = []
-        terms = self.config['search']
-        terms = filter(None, map(lambda t: t.strip("'\" "), smart_split(terms)))
 
-        for term in terms:
+        searches = {}
+
+        # Add per-column searches where necessary
+        for name, term in self.config['column_searches'].items():
+            for term in set(split_terms(term)):
+                columns = searches.setdefault(term, {})
+                columns[name] = self.columns[name]
+
+        # Global search terms apply to all columns
+        for term in split_terms(self.config['search']):
+            # Allow global terms to overwrite identical queries that were single-column
+            searches[term] = self.columns.copy()
+
+        for term in searches.keys():
             term_queries = []
-            for name, column in self.columns.items():
+            for name, column in searches[term].items():
                 search_f = getattr(self, 'search_%s', self._search_column)
                 q = search_f(column, term)
                 if q is not None:
