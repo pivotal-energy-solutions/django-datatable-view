@@ -919,6 +919,17 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
 
 
+class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
+    """"""
+
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = ['headline']
+
+    implementation = u""""""
+
+
 class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     """
     ``MultipleDatatableView`` uses a slightly different configuration mechanism to allow the view to

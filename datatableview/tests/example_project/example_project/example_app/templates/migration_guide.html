@@ -22,6 +22,7 @@
                 <a class="list-group-item" href="#no-automatic-datatable-initialization">No more automatic DataTables.js initialization</a>
                 <a class="list-group-item" href="#default-structure-template">Double check any structure templates</a>
                 <a class="list-group-item" href="#complex-columns">Update complex column definitions</a>
+                <a class="list-group-item" href="#custom-fields">Custom model fields</a>
                 <a class="list-group-item" href="#values-datatable">Experiment with the new <code>ValuesDatatable</code></a>
             </div>
         </div>
@@ -215,6 +216,30 @@ class MyDatatableView(DatatableView):
         The task of <a href="/specific-columns/">showing just a few specific columns</a> is made a
         bit heavier than before, but (as with the forms framework) the new Meta options can all be
         provided as class attributes on the view to keep the simplest cases simple.
+    </p>
+
+
+    <br><br>
+    <h3>
+        <a id="custom-fields" name="custom-fields" href="#custom-fields">
+            Custom model fields
+        </a>
+    </h3>
+    <h6>See <a href="/custom-model-fields/">Custom model fields</a> for new registration strategy.</h6>
+    <p>
+        Custom model fields were previously registered in a dict in
+        <code>datatableview.utils.FIELD_TYPES</code>, where the type (such as <code>'text'</code>)
+        would map to a list of model fields that conformed to the text-style ORM query types (such
+        as <code>__icontains</code>).
+    </p>
+    <p>
+        In 0.9, the registration mechanism has changed to a priority system list, which associates
+        instances of the new <code>Column</code> class to the model fields it can handle.  See
+        <a href="/custom-model-fields/">Custom model fields</a> for examples showing how to register
+        model fields to a built-in <code>Column</code> class, and how to write a new
+        <code>Column</code> subclass if there are custom ORM query types that the field should
+        support.
+    </p>
 
 
     <br><br>

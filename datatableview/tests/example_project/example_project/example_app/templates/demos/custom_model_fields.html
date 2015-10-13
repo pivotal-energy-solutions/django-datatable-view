@@ -1,0 +1,57 @@
+{% extends "example_base.html" %}
+
+{% block content %}
+    <h2>Simple fields</h2>
+    <p>
+        If a custom model field subclasses an existing Django field, that field will automatically
+        be handled by your datatable's search function, as long as there are no custom query types
+        that you want to support.  However, if you have a field that does not subclass a built-in
+        field, or does but supports additional query types, you must register that model field so
+        that it can be correctly consulted for data prep and querying.
+    </p>
+    <p>
+        For fields don't inherit from a Django field, don't offer special query types, and can
+        generally be treated like a built-in field such as <code>CharField</code> or
+        <code>IntegerField</code>, you can use a shorthand registration utility:
+    </p>
+
+    <pre class="brush: python">
+    # Somewhere in your project, such as models.py
+    # This should happen globally so that it happens just once,
+    # not every time a request occurs.
+
+    from datatableview.columns import register_simple_modelfield
+    register_simple_modelfield(MyCustomModelField)
+    </pre>
+
+    <h2>Supporting custom ORM query types</h2>
+    <p>
+        Custom fields with support for non-standard query types need to declare a special
+        <code>Column</code> class to detail the relevant information.  If the field supports a
+        query lookup called <code>'__customquery'</code>, you could declare the column like this:
+    </p>
+    <pre class="brush: python">
+    # This should happen somewhere in your project, such as columns.py,
+    # but you should make sure that the file is imported somewhere,
+    # such as in views.py.
+
+    from datatableview.columns import Column
+    class MyCustomColumn(Column):
+        model_field_class = MyCustomFieldClass
+        lookup_types = ['customquery']
+    </pre>
+    <p>
+        Columns declared like this are automatically registered with metaclass magic, placed at the
+        top priority position of the <code>datatableview.columns.COLUMN_CLASSES</code> list, until
+        another column is declared and takes the top-priority position.  This allows you to override
+        the built-in support for existing columns if you wish.
+    </p>
+    <p class="alert alert-info">
+        Note that you should include ALL of the lookup types you want to support on a custom
+        column, not just the new lookup types.  Lookups should be chosen based on what you think
+        would be intuitive.  In text columns, <code>icontains</code> is chosen because partial
+        matches are expected, and <code>iexact</code> isn't very useful because paired with
+        <code>icontains</code> it doesn't find any additional results and yet by itself it's too
+        inflexible.
+    </p>
+{% endblock content %}
