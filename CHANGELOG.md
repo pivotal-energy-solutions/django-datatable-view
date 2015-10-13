@@ -2,6 +2,16 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.1
+This is a transition release to get people to 1.0, which brings a lot of syntax changes for table declaration on the python view, adopting a strategy that looks a lot like Django's forms framework,
+or django-rest-framework's serializers.
+
+0.9 will continue to offer backwards-compatible datatable declaration with the help of a ``LegacyConfigurationDatatableView`` as a baseclass.  ``DatatableView`` will presume that the modern configuration style is being used and will raise errors accordingly.
+
+``wheel`` installation is also possible now.
+
+The live demo site at http://django-datatable-view.appspot.com will continue to operate WITHOUT this beta release, so experimenting with interactive documentation will require that you run the included example project, which includes a 0.9 migration guide.  See the main README.md for quick instructions to get the example project running locally.
+
 ## 0.8.2
 #### Important future note
 This is the last planned release for the 0.8 series!  0.9 and 1.0 will arrive simultaneously sometime during the next couple of weeks, and the entire declaration process for datatableview options has been modernized.
