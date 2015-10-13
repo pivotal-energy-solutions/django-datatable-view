@@ -247,7 +247,7 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
     def get_active_ajax_datatable(self):
         """ Returns a single datatable according to the hint GET variable from an AJAX request. """
         datatables_dict = self.get_datatables(only=self.request.GET['datatable'])
-        return datatables_dict.values()[0]
+        return list(datatables_dict.values())[0]
 
     # Extra getters
     def get_context_data(self, **kwargs):

@@ -11,6 +11,9 @@ class ExampleModel(models.Model):
     def __unicode__(self):
         return "ExampleModel %d" % (self.pk,)
 
+    def __str__(self):
+        return "ExampleModel %d" % (self.pk,)
+
     def __repr__(self):
         return "<ExampleModel: %d:'%s'>" % (self.pk, self.name,)
 
