@@ -32,6 +32,10 @@ from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPAR
 COLUMN_CLASSES = []
 
 
+def register_simple_modelfield(model_field):
+    column_class = get_column_for_modelfield(model_field)
+    COLUMN_CLASSES.insert(0, (column_class, [model_field]))
+
 def get_column_for_modelfield(model_field):
     """ Return the built-in Column class for a model field class. """
 
