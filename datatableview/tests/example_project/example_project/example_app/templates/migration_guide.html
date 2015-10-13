@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% block static %}
+    {{ block.super }}
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushJScript.js" type="text/javascript"></script>
+{% endblock static %}
+
 {% block content %}
     <h2>Migration checklist for moving up to release 0.9</h2>
 
@@ -10,6 +15,7 @@
     <div class="row">
         <div class="col-md-4">
             <div class="list-group">
+                <a class="list-group-item" href="#datatables-1-10">dataTables.js 1.10</a>
                 <a class="list-group-item" href="#configuration-style">Update configuration style</a>
                 <a class="list-group-item" href="#new-vocabulary">New vocabulary</a>
                 <a class="list-group-item" href="#no-automatic-column-processors">No more automatic column callbacks</a>
@@ -20,6 +26,37 @@
             </div>
         </div>
     </div>
+
+    <br><br>
+    <h3>
+        <a id="datatables-1-10" name="datatables-1-10" href="#datatables-1-10">
+            dataTables.js 1.10
+        </a>
+    </h3>
+    <h6>See <a href="http://datatables.net/blog/2014-05-01">the official 1.10 announcement</a> if you've been living under a rock!</h6>
+    <p>
+        DataTables 1.10 provides a brand new api for getting things done, and it's a good thing too,
+        because doing anything fancy in the old api pretty much required Allan to write yet another
+        block of example code that everyone just copies and pastes.
+    </p>
+    <p>
+        For our 0.9 release of django-datatable-view, we still use the "legacy" constructor to get
+        things going, but that's okay, because the legacy api is still completely supported (even if
+        all of its Hungarian notation keeps us up at night).  The drawback at this stage is that we
+        can't yet accept configuration settings that are "new-style only".
+    </p>
+    <p>
+        Despite the fact that we're using the legacy constructor for a while longer, you can access
+        the table's fancy new API object with one simple line:
+    </p>
+    <pre class="brush: javascript">
+// Standard initialization
+var opts = {};
+var datatable = datatableview.initialize($('.datatable'), opts);
+
+// Get a reference to the new API object
+var table = datatable.api();
+    </pre>
 
     <br><br>
     <h3>
