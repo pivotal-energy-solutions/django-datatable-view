@@ -522,6 +522,16 @@ class LegacyConfigurationDatatableMixin(DatatableMixin):
         """ Helps to keep the promise that we only run ``get_datatable_options()`` once. """
         if not hasattr(self, '_datatable_options'):
             self._datatable_options = self.get_datatable_options()
+
+            # Convert sources from list to tuple, so that modern Column tracking dicts can hold the
+            # field definitions as keys.
+            columns = self._datatable_options.get('columns', [])
+            for i, column in enumerate(columns):
+                if len(column) >= 2 and isinstance(column[1], list):
+                    column = list(column)
+                    column[1] = tuple(column[1])
+                    columns[i] = tuple(column)
+
         return self._datatable_options
 
     def get_datatable_kwargs(self, **kwargs):
