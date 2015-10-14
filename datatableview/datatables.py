@@ -12,6 +12,7 @@ except ImportError:
 from django.db import models
 from django.db.models import Count
 from django.template.loader import render_to_string
+from django.utils.encoding import force_text
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
@@ -621,8 +622,15 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 return f
             return getattr(self, callback)
 
+        column_name = column.name
+        if isinstance(self, LegacyDatatable):
+            name = force_text(column.label, errors="ignore")
+            if not name:
+                name = column.sources[0]
+            column_name = re.sub(r'[\W_]+', '_', name)
+
         if self.forward_callback_target:
-            f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column.name,), None)
+            f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column_name,), None)
             if f:
                 return f
 
@@ -630,7 +638,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if f:
                 return f
 
-        f = getattr(self, 'get_column_%s_data' % (column.name,), None)
+        f = getattr(self, 'get_column_%s_data' % (column_name,), None)
         if f:
             return f
 
