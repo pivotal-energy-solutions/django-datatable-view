@@ -143,7 +143,9 @@ def get_first_orm_bit(column):
 
 def contains_plural_field(model, fields):
     """ Returns a boolean indicating if ``fields`` contains a relationship to multiple items. """
+    source_model = model
     for orm_path in fields:
+        model = source_model
         bits = orm_path.lstrip('+-').split('__')
         for bit in bits[:-1]:
             field, _, direct, m2m = model._meta.get_field_by_name(bit)
@@ -151,7 +153,7 @@ def contains_plural_field(model, fields):
                     or (USE_RELATED_OBJECT and isinstance(field, RelatedObject) and field.field.rel.multiple) \
                     or (not USE_RELATED_OBJECT and isinstance(field, RelatedField) and field.one_to_many):
                 return True
-            model = get_model_at_related_field(model, bit)
+            model = get_model_at_related_field(source_model, bit)
     return False
 
 
