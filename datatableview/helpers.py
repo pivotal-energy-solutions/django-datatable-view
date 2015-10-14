@@ -88,7 +88,7 @@ def link_to_model(instance, text=None, *args, **kwargs):
 
     """
     if not text:
-        text = kwargs.get('default_value') or six.text_type(instance)
+        text = kwargs.get('rich_value') or six.text_type(instance)
     return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
