@@ -70,7 +70,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
     if fields:
         field_dict = OrderedDict(
             [(f, field_dict.get(f)) for f in fields
-                if ((not exclude) or (exclude and f not in exclude))]
+                if (not exclude) or (exclude and f not in exclude)]
         )
     return field_dict
 
