@@ -2,6 +2,7 @@
 
 import re
 import operator
+from datetime import datetime
 try:
     from functools import reduce
 except ImportError:
@@ -31,6 +32,15 @@ from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPAR
 # classes that the column will service.
 COLUMN_CLASSES = []
 
+STRPTIME_PLACEHOLDERS = {
+    'year': ('%y', '%Y'),
+    'month': ('%m', '%b', '%B'),
+    'day': ('%d',),# '%a', '%A'),  # day names are hard because they depend on other date info
+    'hour': ('%H', '%I'),
+    'minute': ('%M',),
+    'second': ('%S',),
+    'week_day': ('%w',),
+}
 
 def register_simple_modelfield(model_field):
     column_class = get_column_for_modelfield(model_field)
@@ -216,17 +226,11 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         if multi_terms:
             return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms))
 
-        if lookup_type not in ('year', 'month', 'day', 'hour' 'minute', 'second', 'week_day'):
-            model_field = self.model_field_class()
-            try:
-                term = model_field.get_prep_value(term)
-            except:
-                term = None
-        else:
-            try:
-                term = int(term)
-            except ValueError:
-                term = None
+        model_field = self.model_field_class()
+        try:
+            term = model_field.get_prep_value(term)
+        except:
+            term = None
 
         return term
 
@@ -252,6 +256,13 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         for source in sources:
             modelfield = resolve_orm_path(model, source)
             handler = get_column_for_modelfield(modelfield)()
+
+            if modelfield.choices:
+                choices = [(v, str(k).lower()) for v, k in modelfield.get_flatchoices()]
+                flipped_term = dict(map(reversed, choices)).get(term.lower())
+                if flipped_term is not None:
+                    term = str(flipped_term)  # term originally comes in a query param string anyway
+
             lookup_types = self.get_lookup_types(handler=handler)
             for lookup_type in lookup_types:
                 coerced_term = (handler or self).prep_search_value(term, lookup_type)
@@ -322,6 +333,30 @@ class DateColumn(Column):
                 pass
             else:
                 return date_obj
+
+        if lookup_type in ('year', 'month', 'day', 'hour' 'minute', 'second', 'week_day'):
+            test_term = term
+            if lookup_type == 'week_day':
+                try:
+                    test_term = int(test_term) - 1  # Django ORM uses 1-7, python strptime uses 0-6
+                except:
+                    return None
+                else:
+                    test_term = str(test_term)
+
+            for test_format in STRPTIME_PLACEHOLDERS[lookup_type]:
+                # Try to validate the term against the given date lookup type
+                try:
+                    date_obj = datetime.strptime(test_term, test_format)
+                except ValueError:
+                    pass
+                else:
+                    if lookup_type == 'week_day':
+                        term = date_obj.weekday() + 1  # Django ORM uses 1-7, python strptime uses 0-6
+                    else:
+                        term = getattr(date_obj, lookup_type)
+                    return str(term)
+
         return super(DateColumn, self).prep_search_value(term, lookup_type)
 
 
