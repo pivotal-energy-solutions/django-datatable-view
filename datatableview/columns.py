@@ -258,10 +258,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             handler = get_column_for_modelfield(modelfield)()
 
             if modelfield.choices:
-                choices = [(v, str(k).lower()) for v, k in modelfield.get_flatchoices()]
-                flipped_term = dict(map(reversed, choices)).get(term.lower())
-                if flipped_term is not None:
-                    term = str(flipped_term)  # term originally comes in a query param string anyway
+                for db_value, label in modelfield.get_flatchoices():
+                    if term.lower() in label.lower():
+                        k = '%s__exact' % (source,)
+                        column_queries.append(Q(**{k: str(db_value)}))
 
             lookup_types = self.get_lookup_types(handler=handler)
             for lookup_type in lookup_types:
