@@ -932,6 +932,61 @@ class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
     implementation = u""""""
 
 
+
+class HeadlineColumn(columns.TextColumn):
+    def search(self, model, term):
+        from django.db.models import Q
+        return Q(headline__startswith=term)
+
+class CustomColumnQueriesDatatableView(DemoMixin, DatatableView):
+    """
+    Columns that need fine tuning of the search query have the option to subclass the appropriate
+    ``Column`` class, such as ``TextColumn``, and override the ``search()`` method, as shown in the
+    implementation example.
+
+    If you call ``super()`` to get normal behavior, you will always receive a single ``Q`` instance
+    that already has all of the compiled behavior for the given search term.  You can
+    combine this object with new ``Q`` objects with bitwise operators like ``|``, ``&``, and ``~``
+    to get a new single object to return.
+
+    Of course, you can avoid calling ``super()`` at all, and just build a ``Q`` object from scratch.
+
+    In this example, we're ignoring the default search behavior and doing something else: we build a
+    ``Q`` object that only checks if the headline starts with the search term.
+
+    INFO:
+    The ``search()`` method receives a ``term`` that it should build a query around, but if the user
+    searches multiple words separated by spaces, those terms will be sent to this method one at a
+    time (unless the user explicitly searched for ``"two words"`` with quotes around them).
+
+    WARNING:
+    The ``term`` that is sent to the search method is pretty raw.  Be careful not to perform invalid
+    queries with the term you are given.  The default implementation uses the ``model`` argument to
+    decide which of the column's sources are database-backed, and then inspects those sources to
+    find out what data types they represent, and spends some effort to coerce the term to fit.
+    """
+    model = Entry
+
+    class datatable_class(Datatable):
+        headline = HeadlineColumn("Headline", sources=['headline'])
+        class Meta:
+            columns = ['id', 'headline']
+
+    implementation = u"""
+    from django.db.models import Q
+    from datatableview import columns
+
+    class HeadlineColumn(columns.TextColumn):
+        def search(self, model, term):
+            return Q(headline__startswith=term)
+
+    class MyDatatable(Datatable):
+        headline = HeadlineColumn("Headline", sources=['headline'])
+        class Meta:
+            columns = ['id', 'headline']
+    """
+
+
 class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
     """
     Fields with choices are of course just normal model fields, so by default queries against the
