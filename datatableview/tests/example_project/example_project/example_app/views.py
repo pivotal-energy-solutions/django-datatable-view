@@ -737,20 +737,22 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = ['id', 'headline', 'blog', 'pub_date']
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
             processors = {
                 'headline': helpers.make_xeditable,
                 'blog': helpers.make_xeditable,
+                'status': helpers.make_xeditable,
                 'pub_date': helpers.make_xeditable,
             }
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = ['id', 'headline', 'blog', 'pub_date']
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
             processors = {
                 'headline': helpers.make_xeditable,
                 'blog': helpers.make_xeditable,
+                'status': helpers.make_xeditable,
                 'pub_date': helpers.make_xeditable,
             }
 

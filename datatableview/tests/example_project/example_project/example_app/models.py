@@ -35,6 +35,10 @@ class Entry(models.Model):
     n_comments = models.IntegerField()
     n_pingbacks = models.IntegerField()
     rating = models.IntegerField()
+    status = models.IntegerField(choices=(
+        (0, "Draft"),
+        (1, "Published"),
+    ))
 
     def __unicode__(self):
         return self.headline
