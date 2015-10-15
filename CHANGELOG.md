@@ -2,6 +2,25 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.2
+Refinements since 0.9.0-beta.1
+
+#### New features
+
+It turns out I forgot to reintroduce some old functionality in the new modern column format code, but it's back!
+
+* Support for model fields that use ``choices``.  Specifically, we enable the user to search for the (case-insensitive) label of the various choices and the column will flip the search term to the right thing.  Fixed a bug in 0.8 choices support that made some assumptions that the choice db value was a string (using ``iexact`` too aggressively).
+* ``strptime`` date formatting will attempt to parse individual numbers and strings for matches that satisfy format symbols, such as ``%y`` (two digit year) and ``%M`` (month names).
+
+#### Fixes
+
+* Fixed a bug with legacy configuration where a sources list defined as a ``list`` instead of a ``tuple`` would cause dictionary key issues. [43ade82]
+* Fixed an issue with ``LegacyConfigurationDatatableView`` skipping the implicit processor discovery phase.  This will be removed in 1.0, but for 0.9 we will continue supporting implicit callbacks when the legacy view is in use. [88a0318]
+* Fixed a bug with columns declaring multiple sources that each targeted a value across an m2m relationship, where sources after the first would attempt to inspect the ORM path starting on the model where the first source left off during its own lookup. [4f0af04]
+* Fixed an issue with sending multiple column sources directly to the ``link_to_model`` helper, where the generated link text was a ``repr()`` of the source values list, instead of the default ``' '``-joined list of those values. [a27b6eb]
+* Changed choices label matching to support partial matches.
+* Changed choices label matching to allow multiple matches (since partial matching is now also allowed).  Previously there was a nuance that if two choices had the same label for whatever reason, it was undefined behavior which one would be selected to represent the database value in the converted search query.
+
 ## 0.9.0-beta.1
 This is a transition release to get people to 1.0, which brings a lot of syntax changes for table declaration on the python view, adopting a strategy that looks a lot like Django's forms framework,
 or django-rest-framework's serializers.

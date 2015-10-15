@@ -932,6 +932,52 @@ class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
     implementation = u""""""
 
 
+class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
+    """
+    Fields with choices are of course just normal model fields, so by default queries against the
+    column would be run for the database value part of the choice, not the label.
+
+    However, choice fields are automatically detected and if the user searches for a string which
+    happens to match a choice's label (case-insensitive), the column's search method will flip that
+    search term into the appropriate database value and run that search instead.
+
+    In the demo above, the raw ``status`` column ends up showing the raw value of course, but we've
+    added an extra column "Status Display" which draws on the automatic Django-supplied method
+    ``get_status_display()`` to show the label.
+
+    INFO:
+    Note that the ``status_display`` column we defined is not using a database-backed source, so
+    searches are not being run against it directly.  The reason a search for ``'published'`` matches
+    anything is because the ``status`` column is deciding that the search string can be found in one
+    of its labels.  Running a search for the raw value actually listed in the column is still a
+    valid query.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        status_display = columns.TextColumn("Status Display", 'get_status_display')
+
+        class Meta:
+            columns = ['id', 'headline', 'status', 'status_display']
+            labels = {
+                'status': "Status Value",
+            }
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        status_display = columns.TextColumn("Status Display", 'get_status_display')
+
+        class Meta:
+            columns = ['id', 'headline', 'status', 'status_display']
+            labels = {
+                'status': "Status Value",
+            }
+
+    class ChoicesFieldsDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
+
 class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     """
     ``MultipleDatatableView`` uses a slightly different configuration mechanism to allow the view to
