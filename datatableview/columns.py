@@ -338,13 +338,16 @@ if get_version().split('.') >= ['1', '6']:
 class BooleanColumn(Column):
     model_field_class = models.BooleanField
     handles_field_classes = [models.BooleanField, models.NullBooleanField]
+    lookup_types = ('exact', 'in')
 
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
     handles_field_classes = [models.IntegerField, models.AutoField]
+    lookup_types = ('exact', 'in')
 
 
 class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
+    lookup_types = ('exact', 'in')
