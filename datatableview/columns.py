@@ -199,6 +199,13 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                 sources.append(source)
         return sources
 
+    def get_sort_fields(self, model):
+        """
+        Returns the list of sources that match fields on the given ``model`` class.  This will be
+        the list of database-backed fields.
+        """
+        return self.get_db_sources(model)
+
     def _resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
@@ -286,9 +293,6 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         else:
             q = None
         return q
-
-    def get_sort_fields(self, model):
-        return self.get_db_sources(model)
 
     # Template rendering
     def __str__(self):
