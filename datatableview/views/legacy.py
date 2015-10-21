@@ -502,7 +502,7 @@ class LegacyDatatableMixin(MultipleObjectMixin):
 
 
 class LegacyDatatableView(LegacyDatatableMixin, ListView):
-    pass
+    """ Implements :py:func:`LegacyDatatableMixin` and the standard Django ``ListView``. """
 
 
 class LegacyConfigurationDatatableMixin(DatatableMixin):

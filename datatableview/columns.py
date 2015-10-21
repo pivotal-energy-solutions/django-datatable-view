@@ -132,8 +132,13 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     def value(self, obj, **kwargs):
         """
-        Returns the 2-tuple of (rich_value, plain_value) for the inspection and serialization phases
-        of serialization.
+        Calls :py:meth:`.get_initial_value` to obtain the value from ``obj`` that this column's
+        :py:attr:`.sources` list describes.
+
+        Any supplied ``kwargs`` are forwarded to :py:meth:`.get_initial_value`.
+
+        Returns the 2-tuple of ``(plain_value, rich_value)`` for the inspection and serialization
+        phases of serialization.
         """
 
         values = self.get_initial_value(obj, **kwargs)
@@ -146,6 +151,19 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     def get_initial_value(self, obj, **kwargs):
         """
         Builds a list of values provided by :py:attr:`.sources` looked up on the target ``obj``.
+        Each source may provide a value as a 2-tuple of ``(plain_value, rich_value)``, where
+        ``plain_value`` is the sortable raw value, and ``rich_value`` is possibly something else
+        that can be coerced to a string for display purposes. The ``rich_value`` could also be a
+        string with HTML in it.
+
+        If no 2-tuple is given, then ``plain_value`` and ``rich_value`` are taken to be the same.
+
+        Columns with multiple :py:attr:`.sources` will have their ``rich_value`` coerced to a string
+        and joined with :py:attr:`.separator`, and this new concatenated string becomes the final
+        ``rich_value`` for the whole column.
+
+        If all :py:attr:`.sources` are ``None``, :py:attr:`.empty_value` will be used as the
+        ``rich_value``.
         """
 
         values = []
@@ -177,6 +195,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return value
 
     def get_processor_kwargs(self, **extra_kwargs):
+        """
+        Returns a dictionary of kwargs that should be sent to this column's :py:attr:`processor`
+        callback.
+        """
         kwargs = {
             'localize': self.localize,
         }
@@ -184,6 +206,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return kwargs
 
     def get_db_sources(self, model):
+        """
+        Returns the list of sources that match fields on the given ``model`` class.
+        """
         sources = []
         for source in self.sources:
             target_field = self._resolve_source(model, source)
@@ -192,6 +217,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return sources
 
     def get_virtual_sources(self, model):
+        """
+        Returns the list of sources that do not match fields on the given ``model`` class.
+        """
         sources = []
         for source in self.sources:
             target_field = self._resolve_source(model, source)
@@ -216,7 +244,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     # Interactivity features
     def prep_search_value(self, term, lookup_type):
-        """ Coerce the input term to work for the given lookup_type. """
+        """
+        Coerce the input term to work for the given lookup_type.  Returns the coerced term, or
+        ``None`` if the term and lookup_type are incompatible together.
+        """
 
         # We avoid making changes that the Django ORM can already do for us
         multi_terms = None
@@ -247,7 +278,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return term
 
     def get_lookup_types(self, handler=None):
-        """ Generates the list of valid ORM lookup operators. """
+        """
+        Generates the list of valid ORM lookup operators, taking into account runtime options for
+        the ``allow_regex`` and ``allow_full_text_search`` options.
+        """
         lookup_types = self.lookup_types
         if handler:
             lookup_types = handler.lookup_types
@@ -261,7 +295,20 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     def search(self, model, term):
         """
-        Returns the ``Q`` object representing queries made against this column for the given terms.
+        Returns the ``Q`` object representing queries to make against this column for the given
+        term.
+
+        It is the responsibility of this method to decide which of this column's sources are
+        database-backed and which are names of instance attributes, properties, or methods.  The
+        ``model`` is provided to identify Django ORM ``ModelField`` s and related models.
+
+        The default implementation resolves each contributing ``source`` from :py:attr:`sources`,
+        and uses :py:meth:`.prep_search_value` to coerce the input search ``term`` to something
+        usable for each of the query :py:attr:`lookup_types` supported by the column.  Any failed
+        coercions will be skipped.
+
+        The default implementation will also discover terms that match the source field's
+        ``choices`` labels, flipping the term to automatically query for the internal choice value.
         """
         sources = self.get_db_sources(model)
         column_queries = []
@@ -296,6 +343,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     # Template rendering
     def __str__(self):
+        """
+        Renders a simple ``<th>`` element with ``data-name`` attribute.  All items found in the
+        ``self.attributes`` dict are also added as dom attributes.
+        """
         return mark_safe(u"""<th data-name="{name_slug}"{attrs}>{label}</th>""".format(**{
             'name_slug': slugify(self.label),
             'attrs': self.attributes,
@@ -304,6 +355,12 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
     @property
     def attributes(self):
+        """
+        Returns a dictionary of initial state data for sorting, sort direction, and visibility.
+
+        The default attributes include ``data-config-sortable``, ``data-config-visible``, and (if
+        applicable) ``data-config-sorting`` to hold information about the initial sorting state.
+        """
         attributes = {
             'data-config-sortable': 'true' if self.sortable else 'false',
             'data-config-visible': 'true' if self.visible else 'false',

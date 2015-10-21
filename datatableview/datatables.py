@@ -492,7 +492,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return column.search(self.model, terms)
 
     def sort(self, queryset):
-        """ Performs db-only queryset sorts. """
+        """
+        Performs db-only queryset sorts, then applies manual sorts if required.
+        """
         fields = []
         db, virtual = self.get_ordering_splits()
         for name in db:

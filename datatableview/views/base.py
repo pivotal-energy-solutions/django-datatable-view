@@ -147,7 +147,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
 
 class DatatableView(DatatableMixin, ListView):
-    pass
+    """ Implements :py:func:`DatatableMixin` and the standard Django ``ListView``. """
 
 
 class MultipleDatatableMixin(DatatableJSONResponseMixin):
