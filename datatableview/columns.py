@@ -136,16 +136,17 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         of serialization.
         """
 
-        kwargs = self.get_processor_kwargs(**kwargs)
-        values = self.process_value(obj, **kwargs)
+        values = self.get_initial_value(obj, **kwargs)
 
         if not isinstance(values, (tuple, list)):
             values = (values, values)
 
         return values
 
-    def process_value(self, obj, **kwargs):
-        """ Default value processor for the target data source. """
+    def get_initial_value(self, obj, **kwargs):
+        """
+        Builds a list of values provided by :py:attr:`.sources` looked up on the target ``obj``.
+        """
 
         values = []
         for field_name in self.sources:
