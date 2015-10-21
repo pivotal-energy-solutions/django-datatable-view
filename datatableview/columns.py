@@ -176,7 +176,11 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
         return value
 
-    def get_processor_kwargs(self, **kwargs):
+    def get_processor_kwargs(self, **extra_kwargs):
+        kwargs = {
+            'localize': self.localize,
+        }
+        kwargs.update(extra_kwargs)
         return kwargs
 
     def get_db_sources(self, model):
