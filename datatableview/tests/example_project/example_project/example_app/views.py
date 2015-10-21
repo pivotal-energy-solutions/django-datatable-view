@@ -404,14 +404,21 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
     return whatever arbitrary data the column needs to display.
 
     INFO:
+    If the ``sources`` is ``[]`` or ``None``, it is required to also send ``sortable=False``.  If
+    you need sorting, consider splitting up the work that you intend to do with the ``processor``,
+    so that there is a field, method, or property that can be used as the source, and the processor
+    just manipulates that value.  This will at least provide you with in-memory sorting of the core
+    value.
+
+    INFO:
     In this particular example, the better approach might simply be to give ``['pub_date']`` as the
     ``sources`` list, but it was omitted specifically to demonstrate the bridging of the gap by the
     callback.
 
     WARNING:
-    Columns without a ``sources`` list cannot be searched or sorted at the database level.  Even if
-    your processor function were to return a simple model field value, the Datatable lacks the
-    necessary hints to know this.  Always give ``sources`` where they exist.
+    Columns without a ``sources`` list cannot be searched or sorted. Even if your processor
+    function were to return a simple model field value, the Datatable lacks the necessary hints to
+    know this. Always give ``sources`` where they exist.
 
     See <a href="/processors/">Postprocessing values</a> for more information on processor
     functions.
@@ -419,7 +426,7 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         blog = columns.TextColumn("Blog", sources=['blog__name'])
-        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age', sortable=False)
 
         class Meta:
             columns = ['blog', 'headline', 'age']
@@ -432,7 +439,7 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
 
     class MyDatatable(Datatable):
         blog = columns.TextColumn("Blog", sources=['blog__name'])
-        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age', sortable=False)
 
         class Meta:
             columns = ['blog', 'headline', 'age']

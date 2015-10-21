@@ -118,6 +118,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         self.allow_regex = allow_regex
         self.allow_full_text_search = allow_full_text_search
 
+        if not self.sources and self.sortable:
+            raise ValueError("%r has no sources.  Specify sortable=False." % (self,))
+
         # To be filled in externally once the datatable has ordering figured out.
         self.sort_priority = None
         self.sort_direction = None
