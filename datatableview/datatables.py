@@ -574,7 +574,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             '_extra_data': self.get_extra_record_data(obj),
         }
         for i, (name, column) in enumerate(self.columns.items()):
-            kwargs = dict(preloaded_kwargs, **{
+            kwargs = dict(column.get_processor_kwargs(**preloaded_kwargs), **{
                 'datatable': self,
                 'view': self.view,
                 'field_name': column.name,
