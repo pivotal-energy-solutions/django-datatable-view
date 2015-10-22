@@ -411,13 +411,11 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def get_records(self):
         """
-        Returns the fully processed list of records for the given set of options.
+        Calls :py:meth:`.populate_records` to apply searches and sorting to the object list, then
+        extracts the applicate page of results, calling :py:meth:`.get_record_data` for each result
+        in the page.
 
-        After ensuring that the records are populated from the underlying object_list and
-        configuration options, the records will finally have paging applied before the list is sent
-        to the column data getters.
-
-        Paging has been performed at this stage!
+        Returns the final list of processed results.
         """
         if not hasattr(self, '_records'):
             self.populate_records()
@@ -434,14 +432,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def populate_records(self):
         """
-        Applies the final normalized configuration on the object_list to get the final list of
-        records.  Note that there is no memoization here; calling this method means work will be
-        performed.
-
-        If ``self.object_list`` is a queryset instead of a list, the queryset will lazily avoid
-        executing any queries as long as the operations requested by the configuration are call
-        database-backed operations.  If they are not, the queryset will be evaluated and then
-        converted to a list for clarity about what has taken place.
+        Searches and sorts the original object list.  Even though these operations do not themselves
+        generate queries, the original object list will be counted and the filtered object list will
+        also be counted, meaning that this is the method is guaranteed to run queries.
 
         No paging will take place at this stage!
         """
@@ -542,9 +535,15 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     # Per-record callbacks
     def preload_record_data(self, obj):
         """
-        An empty hook for doing something with ``instance`` before column lookups are called
-        against the object. The dict of items returned will be passed as keyword arguments to any
-        of the ``get_column_FIELD_NAME_data()`` methods.
+        An empty hook for doing something with a result ``obj`` before column lookups are called
+        against the object.  The dict of items returned will be passed as keyword arguments to any
+        available column ``processor`` callbacks.
+
+        Use this to look up expensive data once per record so that it can be shared between column
+        processors.
+
+        By default, this method also inspects the originating view for a method of the same name,
+        giving it an opportunity to contribute to the preloaded data.
         """
 
         kwargs = {}
@@ -563,11 +562,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def get_record_data(self, obj):
         """
-        Returns a list of column data intended to be passed directly back to dataTables.js.
+        Returns a dict of column data that will be given to the view for final serialization.  The
+        key names in this dict are not finalized at this stage, but all of the data is present.
 
-        Each column generates a 2-tuple of data. [0] is the data meant to be displayed to the client
-        and [1] is the data in plain-text form, meant for manual searches.  One wouldn't want to
-        include HTML in [1], for example.
+        Each column is consulted for its value (computed based on its
+        :py:attr:`~datatableview.columns.Column.sources` applied against the given ``obj`` instance)
+        and then sent to the column's :py:attr:`~datatableview.columns.Column.processor` function.
         """
 
         preloaded_kwargs = self.preload_record_data(obj)
@@ -665,6 +665,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     # Template rendering features
     def __str__(self):
+        """ Renders ``structure_template`` with ``self`` as a context variable. """
         context = {
             'url': self.url,
             'config': self.config,
@@ -674,9 +675,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return render_to_string(self.config['structure_template'], context)
 
     def __iter__(self):
-        """
-        Yields a 2-tuple for each column in the form ("Column Name", " data-attribute='asdf'"),
-        """
+        """ Yields each column in order. """
 
         for column in self.columns.values():
             yield column
@@ -684,55 +683,67 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
 class ValuesDatatable(Datatable):
     """
-    Variant of the standard Datatable that terminates its queryset with ``.values()`` and assigns
-    the results to the column values.
+    Variant of the standard Datatable that terminates its queryset with ``.values()`` provides the
+    results to any column :py:attr:`~datatableview.columns.Column.processor` callbacks for
+    additional modification.
+
+    Processor callbacks will no longer receive model instances, but instead the dict of selected
+    values.
     """
     def get_valuesqueryset(self, queryset):
-        return queryset.values(*self.column_queries.keys())
-
-    def populate_records(self):
-        """
-        Switches the object_list to a ValuesQuerySet with the given columns' ``sources`` lists.
-        """
         # Figure out the full list of ORM path names
-        self.column_queries = OrderedDict({'pk': 'pk'})
+        self.value_queries = OrderedDict({'pk': 'pk'})
         for name, column in self.columns.items():
-            self.column_queries.update(OrderedDict([
+            self.value_queries.update(OrderedDict([
                 (source, name) for source in column.sources
             ]))
 
-        # Convert to a ValuesQuerySet
-        self.object_list = self.get_valuesqueryset(self.object_list)
+        return queryset.values(*self.value_queries.keys())
 
+    def populate_records(self):
+        """
+        Switches the original queryset to a ``ValuesQuerySet``, selecting values according to what
+        each column has declared in its :py:attr:`~datatableview.columns.Column.sources` list.
+        """
+
+        self.object_list = self.get_valuesqueryset(self.object_list)
         super(ValuesDatatable, self).populate_records()
 
-    # def reload_queryset(self, queryset):
-    #     queryset = super(ValuesDatatable, self).reload_queryset(queryset)
-    #     return self.get_valuesqueryset(queryset)
-
     def get_object_pk(self, obj):
-        """ Reads the pk from the ValuesQuerySet entry. """
+        """
+        Correctly reads the pk from the ValuesQuerySet entry, as a dict item instead of an
+        attribute.
+        """
         return obj['pk']
 
     def preload_record_data(self, obj):
         """
-        Add entries to the object dictionary for the real column names mapped to the value from the
-        source, so that it's more natural to deal with long ORM query paths.
+        Modifies the ``obj`` values dict to alias the selected values to the column name that asked
+        for its selection.
 
-        Example conversion:
+        For example, a datatable that declares a column ``'blog'`` which has a related lookup source
+        ``'blog__name'`` will ensure that the selected value exists in ``obj`` at both keys
+        ``blog__name`` and ``blog`` (the former because that was how it was selected, the latter
+        because that was the column name used to select it).
 
-            {'pk': 1, 'blog__name': "My Blog"}
+        :Example:
 
-        becomes:
+            ``{'pk': 1, 'blog__name': "My Blog"}``
+            ``{'pk': 1: 'blog__name': "My Blog", 'blog': "My Blog"}``
 
-            {'pk': 1': 'blog_name': "My Blog", 'blog': "My Blog"}
+        When a column declares multiple :py:attr:`~datatableview.columns.Column.sources`, the column
+        name's entry in ``obj`` will be a list of each of those values.
 
-        If a column declared a plural ``sources`` list, the values at the corresponding object will
-        also be a list.
+        :Example:
+
+            ``{'pk': 1, 'blog__name': "My Blog", 'blog__id': 5}``
+            ``{'pk': 1: 'blog__name': "My Blog", 'blog__id': 5, 'blog': ["My Blog", 5]}``
+
+        In every situation, the original selected values will always be retained in ``obj``.
         """
         data = {}
 
-        for orm_path, column_name in self.column_queries.items():
+        for orm_path, column_name in self.value_queries.items():
             value = obj[orm_path]
             if column_name not in data:
                 data[column_name] = value
@@ -745,9 +756,18 @@ class ValuesDatatable(Datatable):
 
 
 class LegacyDatatable(Datatable):
+    """
+    Modifies the :py:meth:`.resolve_virtual_columns` hook to deal with legacy-style column
+    declarations, rather than automatically raising them as errors like normal.
+
+    :py:class:`~datatableview.views.legacy.LegacyConfigurationDatatableView` automatically uses this
+    as its :py:attr:`~datatableview.views.legacy.LegacyConfigurationDatatableView.datatable_class`.
+    """
+
     def resolve_virtual_columns(self, *names):
         """
-        Assume that all ``names`` are legacy-style declarations and generate columns accordingly.
+        Assume that all ``names`` are legacy-style tuple declarations, and generate modern columns
+        instances to match the behavior of the old syntax.
         """
         from .views.legacy import get_field_definition
         virtual_columns = {}
@@ -770,4 +790,6 @@ class LegacyDatatable(Datatable):
 
 
 class ValuesLegacyDatatable(LegacyDatatable, ValuesDatatable):
-    pass
+    """
+    A :py:class:`LegacyDatatable` that also inherits from :py:class:`ValuesDatatable`
+    """

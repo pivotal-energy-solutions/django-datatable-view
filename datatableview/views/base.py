@@ -84,7 +84,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
     # Configuration getters
     def get_datatable(self):
-        """ Gathers and returns applicable object for datatable processing """
+        """ Gathers and returns the final :py:class:`Datatable` instance for processing. """
         datatable_class = self.get_datatable_class()
         if datatable_class is None:
             class AutoMeta:
@@ -147,7 +147,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
 
 class DatatableView(DatatableMixin, ListView):
-    """ Implements :py:func:`DatatableMixin` and the standard Django ``ListView``. """
+    """ Implements :py:class:`DatatableMixin` and the standard Django ``ListView``. """
 
 
 class MultipleDatatableMixin(DatatableJSONResponseMixin):

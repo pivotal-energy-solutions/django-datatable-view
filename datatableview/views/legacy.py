@@ -426,22 +426,21 @@ class LegacyDatatableMixin(MultipleObjectMixin):
         is derived.
 
         Each field can generate customized data by defining a method on the view called either
-        "get_column_FIELD_NAME_data" or "get_column_INDEX_data".
+        ``get_column_FIELD_NAME_data`` or ``get_column_INDEX_data``.
 
-        If the FIELD_NAME approach is used, the name is the raw field name (e.g., "street_name") or
-        else the friendly representation defined in a 2-tuple such as
-        ("Street name", "subdivision__home__street_name"), where the name has non-alphanumeric
-        characters stripped to single underscores.  For example, the friendly name
-        "Region: Subdivision Type" would convert to "Region_Subdivision_Type", requiring the method
-        name "get_column_Region_Subdivision_Type_data".
+        If the FIELD_NAME approach is used, the name is the raw field name (e.g.,
+        ``"street_name"``) or else the friendly representation defined in a 2-tuple such as
+        ``("Street name", "subdivision__home__street_name")``, where the name has non-alphanumeric
+        characters stripped to single underscores. For example, the friendly name ``'Region:
+        Subdivision Type'`` would convert to ``'Region_Subdivision_Type'``, requiring the method
+        name ``get_column_Region_Subdivision_Type_data``.
 
         Alternatively, if the INDEX approach is used, a method will be fetched called
-        "get_column_0_data", or otherwise using the 0-based index of the column's position as
+        ``get_column_0_data``, or otherwise using the 0-based index of the column's position as
         defined in the view's ``datatable_options['columns']`` setting.
 
         Finally, if a third element is defined in the tuple, it will be treated as the function or
         name of a member attribute which will be used directly.
-
         """
 
         callback = column.callback
@@ -502,14 +501,21 @@ class LegacyDatatableMixin(MultipleObjectMixin):
 
 
 class LegacyDatatableView(LegacyDatatableMixin, ListView):
-    """ Implements :py:func:`LegacyDatatableMixin` and the standard Django ``ListView``. """
+    """
+    Implements :py:class:`LegacyDatatableMixin` and the standard Django ``ListView``.
+    """
 
 
 class LegacyConfigurationDatatableMixin(DatatableMixin):
     """
-    Modern DatatableView mechanisms simply powered by the old configuration style.  Use this if
-    you can.  If you get errors and you've been overriding things on the old DatatableView, fall
-    back to using ``LegacyDatatableView``, which provides those old hooks.
+    Modern :py:class:`DatatableView` mechanisms simply powered by the old configuration style.  Use
+    this if you can. If you get errors and you've been overriding things on the old DatatableView,
+    fall back to using ``LegacyDatatableView``, which provides those old hooks.
+
+    The :py:meth:`.get_datatable_options` hook is still respected as the getter for runtime
+    configuration, but it will be broken up into keyword arguments to be forwarded to its
+    :py:class:`~datatableview.datatables.Datatable`, which in this case is a
+    :py:class:`~datatableview.datatables.LegacyDatatable`.
     """
 
     datatable_options = None
@@ -556,5 +562,7 @@ class LegacyConfigurationDatatableMixin(DatatableMixin):
         return kwargs
 
 class LegacyConfigurationDatatableView(LegacyConfigurationDatatableMixin, ListView):
-    pass
+    """
+    Implements :py:class:`LegacyConfigurationDatatableMixin` and the standard Django ``ListView``.
+    """
 

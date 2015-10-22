@@ -65,6 +65,9 @@ class XEditableMixin(object):
         return HttpResponse(json.dumps(choices))
 
     def post(self, request, *args, **kwargs):
+        """
+        Builds a dynamic form that targets only the field in question, and saves the modification.
+        """
         self.object_list = None
         form = self.get_xeditable_form(self.get_xeditable_form_class())
         if form.is_valid():
@@ -85,9 +88,11 @@ class XEditableMixin(object):
             return HttpResponse(data, content_type="application/json", status=400)
 
     def get_xeditable_form_class(self):
+        """ Returns ``self.xeditable_form_class``. """
         return self.xeditable_form_class
 
     def get_xeditable_form_kwargs(self):
+        """ Returns a dict of keyword arguments to be sent to the xeditable form class. """
         kwargs = {
             'model': self.get_queryset().model,
         }
@@ -98,6 +103,7 @@ class XEditableMixin(object):
         return kwargs
 
     def get_xeditable_form(self, form_class):
+        """ Builds xeditable form computed from :py:meth:`.get_xeditable_form_class`. """
         return form_class(**self.get_xeditable_form_kwargs())
 
     def get_update_object(self, form):
@@ -129,7 +135,10 @@ class XEditableMixin(object):
         return HttpResponse(data, content_type="application/json")
 
     def get_field_choices(self, field, field_name):
-        """ Returns the valid choices for ``field``.  ``field_name`` is given for convenience. """
+        """
+        Returns the valid choices for ``field``.  The ``field_name`` argument is given for
+        convenience.
+        """
         if self.request.GET.get('select2'):
             names = ['id', 'text']
         else:

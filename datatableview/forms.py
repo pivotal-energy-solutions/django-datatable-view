@@ -6,7 +6,9 @@ from django.forms.models import fields_for_model
 
 
 class XEditableUpdateForm(forms.Form):
-    """ Enforces a valid x-editable request. """
+    """
+    Represents only a single field of a given model instance.
+    """
 
     # Note that a primary key can be anything at all, not just an integer
     pk = forms.CharField(max_length=512)
@@ -26,12 +28,15 @@ class XEditableUpdateForm(forms.Form):
         self.set_value_field(model, data.get('name'))
 
     def set_value_field(self, model, field_name):
-        """ Sets the ``value`` field's class so that it can validate naturally. """
+        """
+        Adds a ``value`` field to this form that uses the appropriate formfield for the named target
+        field.  This will help to ensure that the value is correctly validated.
+        """
         fields = fields_for_model(model, fields=[field_name])
         self.fields['value'] = fields[field_name]
 
     def clean_name(self):
-        """ Validates that the field is represented on the model. """
+        """ Validates that the ``name`` field corresponds to a field on the model. """
         field_name = self.cleaned_data['name']
         # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
         if hasattr(self.model._meta, 'get_fields'):
