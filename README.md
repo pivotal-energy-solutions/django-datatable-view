@@ -18,40 +18,37 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://d
 
 Dependencies:
 
-* [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 * [Django](http://www.djangoproject.com/) >= 1.4
-
+* [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 
 # Features at a glance
 
 * ``DatatableView``, a drop-in replacement for ``ListView`` that allows options to be specified for the datatable that will be rendered on the page.
 * ``MultipleDatatableView`` for configurating multiple Datatable specifications on a single view
-* Verbose names as column headers
+* ``ModelForm``-like declarative table design.
 * Customizable table headers
 * Compound columns (columns representing more than one model field)
 * Columns backed by methods or callbacks instead of model fields
 * Easy related fields
-* Automatic searching support
-* Ajax paging
-* Zero queries on initial page load (no queryset evaluation is done until AJAX requests)
-* Multiple tables on the same view
-* Non-``DatatableView`` showing a table powered by another view
-* 100% customization for all cell values
-* Ajax search
+* Automatic search and sort support
+* Total control over cell contents (HTML, processing of raw values)
 * Search data fields that aren't present on the table
-* Customization hook for each row's JSON object
+* Support for DT_RowData
 * Customization hook for full JSON response object
 * Drop-in x-editable support, per-column
 * Customizable table templates
 * Easy Bootstrap integration
 * Allows all normal dataTables.js and x-editable Javascript options
-* Optional automatic javascript initialization for tables
-* Library of common column markup options
+* Small library of common column markup processors
 * Full test suite
 
-# Demos & Examples
-There is an example project wrapped up inside of the ``tests`` component of the resuable app, which
-can be executed using the following basic setup:
+# Documentation and Live Demos
+Read the module documentation at http://django-datatable-view.readthedocs.org.
+
+You can interact with live demos for the latest version at http://fixme
+For version 0.8, we will continue to keep the live demo site alive at http://django-datatable-view.appspot.com/
+
+You can also run the live demos locally from the included example project, using a few setup steps.
 
 ```bash
 $ git clone https://github.com/pivotal-energy-solutions/django-datatable-view.git
@@ -65,9 +62,6 @@ $ mkvirtualenv datatableview
 
 The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware except for ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
 
-A public online version of the example project can be found here:
-
-http://django-datatable-view.appspot.com/
 
 ## Authors
 
@@ -77,7 +71,7 @@ http://django-datatable-view.appspot.com/
 
 ## Copyright and license
 
-Copyright (c) 2012-2013 Pivotal Energy Solutions.  All rights reserved.
+Copyright (c) 2012-2015 Pivotal Energy Solutions.  All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.
