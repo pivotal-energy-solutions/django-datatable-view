@@ -416,3 +416,5 @@ def make_processor(func, arg=None):
             extra_arg = []
         return func(value, *extra_arg)
     return helper
+
+through_filter = make_processor
