@@ -2,10 +2,19 @@
 
 This package is used in conjunction with the jQuery plugin [DataTables](http://datatables.net/), and supports state-saving detection with [fnSetFilteringDelay](http://datatables.net/plug-ins/api).  The package consists of a class-based view, and a small collection of utilities for rendering table data from models.
 
+[![PyPI Downloads][pypi-dl-image]][pypi-dl-link]
+[![PyPI Version][pypi-v-image]][pypi-v-link]
+
+[pypi-dl-link]: https://pypi.python.org/pypi/django-datatable-view
+[pypi-dl-image]: https://img.shields.io/pypi/dm/django-datatable-view.png
+[pypi-v-link]: https://pypi.python.org/pypi/django-datatable-view
+[pypi-v-image]: https://img.shields.io/pypi/v/django-datatable-view.png
+
 Dependencies:
 
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 * [Django](http://www.djangoproject.com/) >= 1.2
+
 
 # Features at a glance
 
