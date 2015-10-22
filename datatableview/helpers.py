@@ -269,7 +269,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     return data
 
 
-def through_filter(template_filter, arg=None):
+def make_processor(func, arg=None):
     def helper(instance, *args, **kwargs):
         value = kwargs.get('default_value')
         if value is None:
@@ -278,5 +278,5 @@ def through_filter(template_filter, arg=None):
             extra_arg = [arg]
         else:
             extra_arg = []
-        return template_filter(value, *extra_arg)
+        return func(value, *extra_arg)
     return helper
