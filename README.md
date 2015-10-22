@@ -4,11 +4,14 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://d
 
 [![PyPI Downloads][pypi-dl-image]][pypi-dl-link]
 [![PyPI Version][pypi-v-image]][pypi-v-link]
+[![Documentation Status](rtfd-image)](rtfd-link)
 
 [pypi-dl-link]: https://pypi.python.org/pypi/django-datatable-view
 [pypi-dl-image]: https://img.shields.io/pypi/dm/django-datatable-view.png
 [pypi-v-link]: https://pypi.python.org/pypi/django-datatable-view
 [pypi-v-image]: https://img.shields.io/pypi/v/django-datatable-view.png
+[rtfd-link]: http://django-datatable-view.readthedocs.org/en/latest/?badge=latest
+[rtfd-image]: https://readthedocs.org/projects/django-datatable-view/badge/?version=latest
 
 Dependencies:
 
