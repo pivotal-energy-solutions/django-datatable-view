@@ -16,7 +16,7 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://d
 Dependencies:
 
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
-* [Django](http://www.djangoproject.com/) >= 1.2
+* [Django](http://www.djangoproject.com/) >= 1.4
 
 
 # Features at a glance
