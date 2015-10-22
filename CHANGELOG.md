@@ -2,6 +2,17 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.3
+Refinements since 0.9.0-beta.2
+
+We've added Sphinx documentation that we intend to have pushed to readthedocs.org, which will serve as the new primary documentation source.  A new live demo site for 0.9 will be launched soon (we want to keep 0.8 around because of this transitionary period for new syntax), and it will continue to play an important role in providing short and sweet examples, but it's not always a perfect substitute for the actual module documentation.  The documentation is stored at ``django-datatable-view/docs/``, alongside the ``datatableview`` python module.
+
+* Fixed sorting of non-db columns
+* Addition of column getter for extra kwargs to be sent to its processor function
+* Require column kwarg ``sortable=False`` when no sources are present
+* Internal method renames
+* ``helpers.through_filter`` renamed to ``helpers.make_processor``
+
 ## 0.9.0-beta.2
 Refinements since 0.9.0-beta.1
 
