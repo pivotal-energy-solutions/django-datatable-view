@@ -12,7 +12,10 @@ except ImportError:
 from django.db import models
 from django.db.models import Count
 from django.template.loader import render_to_string
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:

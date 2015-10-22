@@ -15,7 +15,10 @@ from django.http import HttpResponse
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
