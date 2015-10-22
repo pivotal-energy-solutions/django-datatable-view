@@ -3,11 +3,11 @@ python:
   - "2.7"
   - "3.4"
 env:
-  - DJANGO=1.4.20
+  - DJANGO=1.4.22
   - DJANGO=1.5.12
   - DJANGO=1.6.11
-  - DJANGO=1.7.8
-  - DJANGO=1.8.2
+  - DJANGO=1.7.10
+  - DJANGO=1.8.5
 install:
   - pip install -q Django==$DJANGO --use-mirrors
   - pip install pep8 --use-mirrors
@@ -22,4 +22,4 @@ script:
 matrix:
   exclude:
     - python: "3.4"
-      env: DJANGO=1.4.20
+      env: DJANGO=1.4.22
