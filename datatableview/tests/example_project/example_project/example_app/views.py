@@ -781,13 +781,8 @@ class XEditableColumnsDatatableView(DemoMixin, XEditableDatatableView):
 class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
     """
     ``Column`` classes handle the rendering of a value into a JSON-ready value, and are responsible
-    for responding to search and sort queries on itself.  So while all columns could bluntly use the
-    ``TextColumn`` class, it is still important to match a column up to its correct counterpart for
-    accurate filter capabilities.
-
-    Showing a ``DateTimeField`` via a ``TextColumn`` would be a bad idea, for example, because the
-    kind of queryset language used on text does not apply to datetime fields, and the datetime
-    queries such as ``__year=xxxx`` aren't made available by a text field.
+    for responding to search and sort queries on itself, so it is still important to match model
+    fields up to their correct Column counterparts for accurate filter capabilities.
 
     Adding new custom subclasses is a simple matter of defining your own Column and declaring on it
     the ``model_field_class`` that it corresponds to.  Your custom column class will automatically
@@ -799,12 +794,9 @@ class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
     to represent, and provides any ``lookup_types`` that the query language supports for that field
     when searching for equality.
 
-    ``Column`` classes implement methods for handling the data they represent:
-
-    <ul>
-    <li>``search(model, terms)`` — returns a ``Q()`` object that searches the column's given sources (where the sources are fields found on ``model``), using all ``terms``, using as many database query lookup types as it can.</li>
-    <li>``get_sort_fields()`` — returns the database fields from the column's ``sources`` that are usable for sorting.</li>
-    </ul>
+    See the
+    <a href="http://django-datatable-view.readthedocs.org/en/latest/datatableview/columns.html">
+    module documentation for columns</a> for more information.
     """
     model = Entry
     class datatable_class(Datatable):
@@ -825,9 +817,7 @@ class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
                 'n_pingbacks': helpers.format("{0:,}"),
             }
 
-    implementation = u"""
-    asdf
-    """
+    implementation = u""""""
 
 class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """

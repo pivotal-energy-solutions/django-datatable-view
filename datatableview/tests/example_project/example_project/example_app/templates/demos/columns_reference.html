@@ -1,146 +1,34 @@
 {% extends "example_base.html" %}
 
-{% block static %}
-    {{ block.super }}
-    <!-- Resources for "make_xeditable" portion of the helpers demo -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
+{% block content %}
+    <h2>Description</h2>
+    {% block description %}
+        {{ block.super }}
+    {% endblock description %}
 
-    <!-- Initialization for x-editable tables -->
-    <script type="text/javascript">
-        $.fn.editable.defaults.mode = 'inline';
-        datatableview.auto_initialize = false;
-        $(function(){
-            var xeditable_options = {};
-            datatableview.initialize($('.datatable'), {
-                fnRowCallback: datatableview.make_xeditable(xeditable_options),
-            });
-        });
-    </script>
-{% endblock static %}
-
-{% block description %}
-    {{ block.super }}
 
     <br><br>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="list-group">
-                <a class="list-group-item" href="#TextColumn">TextColumn</a>
-                <a class="list-group-item" href="#DateColumn">DateColumn</a>
-                <a class="list-group-item" href="#DateTimeColumn">DateTimeColumn</a>
-                <a class="list-group-item" href="#BooleanColumn">BooleanColumn</a>
-                <a class="list-group-item" href="#IntegerColumn">IntegerColumn</a>
-                <a class="list-group-item" href="#FloatColumn">FloatColumn</a>
-                <a class="list-group-item" href="#ForeignKeyColumn">ForeignKeyColumn</a>
-            </div>
-        </div>
-    </div>
-
-
-<br /><br />
-<h3>
-    <a id="TextColumn" name="TextColumn" href="#TextColumn">
-        <code>TextColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
+    <h2>Example</h2>
 <pre class="brush: python">
-class TextColumn(Column):
-    model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField]
-    lookup_types = ('iexact', 'in', 'icontains')
+from datatableview import columns
+from datatableview.datatables import Datatable
+from myproject.fields import CustomField
+
+class CustomColumn(columns.Column):
+    model_field_class = CustomField
+    lookup_types = ['icontains', 'mycustomquery']
+
+
+# You can let the field detect the new column by itself:
+class MyDatatable(Datatable):
+    class Meta:
+        columns = ['my_customfield']
+
+# Or you can always use it explicitly:
+class MyDatatable(Datatable):
+    customcolumn = CustomColumn("My Field", sources=['my_customfield')
+    class Meta:
+        columns = ['customcolumn']
+
 </pre>
-
-
-<br /><br />
-<h3>
-    <a id="DateColumn" name="DateColumn" href="#DateColumn">
-        <code>DateColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class DateColumn(Column):
-    model_field_class = models.DateField
-    handles_field_classes = [models.DateField]
-    lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
-</pre>
-
-
-<br /><br />
-<h3>
-    <a id="DateTimeColumn" name="DateTimeColumn" href="#DateTimeColumn">
-        <code>DateTimeColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class DateTimeColumn(DateColumn):
-    model_field_class = models.DateTimeField
-    handles_field_classes = [models.DateTimeField]
-    lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
-</pre>
-
-
-<br /><br />
-<h3>
-    <a id="BooleanColumn" name="BooleanColumn" href="#BooleanColumn">
-        <code>BooleanColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class BooleanColumn(Column):
-    model_field_class = models.BooleanField
-    handles_field_classes = [models.BooleanField, models.NullBooleanField]
-    lookups_types = ('exact',)
-</pre>
-
-
-<br /><br />
-<h3>
-    <a id="IntegerColumn" name="IntegerColumn" href="#IntegerColumn">
-        <code>IntegerColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class IntegerColumn(Column):
-    model_field_class = models.IntegerField
-    handles_field_classes = [models.IntegerField, models.AutoField]
-    lookups_types = ('exact',)
-</pre>
-
-
-<br /><br />
-<h3>
-    <a id="FloatColumn" name="FloatColumn" href="#FloatColumn">
-        <code>FloatColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class FloatColumn(Column):
-    model_field_class = models.FloatField
-    handles_field_classes = [models.FloatField, models.DecimalField]
-    lookups_types = ('exact',)
-</pre>
-
-
-<br /><br />
-<h3>
-    <a id="ForeignKeyColumn" name="ForeignKeyColumn" href="#ForeignKeyColumn">
-        <code>ForeignKeyColumn</code>
-    </a>
-</h3>
-<h6>No columns from demo, see examples below</h6>
-<pre class="brush: python">
-class ForeignKeyColumn(Column):
-    model_field_class = models.ForeignKey
-    lookups_types = ('exact',)
-</pre>
-
-
-
-{% endblock description %}
+{% endblock content %}
