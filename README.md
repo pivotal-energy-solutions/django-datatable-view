@@ -46,8 +46,7 @@ Dependencies:
 # Documentation and Live Demos
 Read the module documentation at http://django-datatable-view.readthedocs.org.
 
-You can interact with live demos for the latest version at http://fixme
-For version 0.8, we will continue to keep the live demo site alive at http://django-datatable-view.appspot.com/
+You can interact with live demos for the latest version at http://fixme.  For version 0.8, we will continue to keep the live demo site alive at http://django-datatable-view.appspot.com/
 
 You can also run the live demos locally from the included example project, using a few setup steps.
 
