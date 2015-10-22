@@ -17,12 +17,11 @@ install:
   #- "pep8 --exclude=migrations --ignore=E501,E225 datatableview"
   #- pyflakes datatableview
 script:
-  - if [[ "$DJANGO" < "1.6" ]]
-    then
-        cd datatableview/tests/example_project
-        python manage.py test
+  - if [[ "$DJANGO" < "1.6" ]]; then
+        cd datatableview/tests/example_project;
+        python manage.py test;
     else
-        python datatableview/tests/example_project/manage.py test
+        python datatableview/tests/example_project/manage.py test;
     fi
 
 matrix:
