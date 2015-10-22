@@ -17,7 +17,8 @@ install:
   #- "pep8 --exclude=migrations --ignore=E501,E225 datatableview"
   #- pyflakes datatableview
 script:
-  - python datatableview/tests/example_project/manage.py test
+  - cd datatableview/tests/example_project
+  - python manage.py test
 
 matrix:
   exclude:
