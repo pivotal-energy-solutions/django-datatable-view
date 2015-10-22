@@ -6,6 +6,7 @@
         {{ datatable }}
     {% endblock demo %}
 
+    {% if implementation %}
     <br /><br />
     <h2>Implementation</h2>
     {% block implementation %}
@@ -13,6 +14,7 @@
         {{ implementation|safe }}
         </pre>
     {% endblock implementation %}
+    {% endif %}
 
     <br /><br />
     <h2>Description</h2>
