@@ -65,10 +65,8 @@ def get_attribute_value(obj, bit):
     except (AttributeError, ObjectDoesNotExist):
         value = None
     else:
-        if callable(value):
-            if isinstance(value, Manager):
-                pass
-            elif not hasattr(value, 'alters_data') or value.alters_data is not True:
+        if callable(value) and not isinstance(value, Manager):
+            if not hasattr(value, 'alters_data') or value.alters_data is not True:
                 value = value()
     return value
 
