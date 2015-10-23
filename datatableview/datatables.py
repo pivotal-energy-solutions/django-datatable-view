@@ -25,7 +25,8 @@ import six
 
 
 from .exceptions import ColumnError, SkipRecord
-from . import columns
+from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
+                      FloatColumn, DisplayColumn, get_column_for_modelfield)
 from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms
 
 def pretty_name(name):
@@ -45,7 +46,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
         if exclude and f.name in exclude:
             continue
 
-        column_class = columns.get_column_for_modelfield(f)
+        column_class = get_column_for_modelfield(f)
         if column_class is None:
             raise ColumnError("Unhandled model field %r." % (f,))
         if labels and f.name in labels:
@@ -93,7 +94,7 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     local_columns = [
         (column_name, attrs.pop(column_name)) \
                 for column_name, obj in list(six.iteritems(attrs)) \
-                if isinstance(obj, columns.Column)
+                if isinstance(obj, Column)
     ]
     local_columns.sort(key=lambda x: x[1].creation_counter)
 
@@ -776,8 +777,8 @@ class LegacyDatatable(Datatable):
         virtual_columns = {}
         for name in names:
             field = get_field_definition(name)
-            column = columns.TextColumn(sources=field.fields, label=field.pretty_name,
-                                        processor=field.callback)
+            column = TextColumn(sources=field.fields, label=field.pretty_name,
+                                processor=field.callback)
             column.name = field.fields[0] if field.fields else field.pretty_name
             virtual_columns[name] = column
 

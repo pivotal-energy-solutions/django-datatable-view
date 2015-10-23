@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from .datatables import Datatable, ValuesDatatable, LegacyDatatable
+from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
+                      FloatColumn, DisplayColumn)
 from .exceptions import SkipRecord
 
 __name__ = 'datatableview'
