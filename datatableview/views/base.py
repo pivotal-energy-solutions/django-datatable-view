@@ -105,10 +105,11 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         return self.datatable_class
 
     def get_datatable_kwargs(self, **kwargs):
+        queryset = self.get_queryset()
         kwargs.update({
-            'object_list': self.get_queryset(),
+            'object_list': queryset,
             'view': self,
-            'model': self.model,  # Potentially ``None``
+            'model': self.model or queryset.model,
         })
 
         # This is provided by default, but if the view is instantiated outside of the request cycle
