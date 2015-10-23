@@ -490,12 +490,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if sources:
                 fields.extend([(sort_direction + source) for source in sources])
 
+        object_list = queryset.order_by(*fields)
+
         # When sorting a plural relationship field, we get duplicate rows for each item on the other
         # end of that relationship, which can't be removed with a call to distinct().
         if self._force_distinct and contains_plural_field(self.model, fields):
-            queryset = self.force_distinct(queryset)
-
-        object_list = queryset.order_by(*fields)
+            object_list = self.force_distinct(object_list)
 
         if virtual:
             # Have to sort the whole queryset by hand!
