@@ -24,6 +24,12 @@ Column
    :param list sources: A list of strings that define which fields on an object instance will be
                         supply the value for this column.  Model field names and extra
                         :py:class:`Datatable` column declarations are valid source names.
+   :param processor: A reference to a callback that can modify the column source data before
+                     serialization and transmission to the client.  Direct callable references will
+                     be used as-is, but strings will be used to look up that callable as a method of
+                     the column's :py:class:`Datatable` (or failing that, the view that is serving
+                     the table).
+   :type processor: callable or str
    :param str separator: The string that joins multiple source values together if more than one
                          source is declared. This is primarily a zero-configuration courtesy, and
                          in most situations the developer should provide a :py:attr:`processor`
@@ -35,12 +41,6 @@ Column
                         ``visible=False`` column is still generated and transmitted over ajax
                         requests for the table.
    :param bool localize: A special hint sent to processor callbacks to use.
-   :param processor: A reference to a callback that can modify the column source data before
-                     serialization and transmission to the client.  Direct callable references will
-                     be used as-is, but strings will be used to look up that callable as a method of
-                     the column's :py:class:`Datatable` (or failing that, the view that is serving
-                     the table).
-   :type processor: callable or str
    :param bool allow_regex: Adds ``__iregex`` as a query lookup type for this instance of the
                             column.
    :param bool allow_full_text_search: Adds ``__search`` as a query lookup type for this instance of

@@ -95,10 +95,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
 
-    def __init__(self, label=None, sources=None, model_field_class=None,
+    def __init__(self, label=None, sources=None, processor=None,
                  separator=DEFAULT_MULTIPLE_SEPARATOR, empty_value=DEFAULT_EMPTY_VALUE,
-                 sortable=True, visible=True, localize=False, processor=None, allow_regex=False,
-                 allow_full_text_search=False):
+                 model_field_class=None, sortable=True, visible=True, localize=False,
+                 allow_regex=False, allow_full_text_search=False):
         if model_field_class:
             self.model_field_class = model_field_class
 
