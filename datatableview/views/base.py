@@ -122,9 +122,10 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         else:
             kwargs['query_config'] = {}
 
-        settings = ('columns', 'ordering', 'start_offset', 'page_length', 'search', 'search_fields',
-                    'unsortable_columns', 'hidden_columns', 'structure_template',
-                    'result_counter_id')
+        settings = ('columns', 'exclude', 'ordering', 'start_offset', 'page_length', 'search',
+                    'search_fields', 'unsortable_columns', 'hidden_columns', 'footer',
+                    'structure_template', 'result_counter_id')
+        
         for k in settings:
             if hasattr(self, k):
                 kwargs[k] = getattr(self, k)
