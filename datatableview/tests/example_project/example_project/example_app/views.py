@@ -874,30 +874,29 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     information is has available about it.  In most cases, you will have supplied a simple
     ``datatable_class`` which packages all of the configuration for you.
 
-    To modify this configuration per-request, you can leverage the ``get_datatable_kwargs()`` hook
-    that sets up the data that will construct the ``Datatable`` object.  The returned dictionary can
-    contain any of the Meta options normally found on a ``Datatable`` object.  Options supplied by
-    the view like this will override any existing options on the given ``datatable_class``.
+    To modify this configuration per-request, treat the ``Datatable`` object like a form; by
+    overriding the ``Datatable.__init__()`` method, you can add or remove items in the ``columns``
+    dictionary, which behaves the way a form's ``fields`` dictionary does.
 
-    WARNING:
-    Care must be taken not to modify the ``datatable_class`` object directly: because it is
-    statically defined, there is only one copy of it in memory, and changing it is not thread safe.
-    To safely change the options at runtime, always make sure to fully copy the original data before
-    making changes.  The simplest way to do this is via a call to python's built-in
-    ``copy.deepcopy`` function. 
+    INFO:
+    Remember that the ``Meta.exclude`` list controls field exclusion for columns created from the
+    source model.  You cannot exclude a column that you explicitly declared on the ``Datatable``
+    class. You must remove it from the instance's ``columns`` dictionary. You can either send the
+    necessary kwargs to make a runtime decision to the ``Datatable`` constructor by overriding the
+    view's ``get_datatable_kwargs()`` method, or you can override the view's ``get_datatable()``
+    method directly and modify the object that comes back from ``super()``.
+
     """
     model = Entry
     class datatable_class(Datatable):
         class Meta:
             columns = ['id', 'headline']
 
-    def get_datatable_kwargs(self):
-        from copy import deepcopy
-        kwargs = super(PerRequestOptionsDatatableView, self).get_datatable_kwargs()
-        columns_copy = deepcopy(self.datatable_class._meta.columns)
-        columns_copy.append('blog')
-        kwargs['columns'] = columns_copy
-        return kwargs
+    def get_datatable(self):
+        datatable = super(PerRequestOptionsDatatableView, self).get_datatable()
+        datatable.columns['blog'] = columns.TextColumn("Blog Name", sources=['blog__name'])
+        del datatable.columns['id']
+        return datatable
 
     implementation = u"""
     class MyDatatable(Datatable):
@@ -908,13 +907,11 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
         model = Entry
         datatable_class = MyDatatable
 
-        def get_datatable_kwargs(self):
-            from copy import deepcopy
-            kwargs = super(PerRequestOptionsDatatableView, self).get_datatable_kwargs()
-            columns_copy = deepcopy(self.datatable_class._meta.columns)
-            columns_copy.append('blog')
-            kwargs['columns'] = columns_copy
-            return kwargs
+        def get_datatable(self):
+            datatable = super(PerRequestOptionsDatatableView, self).get_datatable()
+            datatable['blog'] = columns.TextColumn("Blog Name", sources=['blog__name'])
+            del datatable['id']
+            return datatable
     """
 
 
@@ -1106,10 +1103,12 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     def get_demo3_datatable_queryset(self):
         return Blog.objects.all()
 
-    def get_demo2_datatable_kwargs(self, **kwargs):
-        kwargs = self.get_default_datatable_kwargs(**kwargs)
-        kwargs['columns'] = self.datatable_class._meta.columns[1:]
-        return kwargs
+    def get_datatables(self, only=None):
+        datatables = super(MultipleTablesDatatableView, self).get_datatables(only)
+        if only in (None, 'demo2'):
+            demo2 = datatables['demo2']
+            del demo2.columns['id']
+        return datatables
 
     implementation = u"""
     # Demo #1 and Demo #2 will use variations of the same options.
@@ -1138,10 +1137,12 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
         def get_demo3_datatable_queryset(self):
             return Blog.objects.all()
 
-        def get_demo2_datatable_kwargs(self, **kwargs):
-            kwargs = self.get_default_datatable_kwargs(**kwargs)
-            kwargs['columns'] = EntryDatatable._meta.columns[1:]
-            return kwargs
+        def get_datatables(self, only=None):
+            datatables = super(MultipleTablesDatatableView, self).get_datatables(only)
+            if only in (None, 'demo2'):
+                demo2 = datatables['demo2']
+                del demo2.columns['id']
+            return datatables
     """
 
 
