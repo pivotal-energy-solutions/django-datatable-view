@@ -455,3 +455,8 @@ class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
     lookup_types = ('exact', 'in')
+
+
+class DisplayColumn(Column):
+    model_field_class = models.CharField
+    lookup_types = ()
