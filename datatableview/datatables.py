@@ -455,7 +455,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for term in searches.keys():
             term_queries = []
             for name, column in searches[term].items():
-                search_f = getattr(self, 'search_%s', self._search_column)
+                search_f = getattr(self, 'search_%s' % (name,), self._search_column)
                 q = search_f(column, term)
                 if q is not None:
                     term_queries.append(q)
