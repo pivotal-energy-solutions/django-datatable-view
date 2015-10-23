@@ -89,17 +89,21 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         if datatable_class is None:
             class AutoMeta:
                 model = self.model or self.get_queryset().model
-            datatable_class = type('%sDatatable' % (self.__class__.__name__,), (Datatable,), {
-                'Meta': AutoMeta,
-            })
-        elif datatable_class._meta.model is None:
+            opts = AutoMeta()
+            datatable_class = Datatable
+        else:
             opts = datatable_class.options_class(datatable_class._meta)
-            opts.model = self.model or self.get_queryset().model
-            datatable_class = type('%s_WithModel' % (datatable_class.__name__,), (datatable_class,), {
-                'Meta': opts,
-            })
+
         default_kwargs = {}
-        return datatable_class(**self.get_datatable_kwargs(**default_kwargs))
+        kwargs = self.get_datatable_kwargs(**default_kwargs)
+        for meta_opt in opts.__dict__:
+            if meta_opt in kwargs:
+                setattr(opts, meta_opt, kwargs.pop(meta_opt))
+
+        datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
+            'Meta': opts,
+        })
+        return datatable_class(**kwargs)
 
     def get_datatable_class(self):
         return self.datatable_class
