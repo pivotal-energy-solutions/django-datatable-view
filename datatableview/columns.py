@@ -376,6 +376,14 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return flatatt(attributes)
 
 
+class DisplayColumn(Column):
+    # This is defined before TextColumn because they use the same model_field_class setting, and we
+    # want TextColumn to have the last word about what CharField is.  DisplayColumn should never be
+    # discovered as the natural handler for CharField.
+    model_field_class = models.CharField
+    lookup_types = ()
+
+
 class TextColumn(Column):
     model_field_class = models.CharField
     handles_field_classes = [models.CharField, models.TextField, models.FileField]
@@ -452,8 +460,3 @@ class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
     lookup_types = ('exact', 'in')
-
-
-class DisplayColumn(Column):
-    model_field_class = models.CharField
-    lookup_types = ()
