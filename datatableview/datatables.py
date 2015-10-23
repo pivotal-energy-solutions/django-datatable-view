@@ -202,37 +202,21 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if query_config is None:
             query_config = {}
 
-        self.extra_columns = kwargs.get('columns', None)
         self.columns = copy.deepcopy(self.base_columns)
-        self.configure(self._meta.__dict__, kwargs, query_config)
+        self.configure(self._meta.__dict__, query_config, **kwargs)
 
         self._force_distinct = force_distinct
         self.total_initial_record_count = None
         self.unpaged_record_count = None
 
-    def configure(self, meta_config, view_config, query_config):
+    def configure(self, meta_config, query_config, **kwargs):
         """
         Combines (in order) the declared/inherited inner Meta, any view options, and finally any
         valid AJAX GET parameters from client modifications to the data they see.
         """
-        # Overwriting with **view_config is safe because unspecified view-level settings do not come
-        # through as None.
-        declared_config = dict(meta_config, **view_config)
-
-        # View-supplied columns should replace the ones brought by the Datatable
-        if self.extra_columns is not None:
-            declared_config['columns'] = self._meta.columns = self.extra_columns
-            replacement_columns = columns_for_model(self.model, fields=self.extra_columns)
-            self.missing_columns = set()
-            for name, column in tuple(replacement_columns.items()):
-                if column is None:
-                    self.missing_columns.add(name)
-                    replacement_columns.pop(name)
-            self.columns = replacement_columns
-
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
-        self.config = self.normalize_config(declared_config, query_config)
+        self.config = self.normalize_config(meta_config, query_config)
 
         self.config['column_searches'] = {}
         for i, name in enumerate(self.columns.keys()):
