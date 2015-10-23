@@ -21,8 +21,13 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(dt.config['ordering'], None)
 
     def test_column_names_list_raises_unknown_columns(self):
+        class DT(Datatable):
+            class Meta:
+                model = models.ExampleModel
+                columns = ['fake']
+
         with self.assertRaises(ColumnError) as cm:
-            dt = Datatable([], '/', model=models.ExampleModel, columns=['fake'])
+            dt = DT([], '/')
         self.assertEqual(str(cm.exception), "Unknown column name(s): ('fake',)")
 
     def test_column_names_list_finds_local_fields(self):
