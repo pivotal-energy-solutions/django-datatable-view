@@ -26,8 +26,9 @@ class DatatableTests(DatatableViewTestCase):
                 model = models.ExampleModel
                 columns = ['fake']
 
+        dt = DT([], '/')
         with self.assertRaises(ColumnError) as cm:
-            dt = DT([], '/')
+            dt.configure()
         self.assertEqual(str(cm.exception), "Unknown column name(s): ('fake',)")
 
     def test_column_names_list_finds_local_fields(self):
@@ -50,8 +51,9 @@ class DatatableTests(DatatableViewTestCase):
                 model = models.ExampleModel
                 columns = ['related__name']
 
+        dt = DT([], '/')
         with self.assertRaises(ColumnError) as cm:
-            dt = DT([], '/')
+            dt.configure()
         self.assertEqual(str(cm.exception), "Unknown column name(s): ('related__name',)")
 
     def test_column_names_list_finds_related_fields(self):
@@ -71,6 +73,7 @@ class DatatableTests(DatatableViewTestCase):
     def test_get_ordering_splits(self):
         # Verify empty has blank db-backed list and virtual list
         dt = Datatable([], '/')
+        dt.configure()
         self.assertEqual(dt.get_ordering_splits(), ([], []))
 
         class DT(Datatable):
@@ -82,19 +85,23 @@ class DatatableTests(DatatableViewTestCase):
 
         # Verify a fake field name ends up separated from the db-backed field
         dt = DT([], '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.configure()
         self.assertEqual(dt.get_ordering_splits(), (['name'], []))
 
         # Verify ['name', 'fake'] ordering sends 'name' to db sort list, but keeps 'fake' in manual
         # sort list.
         dt = DT([], '/', query_config={'iSortingCols': '2', 'iSortCol_0': '0', 'sSortDir_0': 'asc', 'iSortCol_1': '1', 'sSortDir_1': 'asc'})
+        dt.configure()
         self.assertEqual(dt.get_ordering_splits(), (['name'], ['fake']))
 
         # Verify a fake field name as the sort column correctly finds no db sort fields
         dt = DT([], '/', query_config={'iSortingCols': '1', 'iSortCol_0': '1', 'sSortDir_0': 'asc'})
+        dt.configure()
         self.assertEqual(dt.get_ordering_splits(), ([], ['fake']))
 
         # Verify ['fake', 'name'] ordering sends both fields to manual sort list
         dt = DT([], '/', query_config={'iSortingCols': '2', 'iSortCol_0': '1', 'sSortDir_0': 'asc', 'iSortCol_1': '0', 'sSortDir_1': 'asc'})
+        dt.configure()
         self.assertEqual(dt.get_ordering_splits(), ([], ['fake', 'name']))
 
     def test_get_records_populates_cache(self):

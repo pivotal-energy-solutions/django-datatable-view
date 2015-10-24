@@ -177,6 +177,7 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
         """ Called in place of normal ``get()`` when accessed via AJAX. """
 
         datatable = self.get_active_ajax_datatable()
+        datatable.configure()
         response_data = self.get_json_response_object(datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
