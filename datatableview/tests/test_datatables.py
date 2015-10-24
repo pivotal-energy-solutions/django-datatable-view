@@ -12,6 +12,7 @@ from .. import utils
 class DatatableTests(DatatableViewTestCase):
     def test_normalize_config(self):
         dt = Datatable([], '/')
+        dt.configure()
         self.assertEqual(dt.config['hidden_columns'], [])
         self.assertEqual(dt.config['search_fields'], [])
         self.assertEqual(dt.config['unsortable_columns'], [])

@@ -427,6 +427,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         No paging will take place at this stage!
         """
+        if not hasattr(self, 'config'):
+            self.configure()
+
         self._records = None
         objects = self.object_list
         objects = self.search(objects)
