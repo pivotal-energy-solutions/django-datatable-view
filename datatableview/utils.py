@@ -99,7 +99,10 @@ def resolve_orm_path(model, orm_path):
 
     bits = orm_path.split('__')
     endpoint_model = reduce(get_model_at_related_field, [model] + bits[:-1])
-    field, _, _, _ = endpoint_model._meta.get_field_by_name(bits[-1])
+    if bits[-1] == 'pk':
+        field = endpoint_model._meta.pk
+    else:
+        field, _, _, _ = endpoint_model._meta.get_field_by_name(bits[-1])
     return field
 
 
