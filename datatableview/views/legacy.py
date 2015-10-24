@@ -544,23 +544,8 @@ class LegacyConfigurationDatatableMixin(DatatableMixin):
         return self._datatable_options
 
     def get_datatable_kwargs(self, **kwargs):
-        kwargs.update({
-            'object_list': self.get_queryset(),
-            'view': self,
-            'model': self.model,  # Potentially ``None``
-            'callback_target': self,
-        })
-
-        # This is provided by default, but if the view is instantiated outside of the request cycle
-        # (such as for the purposes of embedding that view's datatable elsewhere), the request may
-        # not be required, so the user may not have a compelling reason to go through the trouble of
-        # putting it on self.
-        if hasattr(self, 'request'):
-            kwargs['url'] = self.request.path
-            kwargs['query_config'] = self.request.GET
-        else:
-            kwargs['query_config'] = {}
-
+        kwargs = super(LegacyConfigurationDatatableMixin, self).get_datatable_kwargs(**kwargs)
+        kwargs['callback_target'] = self
         kwargs.update(self._get_datatable_options())
         return kwargs
 
