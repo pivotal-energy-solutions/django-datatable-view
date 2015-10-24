@@ -201,26 +201,27 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             self.model = object_list.model
         if query_config is None:
             query_config = {}
+        self.query_config = query_config
 
         self.columns = copy.deepcopy(self.base_columns)
-        self.configure(self._meta.__dict__, query_config, **kwargs)
 
         self._force_distinct = force_distinct
         self.total_initial_record_count = None
         self.unpaged_record_count = None
 
-    def configure(self, meta_config, query_config, **kwargs):
+    def configure(self):
         """
         Combines (in order) the declared/inherited inner Meta, any view options, and finally any
         valid AJAX GET parameters from client modifications to the data they see.
         """
+
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
-        self.config = self.normalize_config(meta_config, query_config)
+        self.config = self.normalize_config(self._meta.__dict__, self.query_config)
 
         self.config['column_searches'] = {}
         for i, name in enumerate(self.columns.keys()):
-            column_search = query_config.get(OPTION_NAME_MAP['search_column'] % i, None)
+            column_search = self.query_config.get(OPTION_NAME_MAP['search_column'] % i, None)
             if column_search:
                 self.config['column_searches'][name] = column_search
 
@@ -654,6 +655,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     # Template rendering features
     def __str__(self):
         """ Renders ``structure_template`` with ``self`` as a context variable. """
+
+        if not hasattr(self, 'config'):
+            self.configure()
+
         context = {
             'url': self.url,
             'config': self.config,
@@ -664,6 +669,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def __iter__(self):
         """ Yields each column in order. """
+
+        if not hasattr(self, 'config'):
+            self.configure()
 
         for column in self.columns.values():
             yield column
