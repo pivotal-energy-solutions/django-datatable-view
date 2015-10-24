@@ -774,7 +774,7 @@ class LegacyDatatable(Datatable):
             field = get_field_definition(name)
             column = TextColumn(sources=field.fields, label=field.pretty_name,
                                 processor=field.callback)
-            column.name = field.fields[0] if field.fields else field.pretty_name
+            column.name = field.pretty_name if field.pretty_name else field.fields[0]
             virtual_columns[name] = column
 
         # Make sure it's in the same order as originally defined
