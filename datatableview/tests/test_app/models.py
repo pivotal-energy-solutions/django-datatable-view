@@ -20,6 +20,9 @@ class ExampleModel(models.Model):
     def get_absolute_url(self):
         return "#{pk}".format(pk=self.pk)
 
+    def get_negative_pk(self):
+        return -1 * self.pk
+
 
 class RelatedModel(models.Model):
     name = models.CharField(max_length=15)

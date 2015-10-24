@@ -187,6 +187,175 @@ class DatatableTests(DatatableViewTestCase):
             dt.get_records()
         self.assertEqual(str(cm.exception), "We did it")
 
+    def test_sort_defaults_to_meta_ordering(self):
+        # Defined so that 'pk' order != 'name' order
+        obj1 = models.ExampleModel.objects.create(name="b")
+        obj2 = models.ExampleModel.objects.create(name="a")
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            name = columns.TextColumn("Name", sources=['name'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['name']
+                ordering = ['name']
+
+        dt = DT(queryset, '/')
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['name'], []))
+        self.assertEqual(list(dt._records), [obj2, obj1])
+
+        class DT(Datatable):
+            name = columns.TextColumn("Name", sources=['name'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['name']
+                ordering = ['-name']
+
+        dt = DT(queryset, '/')
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['-name'], []))
+        self.assertEqual(list(dt._records), [obj1, obj2])
+
+    def test_sort_prioritizes_db_source(self):
+        # Defined so that 'pk' order != 'name' order
+        obj1 = models.ExampleModel.objects.create(name="test name 2")
+        obj2 = models.ExampleModel.objects.create(name="test name 1")
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            name = columns.TextColumn("Name", sources=['name'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['name']
+                ordering = ['pk']
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['name'], []))
+        self.assertEqual(list(dt._records), [obj2, obj1])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['-name'], []))
+        self.assertEqual(list(dt._records), [obj1, obj2])
+
+    def test_sort_uses_all_sources(self):
+        from datetime import timedelta
+        obj1 = models.ExampleModel.objects.create(name="a")
+        obj2 = models.ExampleModel.objects.create(name="a")
+        obj3 = models.ExampleModel.objects.create(name="b")
+        obj1.date_created = obj1.date_created + timedelta(days=3)
+        obj2.date_created = obj2.date_created + timedelta(days=1)
+        obj3.date_created = obj3.date_created + timedelta(days=2)
+        obj1.save()
+        obj2.save()
+        obj3.save()
+
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            my_column = columns.TextColumn("Data", sources=['name', 'date_created', 'pk'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['my_column']
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['my_column'], []))
+        self.assertEqual(list(dt._records), [obj2, obj1, obj3])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['-my_column'], []))
+        self.assertEqual(list(dt._records), [obj3, obj1, obj2])
+
+
+        # Swap the order of 'date_created' and 'name' fields in the sources, which will alter the
+        # sort results.
+        class DT(Datatable):
+            my_column = columns.TextColumn("Data", sources=['date_created', 'name', 'pk'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['my_column']
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['my_column'], []))
+        self.assertEqual(list(dt._records), [obj2, obj3, obj1])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['-my_column'], []))
+        self.assertEqual(list(dt._records), [obj1, obj3, obj2])
+
+    def test_sort_ignores_virtual_sources_when_mixed(self):
+        from datetime import timedelta
+        obj1 = models.ExampleModel.objects.create(name="a")
+        obj2 = models.ExampleModel.objects.create(name="b")
+        obj3 = models.ExampleModel.objects.create(name="a")
+
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            my_column = columns.TextColumn("Data", sources=['name', 'get_absolute_url'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['my_column']
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['my_column'], []))
+        self.assertEqual(list(dt._records), [obj1, obj3, obj2])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), (['-my_column'], []))
+        self.assertEqual(list(dt._records), [obj2, obj1, obj3])  # pk is natural ordering 1,3 here
+
+        # Swap the sources order, but we expect the same result
+        class DT(Datatable):
+            my_column = columns.TextColumn("Data", sources=['get_absolute_url', 'name'], processor='get_data')
+            class Meta:
+                model = models.ExampleModel
+                columns = ['my_column']
+
+            def get_data(self, obj, **kwargs):
+                # Return data that would make the sort order wrong if it were consulted for sorting
+                return obj.pk  # tracks with get_absolute_url
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(list(dt._records), [obj1, obj3, obj2])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(list(dt._records), [obj2, obj1, obj3])  # pk is natural ordering 1,3 here
+
+    def test_sort_uses_virtual_sources_when_no_db_sources_available(self):
+        from datetime import timedelta
+        obj1 = models.ExampleModel.objects.create(name="a")
+        obj2 = models.ExampleModel.objects.create(name="b")
+        obj3 = models.ExampleModel.objects.create(name="c")
+
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            pk = columns.TextColumn("Data", sources=['get_negative_pk'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['pk']
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'asc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), ([], ['pk']))
+        self.assertEqual(list(dt._records), [obj3, obj2, obj1])
+
+        dt = DT(queryset, '/', query_config={'iSortingCols': '1', 'iSortCol_0': '0', 'sSortDir_0': 'desc'})
+        dt.populate_records()
+        self.assertEqual(dt.get_ordering_splits(), ([], ['-pk']))
+        self.assertEqual(list(dt._records), [obj1, obj2, obj3])
+
     def test_get_object_pk(self):
         obj1 = models.ExampleModel.objects.create(name="test name 1")
         queryset = models.ExampleModel.objects.all()
