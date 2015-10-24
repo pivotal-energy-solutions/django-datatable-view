@@ -2,6 +2,22 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.4
+Refinements since 0.9.0-beta.3
+
+Sphinx documentation and Travis CI are now public:
+
+* http://django-datatable-view.readthedocs.org/en/latest/
+* https://travis-ci.org/pivotal-energy-solutions/django-datatable-view
+
+Fixes:
+
+* Several issues with LegacyConfiguration innards (sorting, some column names raising unexpected exceptions before the intended exception could be raised)
+* Imports for some versions of Django
+* Removed forced ``sortable=False`` kwarg when no sources are given (this was causing issues with columns that are expected to be sortable based on processor output)
+* Fixed hook lookup for per-column searches
+* Changed when internal configuration takes place on a ``Datatable``
+
 ## 0.9.0-beta.3
 Refinements since 0.9.0-beta.2
 
