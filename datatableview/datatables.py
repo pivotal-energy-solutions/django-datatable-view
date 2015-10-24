@@ -780,7 +780,7 @@ class LegacyDatatable(Datatable):
         # Make sure it's in the same order as originally defined
         new_columns = OrderedDict()
         for name in self._meta.columns:  # Can't use self.config yet, hasn't been generated
-            if name in self.columns:
+            if self.columns.get(name):
                 column = self.columns[name]
             else:
                 column = virtual_columns[name]
