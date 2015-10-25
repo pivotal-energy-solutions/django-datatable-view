@@ -933,6 +933,8 @@ class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
 
 
 class HeadlineColumn(columns.TextColumn):
+    model_field_class = None
+
     def search(self, model, term):
         from django.db.models import Q
         return Q(headline__startswith=term)
