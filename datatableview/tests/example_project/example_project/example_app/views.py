@@ -13,7 +13,7 @@ from django.template.defaultfilters import timesince
 import datatableview
 from datatableview import Datatable, ValuesDatatable, columns, SkipRecord
 from datatableview.views import DatatableView, MultipleDatatableView, XEditableDatatableView
-from datatableview.views.legacy import LegacyDatatableView, LegacyConfigurationDatatableView
+from datatableview.views.legacy import LegacyDatatableView
 from datatableview import helpers
 
 from .models import Entry, Blog

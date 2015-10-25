@@ -46,7 +46,7 @@ class XEditableMixin(object):
 
         # Sanitize the requested field name by limiting valid names to the datatable_options columns
         from datatableview.views import legacy
-        if isinstance(self, (legacy.LegacyDatatableMixin, legacy.LegacyConfigurationDatatableMixin)):
+        if isinstance(self, legacy.LegacyDatatableMixin):
             columns = self._get_datatable_options()['columns']
             for name in columns:
                 if isinstance(name, (list, tuple)):

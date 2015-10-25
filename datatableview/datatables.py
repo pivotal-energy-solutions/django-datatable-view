@@ -766,8 +766,8 @@ class LegacyDatatable(Datatable):
     Modifies the :py:meth:`.resolve_virtual_columns` hook to deal with legacy-style column
     declarations, rather than automatically raising them as errors like normal.
 
-    :py:class:`~datatableview.views.legacy.LegacyConfigurationDatatableView` automatically uses this
-    as its :py:attr:`~datatableview.views.legacy.LegacyConfigurationDatatableView.datatable_class`.
+    :py:class:`~datatableview.views.legacy.LegacyDatatableView` automatically uses this
+    as its :py:attr:`~datatableview.views.legacy.LegacyDatatableView.datatable_class`.
     """
 
     def resolve_virtual_columns(self, *names):
