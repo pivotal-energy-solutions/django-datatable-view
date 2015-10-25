@@ -23,7 +23,7 @@ except ImportError:
     from .compat import python_2_unicode_compatible
 
 import six
-import dateutil
+import dateutil.parser
 
 from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
