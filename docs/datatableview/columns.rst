@@ -27,8 +27,8 @@ Column
    :param processor: A reference to a callback that can modify the column source data before
                      serialization and transmission to the client.  Direct callable references will
                      be used as-is, but strings will be used to look up that callable as a method of
-                     the column's :py:class:`Datatable` (or failing that, the view that is serving
-                     the table).
+                     the column's :py:class:`~datatableview.datatables.Datatable` (or failing that,
+                     the view that is serving the table).
    :type processor: callable or str
    :param str separator: The string that joins multiple source values together if more than one
                          source is declared. This is primarily a zero-configuration courtesy, and
