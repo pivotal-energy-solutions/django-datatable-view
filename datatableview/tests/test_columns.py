@@ -10,11 +10,13 @@ class ColumnTests(DatatableViewTestCase):
         previous_length = len(COLUMN_CLASSES)
 
         class CustomColumn(Column):
-            pass
+            model_field_class = 'fake'
 
         self.assertEqual(len(COLUMN_CLASSES), previous_length + 1)
         self.assertEqual(COLUMN_CLASSES[0][0], CustomColumn)
         self.assertEqual(COLUMN_CLASSES[0][1], [CustomColumn.model_field_class] + CustomColumn.handles_field_classes)
+
+        del COLUMN_CLASSES[:1]
 
     def test_value_is_pair(self):
         obj = models.ExampleModel.objects.create(name="test name 1")
