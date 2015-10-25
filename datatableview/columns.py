@@ -175,19 +175,17 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
 
         values = []
-        for field_name in self.sources:
-            if isinstance(obj, Model):
-                value = reduce(get_attribute_value, [obj] + field_name.split('__'))
-            else:
-                value = obj[field_name]
+        for source in self.sources:
+            result = self.get_source_value(obj, source, **kwargs)
 
-            if isinstance(value, Model):
-                value = (value.pk, value)
+            for value in result:
+                if isinstance(value, Model):
+                    value = (value.pk, value)
 
-            if value is not None:
-                if not isinstance(value, (tuple, list)):
-                    value = (value, value)
-                values.append(value)
+                if value is not None:
+                    if not isinstance(value, (tuple, list)):
+                        value = (value, value)
+                    values.append(value)
 
         if len(values) == 1:
             value = values[0]
@@ -201,6 +199,22 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             value = self.empty_value
 
         return value
+
+    def get_source_value(self, obj, source, **kwargs):
+        """
+        Retrieves the value from ``obj`` associated with some ``source`` description.  Should return
+        a list whose length is determined by the number of sources consulted.  In the default case,
+        this is always just 1, but compound columns that declare their components with nested
+        ``Column`` instances will have sources of their own and need to return a value per nested
+        source.
+        """
+        if isinstance(obj, Model):
+            value = reduce(get_attribute_value, [obj] + source.split('__'))
+        elif isinstance(obj, dict):  # ValuesQuerySet item
+            value = obj[source]
+        else:
+            raise ValueError("Unknown object type %r" % (repr(obj),))
+        return [value]
 
     def get_processor_kwargs(self, **extra_kwargs):
         """
@@ -242,6 +256,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
         return self.get_db_sources(model)
 
+    def expand_source(self, source):
+        return (source,)
+
     def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
@@ -249,6 +266,10 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             return resolve_orm_path(model, source)
         except FieldDoesNotExist:
             return None
+
+    def get_source_handler(self, model, source):
+        """ Return handler instance for lookup types and term coercion. """
+        return self
 
     # Interactivity features
     def prep_search_value(self, term, lookup_type):
@@ -321,27 +342,28 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         sources = self.get_db_sources(model)
         column_queries = []
         for source in sources:
-            modelfield = resolve_orm_path(model, source)
-            handler = get_column_for_modelfield(modelfield)()
+            handler = self.get_source_handler(model, source)
 
-            if modelfield.choices:
-                for db_value, label in modelfield.get_flatchoices():
-                    if term.lower() in label.lower():
-                        k = '%s__exact' % (source,)
-                        column_queries.append(Q(**{k: str(db_value)}))
+            for sub_source in self.expand_source(source):
+                modelfield = resolve_orm_path(model, sub_source)
+                if modelfield.choices:
+                    for db_value, label in modelfield.get_flatchoices():
+                        if term.lower() in label.lower():
+                            k = '%s__exact' % (sub_source,)
+                            column_queries.append(Q(**{k: str(db_value)}))
 
-            lookup_types = self.get_lookup_types(handler=handler)
-            for lookup_type in lookup_types:
-                coerced_term = (handler or self).prep_search_value(term, lookup_type)
-                if coerced_term is None:
-                    # Skip terms that don't work with the lookup_type
-                    continue
-                elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
-                    # Skip attempts to build multi-component searches if we only have one term
-                    continue
+                lookup_types = handler.get_lookup_types()
+                for lookup_type in lookup_types:
+                    coerced_term = handler.prep_search_value(term, lookup_type)
+                    if coerced_term is None:
+                        # Skip terms that don't work with the lookup_type
+                        continue
+                    elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
+                        # Skip attempts to build multi-component searches if we only have one term
+                        continue
 
-                k = '%s__%s' % (source, lookup_type)
-                column_queries.append(Q(**{k: coerced_term}))
+                    k = '%s__%s' % (sub_source, lookup_type)
+                    column_queries.append(Q(**{k: coerced_term}))
 
         if column_queries:
             q = reduce(operator.or_, column_queries)
@@ -460,6 +482,71 @@ class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
     lookup_types = ('exact', 'in')
+
+
+class CompoundColumn(Column):
+    """
+    Special column type for holding multiple sources that have different model field types.  The
+    separation of sources by type is important because of the different query lookup types that are
+    allowed against different model fields.
+
+    Each source will dynamically find its associated model field and choose an appropriate column
+    class from the registry.
+
+    To more finely control which column class is used, an actual column instance can be given
+    instead of a string name which declares its own ``source`` or ``sources``.  Because they are not
+    important to the client-side representation of the column, no ``label`` is necessary for nested
+    column instances.
+    """
+
+    model_field_class = None
+    handles_field_classes = []
+    lookup_types = ()
+
+    def expand_source(self, source):
+        if isinstance(source, Column):
+            return source.sources
+        return super(CompoundColumn, self).expand_source(source)
+
+    def get_source_value(self, obj, source, **kwargs):
+        """
+        Treat ``field`` as a nested sub-Column instance, which explicitly stands in as the object
+        to which term coercions and the query type lookup are delegated.
+        """
+        result = []
+        for sub_source in self.expand_source(source):
+            # Call super() to get default logic, but send it the 'sub_source'
+            sub_result = super(CompoundColumn, self).get_source_value(obj, sub_source, **kwargs)
+            result.extend(sub_result)
+        return result
+
+    def get_db_sources(self, model):
+        return self.sources
+
+    def get_sort_fields(self, model):
+        return self._get_flat_db_sources(model)
+
+    def _get_flat_db_sources(self, model):
+        """ Return a flattened representation of the individual ``sources`` lists. """
+        sources = []
+        for source in self.sources:
+            for sub_source in self.expand_source(source):
+                target_field = self.resolve_source(model, sub_source)
+                if target_field:
+                    sources.append(sub_source)
+        return sources
+
+    def get_source_handler(self, model, source):
+        """ Allow the nested Column source to be its own handler. """
+        if isinstance(source, Column):
+            return source
+
+        # Generate a generic handler for the source
+        modelfield = resolve_orm_path(model, source)
+        column_class = get_column_for_modelfield(modelfield)
+        return column_class()
+
+
 class DisplayColumn(Column):
     """
     Convenience column type for unsearchable, unsortable columns, which rely solely on a processor
