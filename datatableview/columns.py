@@ -430,7 +430,7 @@ class DateColumn(Column):
             else:
                 return date_obj
 
-        if lookup_type in ('year', 'month', 'day', 'hour' 'minute', 'second', 'week_day'):
+        if lookup_type not in ('exact', 'in', 'range'):
             test_term = term
             if lookup_type == 'week_day':
                 try:
