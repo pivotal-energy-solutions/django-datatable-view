@@ -251,14 +251,8 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     view's class attributes, except that all of the available settings were put inside of one
     dictionary called ``datatable_options``.
 
-    Use ``datatableview.views.legacy.LegacyConfigurationDatatableView`` if all you want is to allow
-    your ``datatable_options`` dict to be discovered, but use
-    ``datatableview.views.legacy.LegacyDatatableView`` if you were hacking the old view and crying
-    like it was made of onions.
-
-    A few private imports were moved from ``datatableview.utils`` into
-    ``datatableview.views.legacy``, but aside from that, method overrides from version 0.8 should
-    work in 0.9.
+    Use ``datatableview.views.legacy.LegacyDatatableView`` to allow your ``datatable_options`` dict
+    to be discovered and converted to the modern syntax on the fly.
     """
     model = Entry
     datatable_options = {
@@ -395,10 +389,10 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
     return whatever arbitrary data the column needs to display.
 
     INFO:
-    If the ``sources`` is ``[]`` or ``None``, it is required to also send ``sortable=False``.  If
-    you need sorting, consider splitting up the work that you intend to do with the ``processor``,
-    so that there is a field, method, or property that can be used as the source, and the processor
-    just manipulates that value.  This will at least provide you with in-memory sorting of the core
+    If the ``sources`` is ``[]`` or ``None``, ``sortable=False`` is automatically implied. If you
+    need sorting, consider splitting up the work that you intend to do with the ``processor``, so
+    that there is a field, method, or property that can be used as the source, and the processor
+    just manipulates that value. This will at least provide you with in-memory sorting of the core
     value.
 
     INFO:
@@ -406,10 +400,14 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
     ``sources`` list, but it was omitted specifically to demonstrate the bridging of the gap by the
     callback.
 
+    INFO:
+    Columns without ``sources`` can be explicitly defined with ``DisplayColumn`` instead of one of
+    the usual column types.
+
     WARNING:
-    Columns without a ``sources`` list cannot be searched or sorted. Even if your processor
-    function were to return a simple model field value, the Datatable lacks the necessary hints to
-    know this. Always give ``sources`` where they exist.
+    Columns without ``sources`` cannot be searched or sorted. Even if your processor function were
+    to return a simple model field value, the Datatable lacks the necessary hints to know this.
+    Always give ``sources`` where they exist.
 
     See <a href="/processors/">Postprocessing values</a> for more information on processor
     functions.
@@ -417,7 +415,7 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         blog = columns.TextColumn("Blog", sources=['blog__name'])
-        age = columns.TextColumn("Age", sources=None, processor='get_entry_age', sortable=False)
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
         class Meta:
             columns = ['blog', 'headline', 'age']
@@ -430,7 +428,7 @@ class CustomColumnsDatatableView(DemoMixin, DatatableView):
 
     class MyDatatable(Datatable):
         blog = columns.TextColumn("Blog", sources=['blog__name'])
-        age = columns.TextColumn("Age", sources=None, processor='get_entry_age', sortable=False)
+        age = columns.TextColumn("Age", sources=None, processor='get_entry_age')
 
         class Meta:
             columns = ['blog', 'headline', 'age']
@@ -557,9 +555,10 @@ class ProcessorsDatatableView(DemoMixin, DatatableView):
 class CompoundColumnsDatatableView(DemoMixin, DatatableView):
     """
     Simple columns only need one model field to represent their data, even when marked up by a
-    callback function.  However, if a column actually represents more than one model field the
-    list of those fields can be given in place of a single field name.  For example, imagine a model
-    ``__str__`` method that houses more than just one model field of information.
+    processor function.  However, if a column actually represents more than one model field the
+    list of those fields can be given in place of a single field name.  For example, an address
+    might be composed of multiple model fields working together to display a more complicated
+    string.  Each model field involved should be listed as a source.
 
     INFO:
     You'll probably want to provide a custom ``processor`` function in order to decide how these
@@ -574,25 +573,57 @@ class CompoundColumnsDatatableView(DemoMixin, DatatableView):
     that the user would search on the ``blog.pk`` value, which is information that is not
     necessarily available for them to know, and would certain create unpredictable sorting behavior.
 
-    Specifying all of the relevent fields in a compound column helps make searching and sorting more
+    Specifying all of the relevant fields in a compound column helps make searching and sorting more
     natural.  Sorting a compound column is the same as giving the sources list to the queryset
     ``order_by()`` method (with non-db sources stripped from the list, such as method and property
     names).
+
+    There is a special ``CompoundColumn`` class for representing completely different data types in
+    a single column.  In many situations, you don't actually need to worry about this distinction,
+    because sources are automatically treated appropriately based on what kind of model field they
+    represent.  (The mechanism used here is the same as when ``Meta.columns`` names model fields to
+    import to the ``Datatable`` without explicitly stating which column class to use.)  However, it
+    is strongly recommended that if the data types are mixed you should use ``CompoundColumn``
+    instead of choosing some arbitrary other column to wrap them.
+
+    ``CompoundColumn`` actually uses other ``Column`` instances as its sources rather than just
+    names of those sources. In turn, these nested columns point at the sources they control.
+    You will divide up the sources based on the specific column class they use.
+
+    INFO:
+    Columns nested within a ``CompoundColumn`` don't need labels, because they don't actually get
+    rendered to the client.  It is purely a server-side mechanism that separates the handlers for
+    different data types.
+
+    INFO:
+    If you find yourself making a ``CompoundColumn`` with only one type of ``Column`` inside of it,
+    you probably don't need to use ``CompoundColumn``.
+
+    In addition to specifying column types for different groups of source types, this enables the
+    use of custom, non-registered ``Column`` subclasses.  Such classes might not be suitable for
+    general registration for automatic assignment to as model field handlers, but can be used
+    directly when you see fit.
     """
     model = Entry
     class datatable_class(Datatable):
-        headline = columns.TextColumn("Headline", sources=['headline', 'blog__name'],
-                                      processor='get_headline_data')
-        class Meta:
-            columns = ['id', 'headline']
+        headline_blog = columns.TextColumn("Headline (Blog)", sources=['headline', 'blog__name'],
+                                           processor=helpers.format("{0[0]} ({0[1]})"))
+        headline_pub = columns.CompoundColumn("Headline (Published)", sources=[
+                                                  columns.TextColumn(source='headline'),
+                                                  columns.DateColumn(source='pub_date')
+                                              ], processor=helpers.format("{0[0]} @ {0[1]}"))
 
-        def get_headline_data(self, instance, **kwargs):
-            return "%s (%s)" % (instance.headline, instance.blog.name)
+        class Meta:
+            columns = ['id', 'headline_blog', 'headline_pub']
 
     implementation = u"""
     class MyDatatable(Datatable):
         headline = columns.TextColumn("Headline", sources=['headline', 'blog__name'],
                                       processor='get_headline_data')
+        headline = columns.CompoundColumn("Headline", sources=[
+                       columns.TextColumn(source='headline'),
+                       columns.TextColumn(source='blog__name'),
+                   ], processor='get_headline_data')
         class Meta:
             columns = ['id', 'headline']
 
@@ -653,7 +684,7 @@ class ManyToManyFieldsDatatableView(DemoMixin, DatatableView):
     """
 
 
-class DefaultCallbackNamesDatatableView(DemoMixin, LegacyConfigurationDatatableView):
+class DefaultCallbackNamesDatatableView(DemoMixin, LegacyDatatableView):
     """
     WARNING:
     Implicit callbacks are a concept from version 0.8 and earlier.  The example here is shown using
@@ -790,29 +821,12 @@ class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
     module documentation for columns</a> for more information.
     """
     model = Entry
-    class datatable_class(Datatable):
-        blog_name = columns.TextColumn("Blog name", sources=['blog__name'], processor=helpers.link_to_model)
-        age = columns.TextColumn("Age", sources=['pub_date'], processor=helpers.through_filter(timesince))
-        interaction = columns.IntegerColumn("Interaction", sources=['get_interaction_total'], processor=helpers.make_boolean_checkmark)
-
-        class Meta:
-            columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
-                       'interaction', 'n_comments', 'n_pingbacks']
-            processors = {
-                'id': helpers.link_to_model,
-                'blog_name': helpers.link_to_model(key=lambda obj: obj.blog),
-                'headline': helpers.make_xeditable,
-                'body_text': helpers.itemgetter(slice(0, 30)),
-                'pub_date': helpers.format_date('%A, %b %d, %Y'),
-                'n_comments': helpers.format("{0:,}"),
-                'n_pingbacks': helpers.format("{0:,}"),
-            }
-
+    datatable_class = None
     implementation = u""""""
 
 class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
-    ``datatableview.helpers`` is a module decidated to functions that can be supplied directly as
+    ``datatableview.helpers`` is a module decimated to functions that can be supplied directly as
     column callback functions.  Some of them are easy to use at runtime in your own callbacks,
     making some work easier for you, but the majority aim to solve common problems with as little
     fuss as possible.
@@ -994,7 +1008,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(Datatable):
-        status_display = columns.TextColumn("Status Display", 'get_status_display')
+        status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
             columns = ['id', 'headline', 'status', 'status_display']
@@ -1004,7 +1018,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
 
     implementation = u"""
     class MyDatatable(Datatable):
-        status_display = columns.TextColumn("Status Display", 'get_status_display')
+        status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
             columns = ['id', 'headline', 'status', 'status_display']
@@ -1186,11 +1200,7 @@ class SatelliteDatatableView(DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
-            columns = [
-                'id',
-                'headline',
-                'pub_date',
-            ]
+            columns = ['id', 'headline', 'pub_date']
 
     def get_datatable_kwargs(self):
         kwargs = super(SatelliteDatatableView, self).get_datatable_kwargs()
@@ -1322,24 +1332,14 @@ class CustomizedTemplateDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
+            columns = ['id', 'headline', 'blog', 'pub_date']
             structure_template = "custom_table_template.html"
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
+            columns = ['id', 'headline', 'blog', 'pub_date']
             structure_template = "custom_table_template.html"
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
 
     class CustomizedTemplateDatatableView(DatatableView):
         model = Entry
@@ -1381,24 +1381,14 @@ class BootstrapTemplateDatatableView(DemoMixin, DatatableView):
     model = Entry
     class datatable_class(Datatable):
         class Meta:
+            columns = ['id', 'headline', 'blog', 'pub_date']
             structure_template = "datatableview/bootstrap_structure.html",
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
 
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
+            columns = ['id', 'headline', 'blog', 'pub_date']
             structure_template = "datatableview/bootstrap_structure.html",
-            columns = [
-                'id',
-                'headline',
-                'blog',
-                'pub_date',
-            ]
 
     class BootstrapTemplateOfficialDatatableView(DatatableView):
         model = Entry
