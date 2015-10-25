@@ -219,7 +219,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
         sources = []
         for source in self.sources:
-            target_field = self._resolve_source(model, source)
+            target_field = self.resolve_source(model, source)
             if target_field:
                 sources.append(source)
         return sources
@@ -230,7 +230,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
         sources = []
         for source in self.sources:
-            target_field = self._resolve_source(model, source)
+            target_field = self.resolve_source(model, source)
             if target_field is None:
                 sources.append(source)
         return sources
@@ -242,7 +242,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
         return self.get_db_sources(model)
 
-    def _resolve_source(self, model, source):
+    def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
         try:
