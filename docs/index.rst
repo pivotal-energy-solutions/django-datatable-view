@@ -6,14 +6,16 @@
 Welcome to django-datatable-view's documentation!
 =================================================
 
+For working demos and example code with explanations on common configurations, visit the demo site at http://example.com.
+
 Contents:
 
 .. toctree::
    :maxdepth: 4
 
    migration-guide
+   topics/index
    datatableview/index
-
 
 Indices and tables
 ==================

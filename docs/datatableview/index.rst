@@ -1,5 +1,5 @@
-datatableview
-=============
+``datatableview`` module documentation
+======================================
 
 .. toctree::
    views

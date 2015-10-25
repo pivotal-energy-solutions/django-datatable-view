@@ -103,6 +103,7 @@ Column
    .. automethod:: prep_search_value
    .. automethod:: value
    .. automethod:: get_initial_value
+   .. automethod:: get_source_value
    .. automethod:: get_processor_kwargs
 
    **Internal Methods**
@@ -185,4 +186,26 @@ BooleanColumn
       :annotation: = BooleanField
    .. autoattribute:: handles_field_classes
       :annotation: = [BooleanField, NullBooleanField]
+   .. autoattribute:: lookup_types
+
+DisplayColumn
+~~~~~~~~~~~~~
+
+.. autoclass:: DisplayColumn(**kwargs)
+
+   .. autoattribute:: model_field_class
+      :annotation: = None
+   .. autoattribute:: handles_field_classes
+      :annotation: = []
+   .. autoattribute:: lookup_types
+
+CompoundColumn
+~~~~~~~~~~~~~
+
+.. autoclass:: CompoundColumn(**kwargs)
+
+   .. autoattribute:: model_field_class
+      :annotation: = None
+   .. autoattribute:: handles_field_classes
+      :annotation: = []
    .. autoattribute:: lookup_types
