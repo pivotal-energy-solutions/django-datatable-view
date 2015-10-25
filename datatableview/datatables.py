@@ -159,8 +159,8 @@ class DatatableMetaclass(type):
 
             for name, column in declared_columns.items():
                 column.name = name
-                if not column.sources:
-                    column.sources = [name]
+                # if not column.sources:
+                #     column.sources = [name]
                 if not column.label:
                     try:
                         field = resolve_orm_path(opts.model, name)
