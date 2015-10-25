@@ -270,17 +270,8 @@ class ConfigureDatatableOptions(DemoMixin, LegacyDatatableView):
     }
 
     implementation = u"""
-    # If all you need is old-style configuration:
-    from datatableview.views.legacy import LegacyConfigurationDatatableView
-    class LegacyConfigDatatableView(LegacyConfigurationDatatableView):
-        model = Entry
-        datatable_options = {
-            'columns': ['id', ("Publication Date", 'pub_date'), 'headline'],
-        }
-
-    # If you need an ambulance:
     from datatableview.views.legacy import LegacyDatatableView
-    class LegacyEverythingDatatableView(LegacyDatatableView):
+    class LegacyConfigDatatableView(LegacyDatatableView):
         model = Entry
         datatable_options = {
             'columns': ['id', ("Publication Date", 'pub_date'), 'headline'],
