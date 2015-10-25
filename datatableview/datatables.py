@@ -11,6 +11,7 @@ except ImportError:
 
 from django.db import models
 from django.db.models import Count
+from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 try:
     from django.utils.encoding import force_text
@@ -27,7 +28,8 @@ import six
 from .exceptions import ColumnError, SkipRecord
 from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
                       FloatColumn, DisplayColumn, get_column_for_modelfield)
-from .utils import OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms
+from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
+                    resolve_orm_path)
 
 def pretty_name(name):
     if not name:
@@ -160,8 +162,13 @@ class DatatableMetaclass(type):
                 if not column.sources:
                     column.sources = [name]
                 if not column.label:
-                    field, _, _, _ = opts.model._meta.get_field_by_name(name)
-                    column.label = pretty_name(field.verbose_name)
+                    try:
+                        field = resolve_orm_path(opts.model, name)
+                    except FieldDoesNotExist:
+                        label = name
+                    else:
+                        label = field.verbose_name
+                    column.label = pretty_name(label)
 
             columns.update(declared_columns)
         else:
