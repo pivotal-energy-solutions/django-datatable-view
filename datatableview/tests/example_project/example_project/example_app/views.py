@@ -186,7 +186,7 @@ class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
     """
     model = Entry
     class datatable_class(ValuesDatatable):
-        blog = columns.TextColumn("Blog", sources=['blog__id', 'blog__name'])
+        blog = columns.CompoundColumn("Blog", sources=['blog__id', 'blog__name'])
         publication_date = columns.DateColumn("Publication Date", sources=['pub_date'])
 
         class Meta:
@@ -195,7 +195,7 @@ class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
 
     implementation = u"""
     class MyDatatable(ValuesDatatable):
-        blog = columns.TextColumn("Blog", sources=['blog__id', 'blog__name'])
+        blog = columns.CompoundColumn("Blog", sources=['blog__id', 'blog__name'])
         publication_date = columns.DateColumn("Publication Date", sources=['pub_date'])
 
         class Meta:
