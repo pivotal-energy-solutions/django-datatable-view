@@ -2,6 +2,17 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.5
+Refinements since 0.9.0-beta.4
+
+* Dropped ``LegacyDatatableView``, renamed ``LegacyConfigurationDatatableView`` to ``LegacyDatatableView`` in its place.
+* Added strategy for adding columns that are not registered.  This helps address the issue that columns meant only for some specific interpretations of some columns were being registered for ``CharField``s all over the lonely little planet.
+* Added ``CompoundColumn`` to allow explicit use of unregistered column subclasses.
+* Add import structure to support accessing the columns from within the ``datatables`` module, hopefully mimicking how ``django.forms`` allows something similar.
+* Fixed long-outstanding issue with the column instances declared directly on a datatable being ignored in favor of re-discovering the column class and instantiating it from scratch at runtime.
+* Big sphinx documentation updates.
+* Removed documentation from live demo site about helpers in favor of linking to the sphinx docs.
+
 ## 0.9.0-beta.4
 Refinements since 0.9.0-beta.3
 
