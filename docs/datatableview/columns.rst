@@ -22,8 +22,13 @@ Column
    :param str label: The verbose name shown on the table header.  If omitted, the first item in
                      ``sources`` is checked for a ``verbose_name`` of its own.
    :param list sources: A list of strings that define which fields on an object instance will be
-                        supply the value for this column.  Model field names and extra
-                        :py:class:`Datatable` column declarations are valid source names.
+                        supply the value for this column.  Model field names (including query
+                        language syntax) and model attribute, method, and property names are all
+                        valid source names.  All sources in the list should share a common model
+                        field class.  If they do not, see :py:class:`CompoundColumn` for information
+                        on separating the sources by type.
+   :param str source: A convenience parameter for specifying just one source name.  Cannot be used
+                      at the same time as ``sources``.
    :param processor: A reference to a callback that can modify the column source data before
                      serialization and transmission to the client.  Direct callable references will
                      be used as-is, but strings will be used to look up that callable as a method of
