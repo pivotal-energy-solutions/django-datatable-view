@@ -74,9 +74,10 @@ class ColumnMetaclass(type):
     """ Column type for automatic registration of column types as ModelField handlers. """
     def __new__(cls, name, bases, attrs):
         new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
-        COLUMN_CLASSES.insert(0, (new_class, [new_class.model_field_class]))
-        if new_class.handles_field_classes:
-            COLUMN_CLASSES.insert(0, (new_class, new_class.handles_field_classes))
+        if new_class.model_field_class:
+            COLUMN_CLASSES.insert(0, (new_class, [new_class.model_field_class]))
+            if new_class.handles_field_classes:
+                COLUMN_CLASSES.insert(0, (new_class, new_class.handles_field_classes))
         return new_class
 
 
@@ -85,10 +86,10 @@ class ColumnMetaclass(type):
 class Column(six.with_metaclass(ColumnMetaclass)):
     """ Generic table column using CharField for rendering. """
 
-    model_field_class = models.CharField
+    model_field_class = None
     handles_field_classes = []
 
-    lookup_types = ('iexact', 'icontains', 'in')
+    lookup_types = ()
 
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
@@ -377,14 +378,6 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         return flatatt(attributes)
 
 
-class DisplayColumn(Column):
-    # This is defined before TextColumn because they use the same model_field_class setting, and we
-    # want TextColumn to have the last word about what CharField is.  DisplayColumn should never be
-    # discovered as the natural handler for CharField.
-    model_field_class = models.CharField
-    lookup_types = ()
-
-
 class TextColumn(Column):
     model_field_class = models.CharField
     handles_field_classes = [models.CharField, models.TextField, models.FileField]
@@ -461,3 +454,11 @@ class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
     lookup_types = ('exact', 'in')
+class DisplayColumn(Column):
+    """
+    Convenience column type for unsearchable, unsortable columns, which rely solely on a processor
+    function to generate content.
+    """
+
+    model_field_class = None
+    lookup_types = ()
