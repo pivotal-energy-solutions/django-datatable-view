@@ -27,7 +27,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
-                      FloatColumn, DisplayColumn, get_column_for_modelfield)
+                      FloatColumn, DisplayColumn, CompoundColumn, get_column_for_modelfield)
 from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
                     resolve_orm_path)
 
