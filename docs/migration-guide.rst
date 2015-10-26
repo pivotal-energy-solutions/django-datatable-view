@@ -47,6 +47,8 @@ An alternate abbreviated style is available: as with class-based views that use 
 
 __ {% url "configure-inline" %}
 
+The new ``Datatable`` object doubles as the old 0.8 ``DatatableOptions`` template renderable object.  ``DatatableOptions`` and ``utils.get_datatable_structure()`` have both been removed, since ``Datatable`` itself is all you need.
+
 
 New vocabulary
 --------------

@@ -95,6 +95,12 @@ class MyDatatableView(DatatableView):
         anything that would have required the 2-tuple or 3-tuple column syntax), please use the new
         <code>Datatable</code> object strategy.
     </p>
+    <p>
+        The new <code>Datatable</code> object doubles as the old 0.8 <code>DatatableOptions</code>
+        template renderable object.  <code>DatatableOptions</code> and
+        <code>utils.get_datatable_structure()</code> have both been removed, since
+        <code>Datatable</code> itself is all you need.
+    </p>
 
     <br><br>
     <h3>
