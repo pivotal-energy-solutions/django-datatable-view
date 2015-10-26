@@ -46,8 +46,8 @@ class DatatableJSONResponseMixin(object):
             'iTotalRecords': datatable.total_initial_record_count,
             'iTotalDisplayRecords': datatable.unpaged_record_count,
             'aaData': [dict(record, **{
-                'DT_RowId': record['pk'],
-                'DT_RowData': record['_extra_data'],
+                'DT_RowId': record.pop('pk'),
+                'DT_RowData': record.pop('_extra_data'),
             }) for record in datatable.get_records()],
         }
         return response_data
