@@ -123,7 +123,7 @@ def contains_plural_field(model, fields):
                     or (USE_RELATED_OBJECT and isinstance(field, RelatedObject) and field.field.rel.multiple) \
                     or (not USE_RELATED_OBJECT and isinstance(field, RelatedField) and field.one_to_many):
                 return True
-            model = get_model_at_related_field(source_model, bit)
+            model = get_model_at_related_field(model, bit)
     return False
 
 def split_terms(s):
