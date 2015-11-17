@@ -471,6 +471,15 @@ class BooleanColumn(Column):
     handles_field_classes = [models.BooleanField, models.NullBooleanField]
     lookup_types = ('exact', 'in')
 
+    def prep_search_value(self, term, lookup_type):
+        term = term.lower()
+        if term == 'true':
+            term = True
+        elif term == 'false':
+            term = False
+        else:
+            return None
+        return super(BooleanColumn, self).prep_search_value(term, lookup_type)
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
