@@ -4,6 +4,7 @@ from django.db import models
 
 class ExampleModel(models.Model):
     name = models.CharField(max_length=15)
+    value = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
     related = models.ForeignKey('RelatedModel', blank=True, null=True)
     relateds = models.ManyToManyField('RelatedM2MModel', blank=True)

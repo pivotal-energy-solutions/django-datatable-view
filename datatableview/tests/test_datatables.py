@@ -119,14 +119,14 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(dt._records, records)
 
     def test_populate_records_searches(self):
-        obj1 = models.ExampleModel.objects.create(name="test name 1")
-        obj2 = models.ExampleModel.objects.create(name="test name 2")
+        obj1 = models.ExampleModel.objects.create(name="test name 1", value=False)
+        obj2 = models.ExampleModel.objects.create(name="test name 2", value=True)
         queryset = models.ExampleModel.objects.all()
 
         class DT(Datatable):
             class Meta:
                 model = models.ExampleModel
-                columns = ['name']
+                columns = ['name', 'value']
         dt = DT(queryset, '/')
 
         # Sanity check for correct initial queryset
