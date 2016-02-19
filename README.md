@@ -60,6 +60,20 @@ $ mkvirtualenv datatableview
 (datatableview)$ datatableview/tests/example_project/manage.py runserver
 ```
 
+For Django 1.9 you should use 
+
+```bash
+$ git clone https://github.com/pivotal-energy-solutions/django-datatable-view.git
+$ cd django-datatable-view
+$ mkvirtualenv datatableview
+(datatableview)$ pip install -r requirements.txt
+(datatableview)$ cd datatableview/tests/example_project/
+(datatableview)$ python manage.py makemigrations example_app && python manage.py migrate
+(datatableview)$ python manage.py loaddata initial_data_modern
+(datatableview)$ python manage.py runserver
+```
+
+
 The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware except for ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
 
 
