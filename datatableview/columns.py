@@ -326,7 +326,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             lookup_types += ('search',)
         return lookup_types
 
-    def search(self, model, term):
+    def search(self, model, term, lookup_types=None):
         """
         Returns the ``Q`` object representing queries to make against this column for the given
         term.
@@ -356,7 +356,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                             k = '%s__exact' % (sub_source,)
                             column_queries.append(Q(**{k: str(db_value)}))
 
-                lookup_types = handler.get_lookup_types()
+                if not lookup_types:
+                    lookup_types = handler.get_lookup_types()
                 for lookup_type in lookup_types:
                     coerced_term = handler.prep_search_value(term, lookup_type)
                     if coerced_term is None:
