@@ -211,7 +211,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         ``Column`` instances will have sources of their own and need to return a value per nested
         source.
         """
-        if isinstance(obj, Model):
+        if hasattr(source, "__call__"):
+            value = source(obj)
+        elif isinstance(obj, Model):
             value = reduce(get_attribute_value, [obj] + source.split('__'))
         elif isinstance(obj, dict):  # ValuesQuerySet item
             value = obj[source]
@@ -265,6 +267,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
+        if hasattr(source, "__call__"):
+            return None
         try:
             return resolve_orm_path(model, source)
         except FieldDoesNotExist:
