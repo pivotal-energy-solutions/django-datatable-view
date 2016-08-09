@@ -129,7 +129,12 @@ def contains_plural_field(model, fields):
         model = source_model
         bits = orm_path.lstrip('+-').split('__')
         for bit in bits[:-1]:
-            field, _, direct, m2m = model._meta.get_field_by_name(bit)
+            # Use the new Model _meta API
+            # https://docs.djangoproject.com/en/1.9/ref/models/meta/
+            if hasattr(model._meta, 'get_field_by_name'):
+                field, _, direct, m2m = model._meta.get_field_by_name(bit)
+            else:
+                field = model._meta.get_field(bit)
             if isinstance(field, models.ManyToManyField) \
                     or (USE_RELATED_OBJECT and isinstance(field, RelatedObject) and field.field.rel.multiple) \
                     or (not USE_RELATED_OBJECT and isinstance(field, RelatedField) and field.one_to_many):
