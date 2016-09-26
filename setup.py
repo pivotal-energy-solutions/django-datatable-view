@@ -4,15 +4,7 @@
 from setuptools import setup, find_packages
 
 setup(name='django-datatable-view',
-<<<<<<< HEAD
-<<<<<<< HEAD
       version='0.9.0-beta.5',
-=======
-      version='0.9.0-beta.7',
->>>>>>> 2a49700... Get column value when source is callable
-=======
-      version='0.9.0-beta.6',
->>>>>>> 0a6542e... Lookup types can be passed as arguments to method 'search'
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
