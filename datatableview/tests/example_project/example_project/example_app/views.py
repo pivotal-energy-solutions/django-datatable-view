@@ -853,18 +853,17 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                ("ID", 'id', helpers.link_to_model),
-                ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
-                ("Headline", 'headline', helpers.make_xeditable),
-                ("Body Text", 'body_text', helpers.itemgetter(slice(0, 30))),
-                ("Publication Date", 'pub_date', helpers.format_date('%A, %b %d, %Y')),
-                ("Modified Date", 'mod_date'),
-                ("Age", 'pub_date', helpers.through_filter(timesince)),
-                ("Interaction", 'get_interaction_total', helpers.make_boolean_checkmark),
-                ("Comments", 'n_comments', helpers.format("{0:,}")),
-                ("Pingbacks", 'n_pingbacks', helpers.format("{0:,}")),
-            ]
+            columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
+                       'interaction', 'n_comments', 'n_pingbacks']
+            processors = {
+                'id': helpers.link_to_model,
+                'blog_name': helpers.link_to_model(key=lambda obj: obj.blog),
+                'headline': helpers.make_xeditable,
+                'body_text': helpers.itemgetter(slice(0, 30)),
+                'pub_date': helpers.format_date('%A, %b %d, %Y'),
+                'n_comments': helpers.format("{0:,}"),
+                'n_pingbacks': helpers.format("{0:,}"),
+            }
 
     class HelpersReferenceDatatableView(XEditableDatatableView):
         model = Entry
