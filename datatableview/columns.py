@@ -486,7 +486,8 @@ class BooleanColumn(Column):
 
     def prep_search_value(self, term, lookup_type):
         term = term.lower()
-        if term == 'true':
+        # Allow column's own label to represent a true value
+        if term == 'true' or term.lower() in self.label.lower():
             term = True
         elif term == 'false':
             term = False
