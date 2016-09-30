@@ -3,8 +3,8 @@
 var datatableview = {
     auto_initialize: false,
     defaults: {
-        "bServerSide": true,
-        "bPaginate": true
+        "serverSide": true,
+        "paging": true
     },
 
     make_xeditable: function(options) {
@@ -24,7 +24,7 @@ var datatableview = {
                 });
                 return errors.join('\n');
             }
-        }
+        };
         return function(nRow, mData, iDisplayIndex) {
             $('td a[data-xeditable]', nRow).editable(options);
             return nRow;
@@ -55,9 +55,10 @@ var datatableview = {
             };
         }
         var options_name_map = {
-            'config-sortable': 'bSortable',
-            'config-sorting': 'aaSorting',
-            'config-visible': 'bVisible'
+            'config-sortable': 'sortable',
+            'config-sorting': 'order',
+            'config-visible': 'visible',
+            'config-searchable': 'searchable'
         };
 
         var template_clear_button = $('<a href="#" class="clear-search">Clear</a>');
@@ -83,7 +84,7 @@ var datatableview = {
                             value = (value === 'true');
                         }
 
-                        if (name == 'aaSorting') {
+                        if (name == 'order') {
                             // This doesn't go in the column_options
                             var sort_info = value.split(',');
                             sort_info[1] = parseInt(sort_info[1]);
@@ -103,12 +104,14 @@ var datatableview = {
                 sorting_options[i] = sorting_options[i].slice(1);
             }
 
+            // fixme: new name for the sAjaxSource parameter is "ajax" but using that sorting does not work in serverSide mode, either way
+            // querystring sent to the server is same (so is the key:value in local storage), I assume there is a bug in datatables.js 1.10.12
             options = $.extend({}, datatableview.defaults, opts, {
-                "aaSorting": sorting_options,
-                "aoColumns": column_options,
+                "order": sorting_options,
+                "columns": column_options,
                 "sAjaxSource": datatable.attr('data-source-url'),
-                "iDisplayLength": datatable.attr('data-page-length'),
-                "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
+                "pageLength": datatable.attr('data-page-length'),
+                "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                     $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
                     var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
                     if (iMax != iTotal) {
