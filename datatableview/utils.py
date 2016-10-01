@@ -22,13 +22,12 @@ DEFAULT_MULTIPLE_SEPARATOR = u" "
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
 OPTION_NAME_MAP = {
-    'start_offset': 'iDisplayStart',
-    'page_length': 'iDisplayLength',
-    'search': 'sSearch',
-    'search_column': 'sSearch_%d',
-    'num_sorting_columns': 'iSortingCols',
-    'sort_column': 'iSortCol_%d',
-    'sort_column_direction': 'sSortDir_%d',
+    'start_offset': 'displayStart',
+    'page_length': 'pageLength',
+    'search': 'search[value]',
+    'search_column': 'columns[%d][search][value]',
+    'sort_column': 'order[%d][column]',
+    'sort_column_direction': 'order[%d][dir]',
 }
 
 # Mapping of Django's supported field types to their more generic type names.

@@ -55,7 +55,8 @@ var datatableview = {
             };
         }
         var options_name_map = {
-            'config-sortable': 'sortable',
+            'name': 'name',
+            'config-sortable': 'orderable',
             'config-sorting': 'order',
             'config-visible': 'visible',
             'config-searchable': 'searchable'
@@ -104,12 +105,10 @@ var datatableview = {
                 sorting_options[i] = sorting_options[i].slice(1);
             }
 
-            // fixme: new name for the sAjaxSource parameter is "ajax" but using that sorting does not work in serverSide mode, either way
-            // querystring sent to the server is same (so is the key:value in local storage), I assume there is a bug in datatables.js 1.10.12
             options = $.extend({}, datatableview.defaults, opts, {
                 "order": sorting_options,
                 "columns": column_options,
-                "sAjaxSource": datatable.attr('data-source-url'),
+                "ajax": datatable.attr('data-source-url'),
                 "pageLength": datatable.attr('data-page-length'),
                 "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                     $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());

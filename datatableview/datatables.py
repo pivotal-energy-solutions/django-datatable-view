@@ -298,27 +298,13 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
         # column indices to check the values of sSortDir_X and bSortable_X
 
-        default_ordering = config['ordering']
         ordering = []
         columns_list = list(self.columns.values())
 
-        try:
-            num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
-        except ValueError:
-            num_sorting_columns = 0
-
-        # Default sorting from view or model definition
-        if num_sorting_columns == 0:
-            return default_ordering
-
-        for sort_queue_i in range(num_sorting_columns):
+        for sort_queue_i in range(len(columns_list)):
             try:
                 column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
             except ValueError:
-                continue
-
-            # Reject out-of-range sort requests
-            if column_index >= len(columns_list):
                 continue
 
             column = columns_list[column_index]
@@ -329,7 +315,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
 
-            sort_modifier = None
+            # sort_modifier = None
             if sort_direction == 'asc':
                 sort_modifier = ''
             elif sort_direction == 'desc':

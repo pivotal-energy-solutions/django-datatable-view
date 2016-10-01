@@ -42,10 +42,10 @@ class DatatableJSONResponseMixin(object):
         datatable.populate_records()
 
         response_data = {
-            'sEcho': self.request.GET.get('sEcho', None),
-            'iTotalRecords': datatable.total_initial_record_count,
-            'iTotalDisplayRecords': datatable.unpaged_record_count,
-            'aaData': [dict(record, **{
+            'draw': self.request.GET.get('draw', None),
+            'recordsFiltered': datatable.total_initial_record_count,
+            'recordsTotal': datatable.unpaged_record_count,
+            'data': [dict(record, **{
                 'DT_RowId': record.pop('pk'),
                 'DT_RowData': record.pop('_extra_data'),
             }) for record in datatable.get_records()],
