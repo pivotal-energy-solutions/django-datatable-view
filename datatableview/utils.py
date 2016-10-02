@@ -22,13 +22,12 @@ DEFAULT_MULTIPLE_SEPARATOR = u" "
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
 OPTION_NAME_MAP = {
-    'start_offset': 'iDisplayStart',
-    'page_length': 'iDisplayLength',
-    'search': 'sSearch',
-    'search_column': 'sSearch_%d',
-    'num_sorting_columns': 'iSortingCols',
-    'sort_column': 'iSortCol_%d',
-    'sort_column_direction': 'sSortDir_%d',
+    'start_offset': 'displayStart',
+    'page_length': 'pageLength',
+    'search': 'search[value]',
+    'search_column': 'columns[%d][search][value]',
+    'sort_column': 'order[%d][column]',
+    'sort_column_direction': 'order[%d][dir]',
 }
 
 # Mapping of Django's supported field types to their more generic type names.
@@ -72,7 +71,12 @@ def resolve_orm_path(model, orm_path):
     if bits[-1] == 'pk':
         field = endpoint_model._meta.pk
     else:
-        field, _, _, _ = endpoint_model._meta.get_field_by_name(bits[-1])
+        # Use the new Model _meta API
+        # https://docs.djangoproject.com/en/1.9/ref/models/meta/
+        if hasattr(endpoint_model._meta, 'get_field_by_name'):
+            field, _, _, _ = endpoint_model._meta.get_field_by_name(bits[-1])
+        else:
+            field = endpoint_model._meta.get_field(bits[-1])
     return field
 
 def get_model_at_related_field(model, attr):
@@ -83,7 +87,13 @@ def get_model_at_related_field(model, attr):
     """
 
     try:
-        field, _, direct, m2m = model._meta.get_field_by_name(attr)
+        # Use the new Model _meta API
+        # https://docs.djangoproject.com/en/1.9/ref/models/meta/
+        if hasattr(model._meta, 'get_field_by_name'):
+            field, _, direct, m2m = model._meta.get_field_by_name(attr)
+        else:
+            field = model._meta.get_field(attr)
+            direct = not field.auto_created
     except FieldDoesNotExist:
         raise
 
@@ -118,7 +128,12 @@ def contains_plural_field(model, fields):
         model = source_model
         bits = orm_path.lstrip('+-').split('__')
         for bit in bits[:-1]:
-            field, _, direct, m2m = model._meta.get_field_by_name(bit)
+            # Use the new Model _meta API
+            # https://docs.djangoproject.com/en/1.9/ref/models/meta/
+            if hasattr(model._meta, 'get_field_by_name'):
+                field, _, direct, m2m = model._meta.get_field_by_name(bit)
+            else:
+                field = model._meta.get_field(bit)
             if isinstance(field, models.ManyToManyField) \
                     or (USE_RELATED_OBJECT and isinstance(field, RelatedObject) and field.field.rel.multiple) \
                     or (not USE_RELATED_OBJECT and isinstance(field, RelatedField) and field.one_to_many):
