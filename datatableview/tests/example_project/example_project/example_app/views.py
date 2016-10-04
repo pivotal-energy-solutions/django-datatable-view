@@ -1180,16 +1180,20 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
             context['datatable'] = SatelliteDatatableView().get_datatable()
             return context
 
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = ['id', 'headline', 'pub_date']
-
     class SatelliteDatatableView(DatatableView):
         \"\"\"
         External view powering the embedded table for ``EmbeddedTableDatatableView``.
         \"\"\"
+        template_name = "blank.html"
         model = Entry
-        datatable_class = MyDatatable
+        class datatable_class(Datatable):
+            class Meta:
+                columns = ['id', 'headline', 'pub_date']
+
+        def get_datatable_kwargs(self):
+            kwargs = super(SatelliteDatatableView, self).get_datatable_kwargs()
+            kwargs['url'] = reverse('satellite')
+            return kwargs
     """
 
 

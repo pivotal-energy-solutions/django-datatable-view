@@ -116,7 +116,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
             'model': self.model or queryset.model,
         })
 
-        # This is provided by default, but if the view is instantiated outside of the request cycle
+        # This is, i.e., request, provided by default, but if the view is instantiated outside of the request cycle
         # (such as for the purposes of embedding that view's datatable elsewhere), the request may
         # not be required, so the user may not have a compelling reason to go through the trouble of
         # putting it on self.
