@@ -288,7 +288,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         # We avoid making changes that the Django ORM can already do for us
         multi_terms = None
 
-        if isinstance(lookup_type, six.text_type):
+        if isinstance(term, six.text_type):
             if lookup_type == "in":
                 in_bits = re.split(r',\s*', term)
                 if len(in_bits) > 1:
