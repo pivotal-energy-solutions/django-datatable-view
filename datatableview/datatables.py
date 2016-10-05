@@ -504,13 +504,13 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if virtual:
             # Have to sort the whole queryset by hand!
             object_list = list(object_list)
-            
+
             def flatten(value):
                 if isinstance(value, (list, tuple)):
                     return flatten(value[0])
                 else:
                     return value
-                
+
             for name in virtual[::-1]:  # stable sorting, top priority sort comes last
                 reverse = False
                 if name[0] in '+-':
