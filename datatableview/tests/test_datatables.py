@@ -18,7 +18,7 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(dt.config['search'], '')
         self.assertEqual(dt.config['start_offset'], 0)
         self.assertEqual(dt.config['page_length'], 25)
-        self.assertEqual(dt.config['ordering'], [])
+        self.assertEqual(dt.config['ordering'], None)
 
     def test_column_names_list_raises_unknown_columns(self):
         class DT(Datatable):
