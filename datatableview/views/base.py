@@ -76,7 +76,6 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         """ Called in place of normal ``get()`` when accessed via AJAX. """
 
         datatable = self.get_datatable()
-        datatable.configure()
         response_data = self.get_json_response_object(datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
@@ -98,12 +97,21 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         kwargs = self.get_datatable_kwargs(**kwargs)
         for meta_opt in opts.__dict__:
             if meta_opt in kwargs:
-                setattr(opts, meta_opt, kwargs.pop(meta_opt))
+                if not (meta_opt == 'ordering' and kwargs['ordering'] is None):
+                    setattr(opts, meta_opt, kwargs.pop(meta_opt))
 
         datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
             'Meta': opts,
         })
-        return datatable_class(**kwargs)
+
+        datatable =  datatable_class(**kwargs)
+        # OK there is some magic going in the line above, this line "self.columns = copy.deepcopy(self.base_columns)" changes _meta.ordering some how
+        # todo: fix later, this is a temporary fix
+        if 'ordering' in opts.__dict__: # restore ordering
+            datatable._meta.ordering = opts.ordering
+
+        datatable.configure()
+        return datatable
 
     def get_datatable_class(self):
         return self.datatable_class
