@@ -14,6 +14,8 @@ from .example_project.example_project.example_app import models
 
 if django.VERSION < (1, 7):
     initial_data_fixture = 'initial_data_legacy.json'
+elif django.VERSION < (1, 10):
+    initial_data_fixture = 'initial_data_17.json'
 else:
     initial_data_fixture = 'initial_data_modern.json'
 
