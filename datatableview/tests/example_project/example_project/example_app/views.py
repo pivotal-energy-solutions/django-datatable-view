@@ -155,6 +155,7 @@ class ConfigureDatatableObject(DemoMixin, DatatableView):
         datatable_class = MyDatatable
     """
 
+
 class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
     """
     ``ValuesDatatable`` is a variant of the standard ``Datatable`` configuration object that
@@ -1017,7 +1018,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
         status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
-            columns = ['id', 'headline', 'status', 'status_display']
+            columns = ['id', 'headline', 'status', 'status_display', 'is_published']
             labels = {
                 'status': "Status Value",
             }
@@ -1027,7 +1028,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
         status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
-            columns = ['id', 'headline', 'status', 'status_display']
+            columns = ['id', 'headline', 'status', 'status_display', 'is_published']
             labels = {
                 'status': "Status Value",
             }

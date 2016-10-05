@@ -28,7 +28,8 @@
         "n_pingbacks": 0,
         "rating": 0,
         "authors": [1],
-        "status": 1
+        "status": 1,
+        "is_published": true
     }},
     { "model": "example_app.Entry", "pk": 2, "fields": {
         "blog": 1,
@@ -40,7 +41,8 @@
         "n_pingbacks": 5,
         "rating": 0,
         "authors": [2],
-        "status": 1
+        "status": 1,
+        "is_published": true
     }},
     { "model": "example_app.Entry", "pk": 3, "fields": {
         "blog": 1,
@@ -52,7 +54,8 @@
         "n_pingbacks": 0,
         "rating": 0,
         "authors": [1, 2],
-        "status": 1
+        "status": 1,
+        "is_published": true
     }},
     { "model": "example_app.Entry", "pk": 4, "fields": {
         "blog": 1,
@@ -64,7 +67,8 @@
         "n_pingbacks": 1017,
         "rating": 0,
         "authors": [1, 2],
-        "status": 0
+        "status": 0,
+        "is_published": false
     }},
     { "model": "example_app.Entry", "pk": 5, "fields": {
         "blog": 1,
@@ -76,7 +80,8 @@
         "n_pingbacks": 0,
         "rating": 0,
         "authors": [1, 2],
-        "status": 0
+        "status": 0,
+        "is_published": false
     }},
     { "model": "example_app.Entry", "pk": 6, "fields": {
         "blog": 2,
@@ -88,6 +93,7 @@
         "n_pingbacks": 0,
         "rating": 0,
         "authors": [1, 2],
-        "status": 1
+        "status": 1,
+        "is_published": true
     }}
 ]

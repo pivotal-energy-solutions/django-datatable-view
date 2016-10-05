@@ -39,6 +39,7 @@ class Entry(models.Model):
         (0, "Draft"),
         (1, "Published"),
     ))
+    is_published = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.headline
