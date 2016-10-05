@@ -508,8 +508,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             def flatten(value):
                 if isinstance(value, (list, tuple)):
                     return flatten(value[0])
-                else:
-                    return value
+                return value
 
             for name in virtual[::-1]:  # stable sorting, top priority sort comes last
                 reverse = False
@@ -517,7 +516,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                     reverse = (name[0] == '-')
                     name = name[1:]
                 column = self.columns[name]
-                object_list.sort(key=lambda o: flatten(column.value(o)), reverse=reverse)
+                object_list.sort(key=lambda o: flatten(column.value(o)[0]), reverse=reverse)
 
         return object_list
 
