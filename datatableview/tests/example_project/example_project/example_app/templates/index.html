@@ -27,11 +27,11 @@
     <h2>Database status</h2>
     {% if db_works %}
         <p class="alert alert-success">
-            Your database tables appear sync'd!  Check out the example pages at your leisure.
+            Your database tables appear {{ migrate_command }}'d!  Check out the example pages at your leisure.
         </p>
     {% else %}
         <p class="alert alert-danger">
-            Make sure you've done a <code>syncdb</code> for the test project!  This view failed to
+            Make sure you've done a <code>{{ migrate_command }}</code> for the test project!  This view failed to
             read from one of the example model tables!
         </p>
         <p>
