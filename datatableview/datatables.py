@@ -316,7 +316,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
 
-            # sort_modifier = None
             if sort_direction == 'asc':
                 sort_modifier = ''
             elif sort_direction == 'desc':
