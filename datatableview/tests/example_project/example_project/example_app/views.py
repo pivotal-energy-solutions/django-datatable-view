@@ -1287,7 +1287,7 @@ class ColReorderDatatableView(DemoMixin, DatatableView):
         class Meta:
             columns = ['headline', 'blog']
 
-    implementation = u""""""
+    implementation = u"""dummy"""  # don't hide the block, overridden in template
 
 
 class MultiFilterDatatableView(DemoMixin, DatatableView):
@@ -1313,7 +1313,7 @@ class MultiFilterDatatableView(DemoMixin, DatatableView):
             columns = ['headline', 'blog']
             footer = True
 
-    implementation = u""""""
+    implementation = u"""dummy"""  # don't hide the block, overridden in template
 
 
 # Template rendering
