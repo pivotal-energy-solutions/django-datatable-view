@@ -261,9 +261,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if config['unsortable_columns'] is None:
             config['unsortable_columns'] = []
 
-        for option in ['search', 'start_offset', 'page_length', 'ordering']:
-            normalizer_f = getattr(self, 'normalize_config_{}'.format(option))
-            config[option] = normalizer_f(config, query_config)
+        config['search'] = self.normalize_config_search(config, query_config)
+        config['start_offset'] = self.normalize_config_start_offset(config, query_config)
+        config['page_length'] = self.normalize_config_page_length(config, query_config)
+        config['ordering'] = self.normalize_config_ordering(config, query_config)
 
         return config
 
