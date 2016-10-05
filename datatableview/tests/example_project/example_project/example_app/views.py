@@ -49,6 +49,11 @@ class IndexView(TemplateView):
             db_works = False
         context['db_works'] = db_works
 
+        migrate_command = 'migrate'
+        if django.VERSION < (1, 7):
+            migrate_command = 'syncdb'
+        context['migrate_command'] = migrate_command
+
         path, working_directory = os.path.split(os.path.abspath('.'))
         context['working_directory'] = working_directory
         context['os_sep'] = sep
