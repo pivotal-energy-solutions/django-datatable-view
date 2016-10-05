@@ -292,8 +292,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             in_bits = re.split(r',\s*', term)
             if len(in_bits) > 1:
                 multi_terms = in_bits
-            # else:
-            #     term = None
+            else:
+                term = None
 
         if lookup_type == "range":
             range_bits = re.split(r'\s*-\s*', term)
@@ -481,11 +481,10 @@ class BooleanColumn(Column):
 
     def prep_search_value(self, term, lookup_type):
         term = term.lower()
-        # this helps filter users with active status by typing active
-        if term == 'true' or term in self.label.lower():
-            return True
+        if term == 'true':
+            term = True
         elif term == 'false':
-            return False
+            term = False
         else:
             return None
         return super(BooleanColumn, self).prep_search_value(term, lookup_type)
