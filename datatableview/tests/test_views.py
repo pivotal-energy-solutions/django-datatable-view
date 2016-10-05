@@ -2,7 +2,7 @@
 
 import json
 
-from django import get_version
+import django
 from django.core.urlresolvers import reverse
 
 import six
@@ -12,7 +12,7 @@ from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
 
 
-if get_version().split('.') < ['1', '7']:
+if django.VERSION < (1, 7):
     initial_data_fixture = 'initial_data_legacy.json'
 else:
     initial_data_fixture = 'initial_data_modern.json'
