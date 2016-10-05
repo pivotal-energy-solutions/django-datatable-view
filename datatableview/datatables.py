@@ -326,8 +326,11 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             ordering.append('%s%s' % (sort_modifier, column.name))
 
-        if not ordering and config['model']:
-            return config['model']._meta.ordering
+        if not ordering:
+            if self._meta.ordering:
+                return self._meta.ordering
+            if config['model'] and config['model']._meta.ordering:
+                return config['model']._meta.ordering
         return ordering
 
     def resolve_virtual_columns(self, *names):
