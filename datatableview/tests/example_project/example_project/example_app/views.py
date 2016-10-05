@@ -4,7 +4,7 @@ from os import sep
 import os.path
 import re
 
-from django import get_version
+import django
 from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -19,7 +19,7 @@ from datatableview import helpers
 from .models import Entry, Blog
 
 
-if get_version().split('.') < ['1', '7']:
+if django.VERSION < (1, 7):
     initial_data_fixture = 'initial_data_legacy.json'
 else:
     initial_data_fixture = 'initial_data_modern.json'
@@ -56,7 +56,7 @@ class IndexView(TemplateView):
         # Versions
         context.update({
             'datatableview_version': '.'.join(map(str, datatableview.__version_info__)),
-            'django_version': get_version(),
+            'django_version': django.get_version(),
             'datatables_version': '1.10.9',
         })
 
