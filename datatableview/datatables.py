@@ -590,7 +590,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             if six.PY2 and isinstance(value, str):  # not unicode
                 value = value.decode('utf-8')
-            data[str(i)] = six.text_type(value)
+            if value is not None:
+                value = six.text_type(value)
+            data[str(i)] = value
         return data
 
     def get_column_value(self, obj, column, **kwargs):
