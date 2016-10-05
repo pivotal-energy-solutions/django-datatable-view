@@ -288,19 +288,20 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         # We avoid making changes that the Django ORM can already do for us
         multi_terms = None
 
-        if lookup_type == "in":
-            in_bits = re.split(r',\s*', term)
-            if len(in_bits) > 1:
-                multi_terms = in_bits
-            else:
-                term = None
+        if isinstance(lookup_type, six.text_type):
+            if lookup_type == "in":
+                in_bits = re.split(r',\s*', term)
+                if len(in_bits) > 1:
+                    multi_terms = in_bits
+                else:
+                    term = None
 
-        if lookup_type == "range":
-            range_bits = re.split(r'\s*-\s*', term)
-            if len(range_bits) == 2:
-                multi_terms = range_bits
-            else:
-                term = None
+            if lookup_type == "range":
+                range_bits = re.split(r'\s*-\s*', term)
+                if len(range_bits) == 2:
+                    multi_terms = range_bits
+                else:
+                    term = None
 
         if multi_terms:
             return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms))
