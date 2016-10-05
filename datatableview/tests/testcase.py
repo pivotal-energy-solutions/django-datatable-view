@@ -1,10 +1,10 @@
 # -*- encoding: utf-8 -*-
 
-from django import get_version
+import django
 from django.test import TestCase
 from django.core.management import call_command
 
-if get_version().split('.') >= ['1', '7']:
+if django.VERSION >= (1, 7):
     from django.test import override_settings
     from django.apps import apps
     initial_data_fixture = 'initial_data_modern'
