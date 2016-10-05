@@ -261,9 +261,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if config['unsortable_columns'] is None:
             config['unsortable_columns'] = []
 
-        for option in ['search', 'start_offset', 'page_length', 'ordering']:
-            normalizer_f = getattr(self, 'normalize_config_{}'.format(option))
-            config[option] = normalizer_f(config, query_config)
+        config['search'] = self.normalize_config_search(config, query_config)
+        config['start_offset'] = self.normalize_config_start_offset(config, query_config)
+        config['page_length'] = self.normalize_config_page_length(config, query_config)
+        config['ordering'] = self.normalize_config_ordering(config, query_config)
 
         return config
 
@@ -302,23 +303,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         ordering = []
         columns_list = list(self.columns.values())
 
-        try:
-            num_sorting_columns = int(query_config.get(OPTION_NAME_MAP['num_sorting_columns'], 0))
-        except ValueError:
-            num_sorting_columns = 0
+        sort_declarations = [k for k in query_config if re.match(r'^order\[\d+\]\[column\]$', k)]
 
         # Default sorting from view or model definition
-        if num_sorting_columns == 0:
+        if len(sort_declarations) == 0:
             return default_ordering
 
-        for sort_queue_i in range(num_sorting_columns):
+        for sort_queue_i in range(len(columns_list)):
             try:
                 column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
             except ValueError:
-                continue
-
-            # Reject out-of-range sort requests
-            if column_index >= len(columns_list):
                 continue
 
             column = columns_list[column_index]
@@ -329,7 +323,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
             sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
 
-            sort_modifier = None
             if sort_direction == 'asc':
                 sort_modifier = ''
             elif sort_direction == 'desc':

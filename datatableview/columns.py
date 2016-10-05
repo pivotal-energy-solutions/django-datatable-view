@@ -15,7 +15,10 @@ from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
-from django.forms.util import flatatt
+try:
+    from django.forms.util import flatatt
+except ImportError:
+    from django.forms.utils import flatatt
 from django.template.defaultfilters import slugify
 try:
     from django.utils.encoding import python_2_unicode_compatible
@@ -208,7 +211,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         ``Column`` instances will have sources of their own and need to return a value per nested
         source.
         """
-        if isinstance(obj, Model):
+        if hasattr(source, "__call__"):
+            value = source(obj)
+        elif isinstance(obj, Model):
             value = reduce(get_attribute_value, [obj] + source.split('__'))
         elif isinstance(obj, dict):  # ValuesQuerySet item
             value = obj[source]
@@ -262,6 +267,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
+        if hasattr(source, "__call__"):
+            return None
         try:
             return resolve_orm_path(model, source)
         except FieldDoesNotExist:
@@ -281,19 +288,20 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         # We avoid making changes that the Django ORM can already do for us
         multi_terms = None
 
-        if lookup_type == "in":
-            in_bits = re.split(r',\s*', term)
-            if len(in_bits) > 1:
-                multi_terms = in_bits
-            else:
-                term = None
+        if isinstance(lookup_type, six.text_type):
+            if lookup_type == "in":
+                in_bits = re.split(r',\s*', term)
+                if len(in_bits) > 1:
+                    multi_terms = in_bits
+                else:
+                    term = None
 
-        if lookup_type == "range":
-            range_bits = re.split(r'\s*-\s*', term)
-            if len(range_bits) == 2:
-                multi_terms = range_bits
-            else:
-                term = None
+            if lookup_type == "range":
+                range_bits = re.split(r'\s*-\s*', term)
+                if len(range_bits) == 2:
+                    multi_terms = range_bits
+                else:
+                    term = None
 
         if multi_terms:
             return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms))
@@ -322,7 +330,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             lookup_types += ('search',)
         return lookup_types
 
-    def search(self, model, term):
+    def search(self, model, term, lookup_types=None):
         """
         Returns the ``Q`` object representing queries to make against this column for the given
         term.
@@ -347,12 +355,17 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             for sub_source in self.expand_source(source):
                 modelfield = resolve_orm_path(model, sub_source)
                 if modelfield.choices:
-                    for db_value, label in modelfield.get_flatchoices():
+                    if hasattr(modelfield, 'get_choices'):
+                        choices = modelfield.get_choices()
+                    else:
+                        choices = modelfield.get_flatchoices()
+                    for db_value, label in choices:
                         if term.lower() in label.lower():
                             k = '%s__exact' % (sub_source,)
                             column_queries.append(Q(**{k: str(db_value)}))
 
-                lookup_types = handler.get_lookup_types()
+                if not lookup_types:
+                    lookup_types = handler.get_lookup_types()
                 for lookup_type in lookup_types:
                     coerced_term = handler.prep_search_value(term, lookup_type)
                     if coerced_term is None:
@@ -473,7 +486,8 @@ class BooleanColumn(Column):
 
     def prep_search_value(self, term, lookup_type):
         term = term.lower()
-        if term == 'true':
+        # Allow column's own label to represent a true value
+        if term == 'true' or term.lower() in self.label.lower():
             term = True
         elif term == 'false':
             term = False

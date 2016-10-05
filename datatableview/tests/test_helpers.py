@@ -3,7 +3,7 @@
 from datetime import datetime
 from functools import partial
 
-from django import get_version
+import django
 
 from datatableview import helpers
 
@@ -12,7 +12,7 @@ import six
 from .testcase import DatatableViewTestCase
 from .test_app.models import ExampleModel, RelatedM2MModel
 
-if get_version().split('.') < ['1', '7']:
+if django.VERSION < (1, 7):
     test_data_fixture = 'test_data_legacy.json'
 else:
     test_data_fixture = 'test_data.json'

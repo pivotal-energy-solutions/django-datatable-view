@@ -4,7 +4,7 @@ from os import sep
 import os.path
 import re
 
-from django import get_version
+import django
 from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -19,7 +19,7 @@ from datatableview import helpers
 from .models import Entry, Blog
 
 
-if get_version().split('.') < ['1', '7']:
+if django.VERSION < (1, 7):
     initial_data_fixture = 'initial_data_legacy.json'
 else:
     initial_data_fixture = 'initial_data_modern.json'
@@ -49,6 +49,11 @@ class IndexView(TemplateView):
             db_works = False
         context['db_works'] = db_works
 
+        migrate_command = 'migrate'
+        if django.VERSION < (1, 7):
+            migrate_command = 'syncdb'
+        context['migrate_command'] = migrate_command
+
         path, working_directory = os.path.split(os.path.abspath('.'))
         context['working_directory'] = working_directory
         context['os_sep'] = sep
@@ -56,7 +61,7 @@ class IndexView(TemplateView):
         # Versions
         context.update({
             'datatableview_version': '.'.join(map(str, datatableview.__version_info__)),
-            'django_version': get_version(),
+            'django_version': django.get_version(),
             'datatables_version': '1.10.9',
         })
 
@@ -149,6 +154,7 @@ class ConfigureDatatableObject(DemoMixin, DatatableView):
         model = Entry
         datatable_class = MyDatatable
     """
+
 
 class ConfigureValuesDatatableObject(DemoMixin, DatatableView):
     """
@@ -853,18 +859,17 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     implementation = u"""
     class MyDatatable(Datatable):
         class Meta:
-            columns = [
-                ("ID", 'id', helpers.link_to_model),
-                ("Blog", 'blog__name', helpers.link_to_model(key=lambda instance: instance.blog)),
-                ("Headline", 'headline', helpers.make_xeditable),
-                ("Body Text", 'body_text', helpers.itemgetter(slice(0, 30))),
-                ("Publication Date", 'pub_date', helpers.format_date('%A, %b %d, %Y')),
-                ("Modified Date", 'mod_date'),
-                ("Age", 'pub_date', helpers.through_filter(timesince)),
-                ("Interaction", 'get_interaction_total', helpers.make_boolean_checkmark),
-                ("Comments", 'n_comments', helpers.format("{0:,}")),
-                ("Pingbacks", 'n_pingbacks', helpers.format("{0:,}")),
-            ]
+            columns = ['id', 'blog_name', 'headline', 'body_text', 'pub_date', 'mod_date', 'age',
+                       'interaction', 'n_comments', 'n_pingbacks']
+            processors = {
+                'id': helpers.link_to_model,
+                'blog_name': helpers.link_to_model(key=lambda obj: obj.blog),
+                'headline': helpers.make_xeditable,
+                'body_text': helpers.itemgetter(slice(0, 30)),
+                'pub_date': helpers.format_date('%A, %b %d, %Y'),
+                'n_comments': helpers.format("{0:,}"),
+                'n_pingbacks': helpers.format("{0:,}"),
+            }
 
     class HelpersReferenceDatatableView(XEditableDatatableView):
         model = Entry
@@ -1013,7 +1018,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
         status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
-            columns = ['id', 'headline', 'status', 'status_display']
+            columns = ['id', 'headline', 'status', 'status_display', 'is_published']
             labels = {
                 'status': "Status Value",
             }
@@ -1023,7 +1028,7 @@ class ChoicesFieldsDatatableView(DemoMixin, DatatableView):
         status_display = columns.TextColumn("Status Display", sources=['get_status_display'])
 
         class Meta:
-            columns = ['id', 'headline', 'status', 'status_display']
+            columns = ['id', 'headline', 'status', 'status_display', 'is_published']
             labels = {
                 'status': "Status Value",
             }
@@ -1181,16 +1186,20 @@ class EmbeddedTableDatatableView(DemoMixin, TemplateView):
             context['datatable'] = SatelliteDatatableView().get_datatable()
             return context
 
-    class MyDatatable(Datatable):
-        class Meta:
-            columns = ['id', 'headline', 'pub_date']
-
     class SatelliteDatatableView(DatatableView):
         \"\"\"
         External view powering the embedded table for ``EmbeddedTableDatatableView``.
         \"\"\"
+        template_name = "blank.html"
         model = Entry
-        datatable_class = MyDatatable
+        class datatable_class(Datatable):
+            class Meta:
+                columns = ['id', 'headline', 'pub_date']
+
+        def get_datatable_kwargs(self):
+            kwargs = super(SatelliteDatatableView, self).get_datatable_kwargs()
+            kwargs['url'] = reverse('satellite')
+            return kwargs
     """
 
 
@@ -1284,7 +1293,7 @@ class ColReorderDatatableView(DemoMixin, DatatableView):
         class Meta:
             columns = ['headline', 'blog']
 
-    implementation = u""""""
+    implementation = u"""dummy"""  # don't hide the block, overridden in template
 
 
 class MultiFilterDatatableView(DemoMixin, DatatableView):
@@ -1310,7 +1319,7 @@ class MultiFilterDatatableView(DemoMixin, DatatableView):
             columns = ['headline', 'blog']
             footer = True
 
-    implementation = u""""""
+    implementation = u"""dummy"""  # don't hide the block, overridden in template
 
 
 # Template rendering

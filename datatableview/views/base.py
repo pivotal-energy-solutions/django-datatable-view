@@ -42,10 +42,10 @@ class DatatableJSONResponseMixin(object):
         datatable.populate_records()
 
         response_data = {
-            'sEcho': self.request.GET.get('sEcho', None),
-            'iTotalRecords': datatable.total_initial_record_count,
-            'iTotalDisplayRecords': datatable.unpaged_record_count,
-            'aaData': [dict(record, **{
+            'draw': self.request.GET.get('draw', None),
+            'recordsFiltered': datatable.total_initial_record_count,
+            'recordsTotal': datatable.unpaged_record_count,
+            'data': [dict(record, **{
                 'DT_RowId': record.pop('pk'),
                 'DT_RowData': record.pop('_extra_data'),
             }) for record in datatable.get_records()],
@@ -116,7 +116,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
             'model': self.model or queryset.model,
         })
 
-        # This is provided by default, but if the view is instantiated outside of the request cycle
+        # This is, i.e., request, provided by default, but if the view is instantiated outside of the request cycle
         # (such as for the purposes of embedding that view's datatable elsewhere), the request may
         # not be required, so the user may not have a compelling reason to go through the trouble of
         # putting it on self.

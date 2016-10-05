@@ -2,7 +2,7 @@
 
 import json
 
-from django import get_version
+import django
 from django.core.urlresolvers import reverse
 
 import six
@@ -12,8 +12,10 @@ from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
 
 
-if get_version().split('.') < ['1', '7']:
+if django.VERSION < (1, 7):
     initial_data_fixture = 'initial_data_legacy.json'
+elif django.VERSION < (1, 10):
+    initial_data_fixture = 'initial_data_17.json'
 else:
     initial_data_fixture = 'initial_data_modern.json'
 
@@ -105,11 +107,11 @@ class ViewsTests(DatatableViewTestCase):
         self.assertIn('demo3_datatable', response.context)
 
         demo1_obj = self.get_json_response(str(url) + "?datatable=demo1")
-        self.assertEqual(len(demo1_obj['aaData'][0]), 2 + 2)  # 2 built-in DT items
+        self.assertEqual(len(demo1_obj['data'][0]), 2 + 2)  # 2 built-in DT items
         demo2_obj = self.get_json_response(str(url) + "?datatable=demo2")
-        self.assertEqual(len(demo2_obj['aaData'][0]), 1 + 2)  # 2 built-in DT items
+        self.assertEqual(len(demo2_obj['data'][0]), 1 + 2)  # 2 built-in DT items
         demo3_obj = self.get_json_response(str(url) + "?datatable=demo3")
-        self.assertEqual(len(demo3_obj['aaData'][0]), 3 + 2)  # 2 built-in DT items
+        self.assertEqual(len(demo3_obj['data'][0]), 3 + 2)  # 2 built-in DT items
 
     def test_embedded_table_datatable_view(self):
         view = views.SatelliteDatatableView()
