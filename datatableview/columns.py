@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from django import get_version
+import django
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.db.models.fields import FieldDoesNotExist
@@ -475,7 +475,7 @@ class DateTimeColumn(DateColumn):
     lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
 
 
-if get_version().split('.') >= ['1', '6']:
+if django.VERSION >= (1, 6):
     DateTimeColumn.lookup_types += ('hour', 'minute', 'second')
 
 
