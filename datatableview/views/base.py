@@ -8,7 +8,7 @@ from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
 
-from ..datatables import Datatable, DatatableOptions
+from ..datatables import Datatable
 
 log = logging.getLogger(__name__)
 
