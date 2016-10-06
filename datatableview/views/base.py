@@ -129,7 +129,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         settings = ('columns', 'exclude', 'ordering', 'start_offset', 'page_length', 'search',
                     'search_fields', 'unsortable_columns', 'hidden_columns', 'footer',
                     'structure_template', 'result_counter_id')
-        
+
         for k in settings:
             v = getattr(self, k, None)
             if v is not None:  # MultipleObjectMixin or others might have default attr as None
