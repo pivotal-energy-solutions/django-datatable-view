@@ -297,6 +297,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def normalize_config_ordering(self, config, query_config):
         default_ordering = config['ordering']
+        if default_ordering is None and config['model']:
+            default_ordering = config['model']._meta.ordering
 
         sort_declarations = [k for k in query_config if re.match(r'^order\[\d+\]\[column\]$', k)]
 
