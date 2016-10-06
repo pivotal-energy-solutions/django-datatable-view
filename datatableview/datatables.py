@@ -296,9 +296,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return page_length
 
     def normalize_config_ordering(self, config, query_config):
-        # For "n" columns (iSortingCols), the queried values iSortCol_0..iSortCol_n are used as
-        # column indices to check the values of sSortDir_X and bSortable_X
-
         default_ordering = config['ordering']
         ordering = []
         columns_list = list(self.columns.values())
