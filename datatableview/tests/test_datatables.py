@@ -591,6 +591,35 @@ class DatatableTests(DatatableViewTestCase):
         dt.populate_records()
         self.assertEquals(list(dt._records), [])
 
+    def test_search_term_boolean(self):
+        obj1 = models.ExampleModel.objects.create(name="test name 1", value=True)
+        obj2 = models.ExampleModel.objects.create(name="test name 2", value=True)
+        obj3 = models.ExampleModel.objects.create(name="test name 12", value=False)
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            senior = columns.BooleanColumn('Senior:', 'value')
+            class Meta:
+                model = models.ExampleModel
+                columns = ['name', 'senior']
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'True'})
+        dt.populate_records()
+        self.assertEquals(len(list(dt._records)), 2)
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'false'})
+        dt.populate_records()
+        self.assertEquals(len(list(dt._records)), 1)
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'SENIOR'})
+        dt.populate_records()
+        self.assertEquals(len(list(dt._records)), 2)
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'menior'})
+        dt.populate_records()
+        self.assertEquals(len(list(dt._records)), 0)
+
+
     def test_search_multiple_terms_use_AND(self):
         obj1 = models.ExampleModel.objects.create(name="test name 1")
         obj2 = models.ExampleModel.objects.create(name="test name 2")
