@@ -5,7 +5,7 @@ from .testcase import DatatableViewTestCase
 from .test_app import models
 from ..exceptions import ColumnError
 from ..datatables import Datatable, ValuesDatatable
-from ..views import DatatableJSONResponseMixin
+from ..views import DatatableJSONResponseMixin, DatatableView
 from .. import columns
 
 class DatatableTests(DatatableViewTestCase):
@@ -203,6 +203,16 @@ class DatatableTests(DatatableViewTestCase):
         dt.populate_records()
         self.assertEqual(dt.get_ordering_splits(), (['name'], []))
         self.assertEqual(list(dt._records), [obj2, obj1])
+
+
+        # this is to keep DatatableView class from overriding the Meta ordering in Datatable
+        class DTV(DatatableView):
+            datatable_class = DT
+            model = models.ExampleModel
+
+        dtv = DTV().get_datatable(url='/')
+        self.assertIn('<th data-name="name" data-config-sortable="true" data-config-sorting="0,0,asc" data-config-visible="true">Name</th>', dtv.__str__())
+
 
         class DT(Datatable):
             name = columns.TextColumn("Name", sources=['name'])
