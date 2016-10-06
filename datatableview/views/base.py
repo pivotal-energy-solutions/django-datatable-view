@@ -131,8 +131,9 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
                     'structure_template', 'result_counter_id')
         
         for k in settings:
-            if hasattr(self, k):
-                kwargs[k] = getattr(self, k)
+            v = getattr(self, k, None)
+            if v is not None:  # MultipleObjectMixin or others might have default attr as None
+                kwargs[k] = v
         return kwargs
 
 
