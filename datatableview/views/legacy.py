@@ -5,8 +5,6 @@ from collections import namedtuple
 
 from django.views.generic.list import ListView
 
-import six
-
 from .base import DatatableMixin
 from ..datatables import Datatable, LegacyDatatable
 

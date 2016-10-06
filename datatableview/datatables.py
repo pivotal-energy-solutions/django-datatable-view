@@ -9,8 +9,6 @@ try:
 except ImportError:
     pass
 
-from django.db import models
-from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
 try:

@@ -1,8 +1,6 @@
 # -*- encoding: utf-8 -*-
 
 import json
-import re
-import operator
 import logging
 
 from ..forms import XEditableUpdateForm
