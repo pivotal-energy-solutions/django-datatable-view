@@ -297,14 +297,15 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def normalize_config_ordering(self, config, query_config):
         default_ordering = config['ordering']
-        ordering = []
-        columns_list = list(self.columns.values())
 
         sort_declarations = [k for k in query_config if re.match(r'^order\[\d+\]\[column\]$', k)]
 
         # Default sorting from view or model definition
         if len(sort_declarations) == 0:
             return default_ordering
+
+        ordering = []
+        columns_list = list(self.columns.values())
 
         for sort_queue_i in range(len(columns_list)):
             try:
