@@ -110,6 +110,32 @@ def link_to_model(instance, text=None, *args, **kwargs):
     return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
+def link_to_related_model(instance, text=None, *args, **kwargs):
+    """
+    Returns HTML in the form::
+
+        <a href="{{ instance.related_obj.get_absolute_url }}">{{ text }}</a>
+
+    If ``text`` is provided and isn't empty, it will be used as the hyperlinked text.
+
+    If ``text`` isn't available, then ``kwargs['rich_value']`` will be consulted instead.
+
+    Failing those checks, the helper will fall back to simply using ``unicode(instance.related_obj)`` as the
+    link text.
+
+    Examples::
+
+        # Generate a simple href tag for instance.related_obj.get_absolute_url()
+        name = columns.TextColumn("Parent", sources=['parent'],
+                                          processor=link_to_related_model)
+    """
+    field_name = kwargs.get('field_name')
+    related_obj = getattr(instance, field_name)
+    if not text:
+        text = kwargs.get('rich_value') or six.text_type(related_obj)
+    return u"""<a href="{0}">{1}</a>""".format(related_obj.get_absolute_url(), text)
+
+
 @keyed_helper
 def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;", *args, **kwargs):
     """
