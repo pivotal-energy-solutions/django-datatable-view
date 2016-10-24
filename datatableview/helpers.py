@@ -22,7 +22,7 @@ import six
 
 from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES
 
-if get_version().split('.') >= ['1', '5']:
+if [int(v) for v in get_version().split('.')[0:2]] >= [1, 5]:
     from django.utils.timezone import localtime
 else:
     localtime = None
