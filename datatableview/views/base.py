@@ -7,6 +7,7 @@ from django.views.generic import ListView, TemplateView
 from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 
 from ..datatables import Datatable, DatatableOptions
 
@@ -59,7 +60,9 @@ class DatatableJSONResponseMixin(object):
         if settings.DEBUG:
             indent = 4
 
-        return json.dumps(response_data, indent=indent)
+        # Serialize to JSON with Django's encoder: Adds date/time, decimal,
+        # and UUID support.
+        return json.dumps(response_data, indent=indent, cls=DjangoJSONEncoder)
 
 
 class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
@@ -270,5 +273,3 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
 
 class MultipleDatatableView(MultipleDatatableMixin, TemplateView):
     pass
-
-
