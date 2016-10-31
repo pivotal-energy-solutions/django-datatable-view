@@ -421,7 +421,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField]
+    handles_field_classes = [models.CharField, models.TextField, models.FileField, models.UUIDField]
     lookup_types = ('icontains', 'in')
 
 
