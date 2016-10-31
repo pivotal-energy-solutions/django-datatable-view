@@ -421,7 +421,14 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField, models.UUIDField]
+    handles_field_classes = [models.CharField, models.TextField, models.FileField]
+
+    # Add UUIDField if present in this version of Django
+    try:
+        handles_field_classes.append(models.UUIDField)
+    except AttributeError:
+        pass
+
     lookup_types = ('icontains', 'in')
 
 
