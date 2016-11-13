@@ -46,3 +46,31 @@ class XEditableUpdateForm(forms.Form):
         if field_name not in field_names:
             raise ValidationError("%r is not a valid field." % field_name)
         return field_name
+
+
+class SelectizeWidget(forms.TextInput):
+    class Media:
+        css = {
+            'all': ('selectize/selectize.css',)
+        }
+        js = ('selectize/selectize.js', 'selectize/initialize.js',)
+
+
+class SelectizeUpdateForm(XEditableUpdateForm):
+    """
+    It extends from XEditableUpdateForm, thus it use the same structure to post on this form:
+    pk: id of the current object you want to edit
+    name: the name of the field you are editing
+    value: the new value of the field_name
+    Example: {value: 2, name: "blog", pk:7},
+    Will override the object "7", with the new "value" in the field "name"
+    
+    It also adds media to easily render js/css files on template
+    """
+    name = forms.CharField(max_length=100, widget=SelectizeWidget)
+    # We create an init function that accept all optional values (so we can create form without parameters)
+    def __init__(self, model=None, data=[], *args, **kwargs):
+        super(XEditableUpdateForm, self).__init__(model, data, *args, **kwargs)
+        self.model = model
+        if model:
+            self.set_value_field(model, data.get('name'))

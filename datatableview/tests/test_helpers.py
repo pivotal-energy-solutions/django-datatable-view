@@ -248,3 +248,55 @@ class HelpersTests(DatatableViewTestCase):
         </a>
         """
         self.assertHTMLEqual(output, expected_output)
+    
+    def test_make_selectize(self):
+        """ Verifies that make_selectize works. """
+        helper = helpers.make_selectize
+        
+        internals = {'field_name': 'name'}
+        
+        # Verify default kwargs and extra_attrs attributes
+        data = ExampleModel.objects.get(pk=1)
+        kwargs = {
+            'pk': "PK DATA",
+            'url': "URL DATA",
+        }
+        extra_attrs={ 'placeholder': "Headline",}
+        secondary_helper = helper(extra_attrs = extra_attrs, **kwargs)
+        output = secondary_helper(data, **internals)
+        expected_output = """
+        <input data-field_name="name" 
+            data-name="name" 
+            data-pk="PK DATA" 
+            data-selectize="selectize" 
+            data-type="text" 
+            data-url="URL DATA" name="name" 
+            selectize-placeholder="Headline" 
+            value="ExampleModel 1" />
+        """
+        self.assertHTMLEqual(output, expected_output)
+        
+        # Verify foreign key (should render as select)
+        kwargs = {
+            'pk': "PK DATA",
+            'url': "URL DATA",
+        }
+        extra_attrs={'hideSelected': True,}
+        secondary_helper = helper(extra_attrs = extra_attrs, **kwargs)
+        output = secondary_helper(data, **{'field_name': 'related'})
+        expected_output = """
+        <select 
+            data-field_name="related" 
+            data-name="related" 
+            data-pk="PK DATA" 
+            data-selectize="selectize" 
+            data-type="select" 
+            data-url="URL DATA" 
+            name="related" 
+            selectize-hide-selected="True">
+        <option value="" >---------</option>
+        <option value="1" >RelatedModel object</option>
+        </select>
+        """
+        self.assertHTMLEqual(output, expected_output)
+

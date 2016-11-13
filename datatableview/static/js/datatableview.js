@@ -6,7 +6,7 @@ var datatableview = {
         "serverSide": true,
         "paging": true
     },
-
+    
     make_xeditable: function(options) {
         var options = $.extend({}, options);
         if (!options.ajaxOptions) {
@@ -24,11 +24,83 @@ var datatableview = {
                 });
                 return errors.join('\n');
             }
-        };
+        }
         return function(nRow, mData, iDisplayIndex) {
             $('td a[data-xeditable]', nRow).editable(options);
             return nRow;
         }
+    },
+    
+    
+    make_selectize: function(options) {
+        var options = $.extend({}, options);
+        if (!options.ajaxOptions) {
+        	options.ajaxOptions = {}
+        }
+        if (!options.ajaxOptions.headers) {
+        	options.ajaxOptions.headers = {}
+        }
+        /* Set CSRF in order to send post request safely in Django */
+        options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
+        
+        /* We return the function that will selectize the correspondent elements */
+        return function(nRow, mData, iDisplayIndex) {
+        	/* We selectize al the elements inside "td" with a "data-selectize" attribute */
+            $('td [data-selectize]', nRow).each(function(index, el) {
+            	var selectizeOptions = $.extend({}, options);
+            	
+            	// We parse attributes in order to set appropriate options for selectize component
+            	datatableview._selectizeAttributes(el, selectizeOptions);
+            	
+            	// Instead of xeditable, here we have to change our values manually. 
+            	// So we perform an AJAX request when selectize element changes his value.
+            	selectizeOptions['onChange'] = function(value) {
+            		if (value) {
+            			// Get values to send as form data
+            			var serializedData = $(el).serializeArray();
+            			serializedData[0].pk = $(el).attr("data-pk");
+            			// Send values via ajax
+            			$.ajax($.extend({
+            				url: $(el).attr("data-url"),
+            				type: "POST",
+            				data: 	serializedData[0],
+            			}, options.ajaxOptions));
+            		}
+                	
+            	}
+	            $(el).selectize(selectizeOptions);
+
+            });
+
+            return nRow;
+        }
+    },
+    
+    acceptedFunctions: ["load", "score", "render"],
+    /* Set selectize options from html element attributes
+     */
+    _selectizeAttributes: function(el, selectizeOptions) {
+    	var attributes = $(el)[0].attributes;
+    	$.each( attributes, function( index, attr ) {
+    		if (attr.name.startsWith("selectize-")) {
+    			var selectizeKey = attr.name.replace("selectize-", "");
+    			selectizeKey = selectizeKey.replace(/-([a-z])/g, function (m, w) {
+    			    return w.toUpperCase();
+    			});
+    			// Cast string value into respective value
+    			var value = $.isNumeric(attr.value) ? parseInt(attr.value) : attr.value;
+    			value = (value == "True") ? true : value;
+    			value = (value == "False") ? false : value;
+    			
+    			if (datatableview.acceptedFunctions.includes(selectizeKey)) {
+    				value = eval(value);
+    				if (value == undefined) {
+    					console.warn("Function not defined: " + attr.value);
+    				}
+    			}
+    			selectizeOptions[selectizeKey] = value;
+    		}
+        } );
     },
 
     getCookie: function(name) {
