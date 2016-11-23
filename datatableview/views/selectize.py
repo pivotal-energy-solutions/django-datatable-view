@@ -58,7 +58,6 @@ class SelectizeMixin(FormView):
 
     def get_selectize_form(self):
         """ Builds selectize form with get_selectize_form_kwargs args """
-        print "hello"
         return self.form_class(**self.get_selectize_form_kwargs())
 
     def get_update_object(self, form):
