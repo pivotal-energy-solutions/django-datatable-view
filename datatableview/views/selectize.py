@@ -3,12 +3,12 @@
 import json
 import logging
 
-from ..forms import SelectizeUpdateForm
-from .base import DatatableView
-
 from django import get_version
 from django.http import HttpResponse
 from django.views.generic.edit import FormView
+
+from .base import DatatableView
+from ..forms import SelectizeUpdateForm
 
 log = logging.getLogger(__name__)
 
@@ -17,11 +17,12 @@ CAN_UPDATE_FIELDS = get_version().split('.') >= ['1', '5']
 
 class SelectizeMixin(FormView):
     form_class = SelectizeUpdateForm
-    
+
     def get_context_data(self, *args, **kwargs):
         data = super(SelectizeMixin, self).get_context_data(*args, **kwargs)
         data['form'] = self.form_class();
         return data
+
     def post(self, request, *args, **kwargs):
         """
         Builds a dynamic form that targets only the field in question, and saves the modification.

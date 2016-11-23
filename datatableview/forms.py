@@ -51,9 +51,9 @@ class XEditableUpdateForm(forms.Form):
 class SelectizeWidget(forms.TextInput):
     class Media:
         css = {
-            'all': ('selectize/selectize.css',)
+            'all': ('js/selectize/selectize.css',)
         }
-        js = ('selectize/selectize.js', 'selectize/initialize.js',)
+        js = ('js/selectize/selectize.js',)
 
 
 class SelectizeUpdateForm(forms.Form):
