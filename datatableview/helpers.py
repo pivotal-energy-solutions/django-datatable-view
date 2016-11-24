@@ -9,11 +9,12 @@ in any way.
 
 """
 
+import re
 from functools import partial, wraps
 
 from django import get_version
 from django.db.models import Model
-import re
+
 try:
     from django.forms.utils import flatatt
 except ImportError:
@@ -21,7 +22,7 @@ except ImportError:
 
 import six
 
-from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES
+from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES, SELECTIZE_FIELD_TYPES
 
 if [int(v) for v in get_version().split('.')[0:2]] >= [1, 5]:
     from django.utils.timezone import localtime
@@ -65,11 +66,13 @@ def keyed_helper(helper):
                 @wraps(helper)
                 def helper_wrapper(instance, *args, **kwargs):
                     return helper(key(instance), *args, **kwargs)
+
                 return helper_wrapper
             else:
                 # helper was called in place with neither important arg
                 raise ValueError("If called directly, helper function '%s' requires either a model"
                                  " instance or a 'key' keyword argument." % helper.__name__)
+
     wrapper._is_wrapped = True
     return wrapper
 
@@ -160,13 +163,14 @@ def itemgetter(k, ellipsis=False, key=None):
                                          processor=itemgetter(slice(None, 30), ellipsis=True))
 
     """
+
     def helper(instance, *args, **kwargs):
         default_value = kwargs.get('default_value')
         if default_value is None:
             default_value = instance
         value = default_value[k]
         if ellipsis and isinstance(k, slice) and isinstance(value, six.string_types) and \
-                len(default_value) > len(value):
+                        len(default_value) > len(value):
             if ellipsis is True:
                 value += "..."
             else:
@@ -196,6 +200,7 @@ def attrgetter(attr, key=None):
                                      processor=attrgetter('get_address'))
 
     """
+
     def helper(instance, *args, **kwargs):
         value = instance
         for bit in attr.split('.'):
@@ -257,7 +262,7 @@ def format(format_string, cast=lambda x: x):
     the ``cast`` function.
 
     Examples::
-    
+
         # Perform some 0 padding
         item_number = columns.FloatColumn("Item No.", sources=['number'],
                                           processor=format("{:03d}))
@@ -274,6 +279,7 @@ def format(format_string, cast=lambda x: x):
             value = instance
         value = cast(value)
         return format_string.format(value, obj=instance)
+
     return helper
 
 
@@ -394,15 +400,14 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
     """
     Converts the contents of the column into an ``<select>`` or ``<input>`` tag with the using selectize lib.
 
-    Supplying an object (dictionary containing key:value) via ``extra_attrs`` will add a key 
+    Supplying an object (dictionary containing key:value) via ``extra_attrs`` will add a key
     with the respective value into the HTML element.
     You should use any string/int/boolean property defined on https://github.com/selectize/selectize.js/blob/master/docs/usage.md
     However for this purpose the following main (optional) properties was tested:
-    
-        * ``maxItems`` - The max number of items the user can select. 
+        * ``maxItems`` - The max number of items the user can select.
         * ``hideSelected`` - If true, the items that are currently selected will not be shown in the dropdown list of available options.
         * ``closeAfterSelect`` - If true, the dropdown will be closed after a selection is made.
-        * ``placeholder`` - The placeholder of the control (displayed when nothing is selected / typed). 
+        * ``placeholder`` - The placeholder of the control (displayed when nothing is selected / typed).
     """
 
     if instance is None:
@@ -413,17 +418,20 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
     # Immediate finalization, return the structure
     data = kwargs.get('default_value', instance)
     # Compile values to appear as "data-*" attributes on the anchor tag
+    default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder', 'choices']
+    valid_attr_names = set(default_attr_names + list(extra_attrs))
     attrs = {}
     for k, v in kwargs.items():
-        if k.startswith('data_'):
-            k = k[5:]
-        attrs['data-{0}'.format(k)] = v
+        if k in valid_attr_names:
+            if k.startswith('data_'):
+                k = k[5:]
+            attrs['data-{0}'.format(k)] = v
     for k, v in extra_attrs.items():
         # We set properties as underscore string
         underscore = re.sub('([A-Z]+)', r'-\1', k).lower()
-        # we convert value to string (mainly for boolean values) 
+        # we convert value to string (mainly for boolean values)
         attrs["selectize-%s" % underscore] = str(v)
-    
+
     attrs['data-selectize'] = "selectize"
 
     # Assign default values where they are not provided
@@ -464,25 +472,26 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
             if field.choices:
                 field_type = 'select'
             else:
-                field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), 'text')
+                field_type = SELECTIZE_FIELD_TYPES.get(field.get_internal_type(), 'text')
         else:
             field_type = 'text'
         attrs['data-type'] = field_type
 
-    
     if attrs['data-type'] in ('select', 'select2'):
-      
-        # Choice fields will want to display their readable label instead of db data
-        data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
-        
-        # get choices depending of field
         from django.db.models import ForeignKey
-        if isinstance(field, ForeignKey):
-            formfield = field.formfield()
-            selectOptions = formfield.choices
+        if 'data-choices' not in attrs:
+            # Choice fields will want to display their readable label instead of db data
+            data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
+
+            # get choices depending of field
+            if isinstance(field, ForeignKey):
+                formfield = field.formfield()
+                selectOptions = formfield.choices
+            else:
+                selectOptions = field.choices
         else:
-            selectOptions = field.choices
-        
+            selectOptions = attrs['data-choices']
+
         # Render basic select component
         data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
         for key, value in selectOptions:
@@ -492,7 +501,8 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
                     selected = (key == getattr(instance, field_name).pk) and "selected"
             else:
                 selected = (key == getattr(instance, field_name)) and "selected"
-            data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=selected, text=value)
+            data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=selected,
+                                                                                     text=value)
         data += u"""</select>"""
     else:
         # Render input type
@@ -517,6 +527,7 @@ def make_processor(func, arg=None):
     ``func``.  If you need to sent more arguments, consider wrapping your ``func`` in a
     ``functools.partial``, and use that as ``func`` instead.
     """
+
     def helper(instance, *args, **kwargs):
         value = kwargs.get('default_value')
         if value is None:
@@ -526,6 +537,8 @@ def make_processor(func, arg=None):
         else:
             extra_arg = []
         return func(value, *extra_arg)
+
     return helper
+
 
 through_filter = make_processor
