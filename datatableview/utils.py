@@ -66,7 +66,7 @@ XEDITABLE_FIELD_TYPES = {
 SELECTIZE_FIELD_TYPES = XEDITABLE_FIELD_TYPES.copy()
 SELECTIZE_FIELD_TYPES.update({
     'OneToOneField': 'select',
-    'ManyToManyField': 'select',
+    'ManyToManyField': 'm2m',
 })
 
 

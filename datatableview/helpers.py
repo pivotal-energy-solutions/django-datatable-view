@@ -477,7 +477,7 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
             field_type = 'text'
         attrs['data-type'] = field_type
 
-    if attrs['data-type'] == 'select':
+    if attrs['data-type'] in ['select', 'm2m']:
         from django.db.models import ForeignKey
         if 'selectize-load' not in attrs:
             if 'data-choices' not in attrs:
@@ -489,7 +489,6 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
                     selectOptions = field.choices
             else:
                 selectOptions = attrs['data-choices']
-
             # Render basic select component
             data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
             for key, value in selectOptions:
@@ -504,15 +503,24 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
         else:
             # Render basic select component
             data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
-            if isinstance(field, ForeignKey):
-                if getattr(instance, field_name):
-                    key = getattr(instance, field_name).pk
-                    value = getattr(instance, field_name)
+            if attrs['data-type'] == 'm2m':
+                attrs['data-type'] = 'select'
+                for x in kwargs.get('default_value', instance).all():
+                    key = x.pk
+                    value = x
+                    data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key,
+                                                                                             selected=True,
+                                                                                             text=value)
             else:
-                key = getattr(instance, field_name)
-                value = getattr(instance, field_name)
-            data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=True,
-                                                                                     text=value)
+                if isinstance(field, ForeignKey):
+                    if getattr(instance, field_name):
+                        key = getattr(instance, field_name).pk
+                        value = getattr(instance, field_name)
+                else:
+                    key = getattr(instance, field_name)
+                    value = getattr(instance, field_name)
+                data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=True,
+                                                                                         text=value)
         data += u"""</select>"""
     else:
         # Render input type
