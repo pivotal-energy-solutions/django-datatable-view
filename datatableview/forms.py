@@ -48,14 +48,6 @@ class XEditableUpdateForm(forms.Form):
         return field_name
 
 
-class SelectizeWidget(forms.TextInput):
-    class Media:
-        css = {
-            'all': ('js/selectize/selectize.css',)
-        }
-        js = ('js/selectize/selectize.js',)
-
-
 class SelectizeUpdateForm(forms.Form):
     """
     It is similar to XEditableUpdateForm.
@@ -76,7 +68,7 @@ class SelectizeUpdateForm(forms.Form):
     # into failure mode if the field name is bad.
     # Displaying field itself should not be required on the frontend, but x-editable.js sends it
     # along as part of the editing widget.
-    name = forms.CharField(max_length=100, widget=SelectizeWidget)
+    name = forms.CharField(max_length=100)
 
     def __init__(self, model=None, data={}, *args, **kwargs):
         super(SelectizeUpdateForm, self).__init__(data, *args, **kwargs)
