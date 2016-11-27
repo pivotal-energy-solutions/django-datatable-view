@@ -477,31 +477,41 @@ def make_selectize(instance=None, extra_attrs={}, *args, **kwargs):
             field_type = 'text'
         attrs['data-type'] = field_type
 
-    if attrs['data-type'] in ('select', 'select2'):
+    if attrs['data-type'] == 'select':
         from django.db.models import ForeignKey
-        if 'data-choices' not in attrs:
-            # Choice fields will want to display their readable label instead of db data
-            data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
-
-            # get choices depending of field
-            if isinstance(field, ForeignKey):
-                formfield = field.formfield()
-                selectOptions = formfield.choices
+        if 'selectize-load' not in attrs:
+            if 'data-choices' not in attrs:
+                # get choices depending on field
+                if isinstance(field, ForeignKey):
+                    formfield = field.formfield()
+                    selectOptions = formfield.choices
+                else:
+                    selectOptions = field.choices
             else:
-                selectOptions = field.choices
-        else:
-            selectOptions = attrs['data-choices']
+                selectOptions = attrs['data-choices']
 
-        # Render basic select component
-        data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
-        for key, value in selectOptions:
-            selected = ""
+            # Render basic select component
+            data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
+            for key, value in selectOptions:
+                selected = ""
+                if isinstance(field, ForeignKey):
+                    if getattr(instance, field_name):
+                        selected = (key == getattr(instance, field_name).pk) and "selected"
+                else:
+                    selected = (key == getattr(instance, field_name)) and "selected"
+                data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=selected,
+                                                                                         text=value)
+        else:
+            # Render basic select component
+            data = u"""<select {attrs} >""".format(attrs=flatatt(attrs))
             if isinstance(field, ForeignKey):
                 if getattr(instance, field_name):
-                    selected = (key == getattr(instance, field_name).pk) and "selected"
+                    key = getattr(instance, field_name).pk
+                    value = getattr(instance, field_name)
             else:
-                selected = (key == getattr(instance, field_name)) and "selected"
-            data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=selected,
+                key = getattr(instance, field_name)
+                value = getattr(instance, field_name)
+            data += u"""<option value="{value}" {selected}>{text}</option>""".format(value=key, selected=True,
                                                                                      text=value)
         data += u"""</select>"""
     else:
