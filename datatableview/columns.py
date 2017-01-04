@@ -16,9 +16,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 try:
-    from django.forms.util import flatatt
-except ImportError:
     from django.forms.utils import flatatt
+except ImportError:
+    from django.forms.util import flatatt
 from django.template.defaultfilters import slugify
 try:
     from django.utils.encoding import python_2_unicode_compatible
