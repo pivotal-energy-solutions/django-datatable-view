@@ -6,7 +6,6 @@ import re
 
 import django
 from django.views.generic import View, TemplateView
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import timesince
 
@@ -17,6 +16,9 @@ from datatableview.views.legacy import LegacyDatatableView
 from datatableview import helpers
 
 from .models import Entry, Blog
+from datatableview.views.selectize import SelectizeDatatableView
+from django.views.generic.edit import FormView
+from datatableview.forms import SelectizeUpdateForm
 
 
 if django.VERSION < (1, 7):
@@ -115,7 +117,7 @@ class DemoMixin(object):
                 p.append(line)
         description = "\n\n".join(" ".join(p) for p in paragraphs)
         context['description'] = re.sub(r'``(.*?)``', r'<code>\1</code>', description)
-
+        
         return context
 
 
@@ -874,6 +876,131 @@ class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     class HelpersReferenceDatatableView(XEditableDatatableView):
         model = Entry
         datatable_class = MyDatatable
+    """
+
+
+class SelectizeColumnsDatatableView(DemoMixin, SelectizeDatatableView):
+    """
+    <a href="https://selectize.github.io/selectize.js/">Selectize</a> is the hybrid of a textbox and select box. 
+    It's jQuery-based and it's useful for tagging, contact lists, country selectors, and so on.
+
+    To enable selectise columns, inherit your view from ``SelectizeDatatableView`` instead of the
+    plain ``DatatableView``. This Selectize variant has implemented his own callbacks built into it so that the
+    incremental updates can be received, validated, and responded to. Choices lists are generated automatically
+    depending on the field you are using.
+
+    Next, use the ``datatableview.helpers.make_selectize`` function as a callback for the columns
+    that should become interactive.  You can customize the helper's behavior, but by default,
+    ``make_selectize`` will try to pick reasonable defaults for the field type. This function use inputs or
+    select as convenient: ForeignKey becames select, CharField becames input.
+
+    Finally, on your template you will need to include a special initialization to make sure that
+    the frontend understands how to handle what you've set up.  The global Javascript object
+    ``datatableview`` has a member called ``make_selectize`` (named after the helper function you
+    use in the column definitions), which is a factory that returns a callback for the dataTables.js
+    ``fnRowCallback`` hook.  See the implementation snippets below.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
+            processors = {
+                'headline': helpers.make_selectize(extra_attrs={ 'create': True}),
+                'blog': helpers.make_selectize,
+                'status': helpers.make_selectize,
+            }
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
+            processors = {
+                'headline': helpers.make_selectize,
+                'blog': helpers.make_selectize,
+                'status': helpers.make_selectize,
+            }
+
+    class SelectizeColumnsDatatableView(SelectizeDatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    </pre>
+    <pre class="brush: javascript">
+    // Page javascript / Head component
+    {{ form.media }}
+    """
+
+
+class SelectizeWithExtraArgsDatatableView(DemoMixin, SelectizeDatatableView):
+    """
+    You can use selectize with standard options, or add ``extra_attrs`` as a parameter of make_selectize helper function.
+    Allowed attributes are defined here:
+    <a href="https://github.com/selectize/selectize.js/blob/master/docs/usage.md">https://github.com/selectize/selectize.js/blob/master/docs/usage.md</a>
+    
+    ``'maxItems'`` makes the control mono-selection (=1), multi-selection (>1), or with an unlimited number of items (null)
+    
+    If you set ``{'hideSelected': True}`` the items that are currently selected will not be shown in the dropdown list of available options.
+    
+    You are allowed to set several options as ``extra_attrs`` as you see in headline processor:
+    <ul>
+    <li> ``'placeholder': "Headline"``. is displayed when nothing is selected . </li>
+    <li> ``'load': "datatableview.onLoadSelectize"``, invoked when new options should be loaded from the server. It is just the name of a javascript function. </li>
+    <li> ``'render': "datatableview.renderSelectize"``, is a javascript object name that render options as HTML. </li>
+    </ul>
+    
+    All the boolean/string/int options should work. However only just some function/object options are allowed, if you want override it, just change: 
+    ``datatableview.acceptedFunctions: ["load", "score", "render"],``
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
+            processors = {
+                'headline': helpers.make_selectize(extra_attrs={ 'placeholder': "Headline", 'load': "datatableview.onLoadSelectize", 'render': "datatableview.renderSelectize", 'create': False, 'searchField': 'name', 'valueField': 'name', 'labelField': 'name',}),
+                'blog': helpers.make_selectize(extra_attrs={'maxItems': 1}),
+                'status': helpers.make_selectize(extra_attrs={'hideSelected': True}),
+            }
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline', 'blog', 'status', 'pub_date']
+            processors = {
+                'headline': helpers.make_selectize(extra_attrs={ 'placeholder': "Headline", 'load': "datatableview.onLoadSelectize", 'render': "datatableview.renderSelectize", 'create': False, 'searchField': 'name', 'valueField': 'name', 'labelField': 'name',}),
+                'blog': helpers.make_selectize(extra_attrs={'maxItems': 1}),
+                'status': helpers.make_selectize(extra_attrs={'hideSelected': True}),
+            }
+
+    class SelectizeWithExtraArgsDatatableView(SelectizeDatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    </pre>
+    <pre class="brush: javascript">
+    // Page javascript / Head component
+    <script type="text/javascript">
+        // it has to be the same name as load paramater in extra_attrs
+        datatableview.onLoadSelectize = function(query, callback) {
+            if (!query.length) return callback();
+            $.ajax({
+                url: 'https://api.github.com/legacy/repos/search/' + encodeURIComponent(query),
+                type: 'GET',
+                error: function() {
+                    callback();
+                },
+                success: function(res) {
+                    callback(res.repositories.slice(0, 10));
+                }
+            });
+        };
+        // it has to be the same name as render paramater in extra_attrs
+        datatableview.renderSelectize = {
+            option: function(item, escape) {
+                return '<div><span class="title"><span class="name">' + escape(item.name) + '</span></span> ' +
+                    '<b class="description">' + escape(item.description) + '</b></div>';
+            }
+        };
+    </script>
+    // Load selectize files
+    {{ form.media }}
     """
 
 
