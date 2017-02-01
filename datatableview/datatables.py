@@ -394,7 +394,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             i_end = self.config['start_offset'] + self.config['page_length']
             object_list = self._records[i_begin:i_end]
 
-        return object_list
+        return self._records
 
     def get_records(self):
         """
