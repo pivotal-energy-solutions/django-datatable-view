@@ -168,6 +168,29 @@ class DatatableMetaclass(type):
                         label = field.verbose_name
                     column.label = pretty_name(label)
 
+            # Normalize declared 'search_fields' to Column instances
+            if isinstance(opts.search_fields, dict):
+                # Turn a dictionary of {name: ColumnClass} to just a list of classes.
+                # If only the column class reference is given instead of an instance, instantiate
+                # the object first.
+                search_fields = []
+                for name, column in opts.search_fields.items():
+                    if callable(column):
+                        column = column(sources=[name])
+                    search_fields.append(column)
+                opts.search_fields = search_fields
+            elif opts.search_fields is None:
+                opts.search_fields = []
+            else:
+                opts.search_fields = list(opts.search_fields)
+            for i, column in enumerate(opts.search_fields):
+                # Build a column object
+                if isinstance(column, six.string_types):
+                    name = column
+                    field = resolve_orm_path(opts.model, name)
+                    column = get_column_for_modelfield(field)
+                    opts.search_fields[i] = column(sources=[name])
+
             columns.update(declared_columns)
         else:
             columns = declared_columns
