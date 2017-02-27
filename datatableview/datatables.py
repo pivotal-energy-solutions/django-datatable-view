@@ -125,6 +125,7 @@ class DatatableOptions(object):
         self.unsortable_columns = getattr(options, 'unsortable_columns', None)
         self.hidden_columns = getattr(options, 'hidden_columns', None)  # generated, but hidden
 
+        self.request_method = getattr(options, 'request_method', 'GET')
         self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')

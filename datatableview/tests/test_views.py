@@ -21,9 +21,10 @@ else:
 
 
 class FakeRequest(object):
-    GET = {}
-    def __init__(self, url):
+    def __init__(self, url, method='GET'):
         self.path = url
+        self.method = method
+        setattr(self, method, {})
 
 
 class ViewsTests(DatatableViewTestCase):

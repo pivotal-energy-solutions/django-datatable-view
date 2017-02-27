@@ -108,7 +108,13 @@ var datatableview = {
             options = $.extend({}, datatableview.defaults, opts, {
                 "order": sorting_options,
                 "columns": column_options,
-                "ajax": datatable.attr('data-source-url'),
+                "ajax": {
+                    "url": datatable.attr('data-source-url'),
+                    "type": datatable.attr('data-ajax-method') || 'GET',
+                    "beforeSend": function(request){
+                        request.setRequestHeader("X-CSRFToken", datatableview.getCookie('csrftoken'));
+                    }
+                },
                 "pageLength": datatable.attr('data-page-length'),
                 "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                     $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());

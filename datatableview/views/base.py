@@ -15,16 +15,13 @@ log = logging.getLogger(__name__)
 
 
 class DatatableJSONResponseMixin(object):
-    # AJAX response router
-    def get(self, request, *args, **kwargs):
-        """
-        Detects AJAX access and returns appropriate serialized data.  Normal access to the view is
-        unmodified.
-        """
-
-        if request.is_ajax() or request.GET.get('ajax') == 'true':
-            return self.get_ajax(request, *args, **kwargs)
-        return super(DatatableJSONResponseMixin, self).get(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        datatable = self.get_datatable()
+        datatable.configure()
+        if request.method == datatable.config['request_method']:
+            if request.is_ajax() or getattr(request, request.method).get('ajax') == 'true':
+                return self.get_ajax(request, *args, **kwargs)
+        return super(DatatableJSONResponseMixin, self).dispatch(request, *args, **kwargs)
 
     # Response generation
     def get_json_response_object(self, datatable):
@@ -43,7 +40,7 @@ class DatatableJSONResponseMixin(object):
         datatable.populate_records()
 
         response_data = {
-            'draw': self.request.GET.get('draw', None),
+            'draw': getattr(self.request, self.request.method).get('draw', None),
             'recordsFiltered': datatable.total_initial_record_count,
             'recordsTotal': datatable.unpaged_record_count,
             'data': [dict(record, **{
@@ -76,7 +73,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
     # AJAX response handler
     def get_ajax(self, request, *args, **kwargs):
-        """ Called in place of normal ``get()`` when accessed via AJAX. """
+        """ Called when accessed via AJAX on the request method specified by the Datatable. """
 
         datatable = self.get_datatable()
         datatable.configure()
@@ -129,7 +126,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         # putting it on self.
         if hasattr(self, 'request'):
             kwargs['url'] = self.request.path
-            kwargs['query_config'] = self.request.GET
+            kwargs['query_config'] = getattr(self.request, self.request.method)
         else:
             kwargs['query_config'] = {}
 
@@ -192,6 +189,15 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
         return response
 
     # Configuration getters
+    def get_datatable(self):
+        return self.get_active_ajax_datatable()
+
+    def get_active_ajax_datatable(self):
+        """ Returns a single datatable according to the hint GET variable from an AJAX request. """
+        data = getattr(self.request, self.request.method)
+        datatables_dict = self.get_datatables(only=data['datatable'])
+        return list(datatables_dict.values())[0]
+
     def get_datatables(self, only=None):
         """ Returns a dict of the datatables served by this view. """
         if not hasattr(self, '_datatables'):
@@ -253,16 +259,11 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
         # putting it on self.
         if hasattr(self, 'request'):
             kwargs['url'] = self.request.path
-            kwargs['query_config'] = self.request.GET
+            kwargs['query_config'] = getattr(self.request, self.request.method)
         else:
             kwargs['query_config'] = {}
 
         return kwargs
-
-    def get_active_ajax_datatable(self):
-        """ Returns a single datatable according to the hint GET variable from an AJAX request. """
-        datatables_dict = self.get_datatables(only=self.request.GET['datatable'])
-        return list(datatables_dict.values())[0]
 
     # Extra getters
     def get_context_data(self, **kwargs):
