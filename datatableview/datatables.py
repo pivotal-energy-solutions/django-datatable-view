@@ -450,8 +450,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 columns[name] = self.columns[name]
 
         # Global search terms apply to all columns
-        for term in split_terms(self.config['search']):
             # Allow global terms to overwrite identical queries that were single-column
+        for term in set(split_terms(self.config['search'])):
             searches[term] = self.columns.copy()
 
         for term in searches.keys():
