@@ -89,6 +89,9 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
     # Configuration getters
     def get_datatable(self, **kwargs):
         """ Gathers and returns the final :py:class:`Datatable` instance for processing. """
+        if hasattr(self, '_datatable'):
+            return self._datatable
+
         datatable_class = self.get_datatable_class()
         if datatable_class is None:
             class AutoMeta:
@@ -106,7 +109,8 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
             'Meta': opts,
         })
-        return datatable_class(**kwargs)
+        self._datatable = datatable_class(**kwargs)
+        return self._datatable
 
     def get_datatable_class(self):
         return self.datatable_class

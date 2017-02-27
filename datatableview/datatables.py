@@ -243,6 +243,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         valid AJAX GET parameters from client modifications to the data they see.
         """
 
+        if hasattr(self, '_configured'):
+            return
+
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
         self.config = self.normalize_config(self._meta.__dict__, self.query_config)
@@ -266,6 +269,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 self.columns[column_name].sort_priority = i
                 self.columns[column_name].sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.columns[column_name].index = index
+
+        self._configured = True
 
     # Client request configuration mergers
     def normalize_config(self, config, query_config):
