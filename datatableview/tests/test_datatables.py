@@ -692,6 +692,29 @@ class DatatableTests(DatatableViewTestCase):
         dt.populate_records()
         self.assertEquals(list(dt._records), [])
 
+    def test_search_term_queries_extra_fields(self):
+        r1 = models.RelatedModel.objects.create(name="test related 1 one")
+        r2 = models.RelatedModel.objects.create(name="test related 2 two")
+        obj1 = models.ExampleModel.objects.create(name="test name 1", related=r1)
+        obj2 = models.ExampleModel.objects.create(name="test name 2", related=r2)
+
+        queryset = models.ExampleModel.objects.all()
+
+        class DT(Datatable):
+            related = columns.TextColumn("Related", ['related__name'])
+            class Meta:
+                model = models.ExampleModel
+                columns = ['related']
+                search_fields = ['name']
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'test'})
+        dt.populate_records()
+        self.assertEquals(list(dt._records), [obj1, obj2])
+
+        dt = DT(queryset, '/', query_config={'search[value]': 'test name 2'})
+        dt.populate_records()
+        self.assertEquals(list(dt._records), [obj2])
+
 
 class ValuesDatatableTests(DatatableViewTestCase):
     def test_get_object_pk(self):
