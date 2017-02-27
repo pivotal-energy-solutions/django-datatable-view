@@ -914,7 +914,7 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
         class Meta:
             columns = ['id', 'headline']
 
-    class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
+    class PerRequestOptionsDatatableView(DatatableView):
         model = Entry
         datatable_class = MyDatatable
 
@@ -1268,7 +1268,7 @@ class SkippedRecordDatatableView(DemoMixin, DatatableView):
                 raise SkipRecord
             return super(MyDatatable, self).get_record_data(obj)
 
-    class SkippedRecordDatatableView(DemoMixin, DatatableView):
+    class SkippedRecordDatatableView(DatatableView):
         model = Entry
         datatable_class = MyDatatable
     """
