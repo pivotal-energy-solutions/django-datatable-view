@@ -10,6 +10,7 @@ in any way.
 """
 
 from functools import partial, wraps
+import operator
 
 from django import get_version
 from django.db.models import Model
@@ -54,24 +55,33 @@ def keyed_helper(helper):
     """
 
     @wraps(helper)
-    def wrapper(instance=None, key=None, *args, **kwargs):
-        if instance is not None and not key:
+    def wrapper(instance=None, key=None, attr=None, *args, **kwargs):
+        if set((instance, key, attr)) == {None}:
+            # helper was called in place with neither important arg
+            raise ValueError("If called directly, helper function '%s' requires either a model"
+                             " instance, or a 'key' or 'attr' keyword argument." % helper.__name__)
+
+        if instance is not None:
             return helper(instance, *args, **kwargs)
-        elif instance is None:
-            if key:
-                # Helper is used directly in the columns declaration.  A new callable is
-                # returned to take the place of a callback.
-                @wraps(helper)
-                def helper_wrapper(instance, *args, **kwargs):
-                    return helper(key(instance), *args, **kwargs)
-                return helper_wrapper
+
+        if key is None and attr is None:
+            attr = 'self'
+
+        if attr:
+            if attr == 'self':
+                key = lambda obj: obj
             else:
-                # helper was called in place with neither important arg
-                raise ValueError("If called directly, helper function '%s' requires either a model"
-                                 " instance or a 'key' keyword argument." % helper.__name__)
+                key = operator.attrgetter(attr)
+
+        # Helper is used directly in the columns declaration.  A new callable is
+        # returned to take the place of a callback.
+        @wraps(helper)
+        def helper_wrapper(instance, *args, **kwargs):
+            return helper(key(instance), *args, **kwargs)
+        return helper_wrapper
+
     wrapper._is_wrapped = True
     return wrapper
-
 
 @keyed_helper
 def link_to_model(instance, text=None, *args, **kwargs):
