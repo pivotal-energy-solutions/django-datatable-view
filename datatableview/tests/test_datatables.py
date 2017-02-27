@@ -619,7 +619,6 @@ class DatatableTests(DatatableViewTestCase):
         dt.populate_records()
         self.assertEquals(len(list(dt._records)), 0)
 
-
     def test_search_multiple_terms_use_AND(self):
         obj1 = models.ExampleModel.objects.create(name="test name 1")
         obj2 = models.ExampleModel.objects.create(name="test name 2")
