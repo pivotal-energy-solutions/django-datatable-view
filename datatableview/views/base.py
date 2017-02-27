@@ -16,10 +16,10 @@ log = logging.getLogger(__name__)
 
 class DatatableJSONResponseMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        datatable = self.get_datatable()
-        datatable.configure()
-        if request.method == datatable.config['request_method']:
-            if request.is_ajax() or getattr(request, request.method).get('ajax') == 'true':
+        if request.is_ajax() or getattr(request, request.method).get('ajax') == 'true':
+            datatable = self.get_datatable()
+            datatable.configure()
+            if request.method == datatable.config['request_method']:
                 return self.get_ajax(request, *args, **kwargs)
         return super(DatatableJSONResponseMixin, self).dispatch(request, *args, **kwargs)
 
@@ -75,9 +75,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
     def get_ajax(self, request, *args, **kwargs):
         """ Called when accessed via AJAX on the request method specified by the Datatable. """
 
-        datatable = self.get_datatable()
-        datatable.configure()
-        response_data = self.get_json_response_object(datatable)
+        response_data = self.get_json_response_object(self._datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
 
@@ -180,9 +178,7 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
     def get_ajax(self, request, *args, **kwargs):
         """ Called in place of normal ``get()`` when accessed via AJAX. """
 
-        datatable = self.get_active_ajax_datatable()
-        datatable.configure()
-        response_data = self.get_json_response_object(datatable)
+        response_data = self.get_json_response_object(self._datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
                                 content_type="application/json")
 
@@ -190,7 +186,10 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
 
     # Configuration getters
     def get_datatable(self):
-        return self.get_active_ajax_datatable()
+        if hasattr(self, '_datatable'):
+            return self._datatable
+        self._datatable = self.get_active_ajax_datatable()
+        return self._datatable
 
     def get_active_ajax_datatable(self):
         """ Returns a single datatable according to the hint GET variable from an AJAX request. """
