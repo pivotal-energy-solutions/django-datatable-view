@@ -394,6 +394,7 @@ class DatatableTests(DatatableViewTestCase):
                 return {'custom': 'data'}
 
         class FakeRequest(object):
+            method = 'GET'
             GET = {'sEcho': 0}
 
         dt = DT(queryset, '/')
