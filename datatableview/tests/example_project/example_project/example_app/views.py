@@ -926,6 +926,33 @@ class PerRequestOptionsDatatableView(DemoMixin, DatatableView):
     """
 
 
+class RequestMethodDatatableView(DemoMixin, DatatableView):
+    """
+    Use the ``Meta.request_method`` option to change the ajax request type from ``GET`` to ``POST``.
+    The view will adjust accordingly when responding to ajax queries.
+
+    INFO:
+    When using POST, Django's CSRF token is read from the cookie and sent as a header.  If you get
+    unexpected HTTP 403 errors, confirm that the cookie is correctly set by using Django's
+    ``@ensure_csrf_cookie`` decorator on the method.
+    """
+    model = Entry
+    class datatable_class(Datatable):
+        class Meta:
+            columns = ['id', 'headline']
+            request_method = 'POST'
+
+    implementation = u"""
+    class MyDatatable(Datatable):
+        class Meta:
+            columns = ['id', 'headline']
+            request_method = 'POST'
+
+    class PerRequestOptionsDatatableView(DatatableView):
+        model = Entry
+        datatable_class = MyDatatable
+    """
+
 class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
     """"""
 
