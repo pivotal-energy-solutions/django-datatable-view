@@ -476,11 +476,15 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for term in set(split_terms(self.config['search'])):
             # NOTE: Allow global terms to overwrite identical queries that were single-column
             searches[term] = self.columns.copy()
+            searches[term].update({None: column for column in self.config['search_fields']})
 
         for term in searches.keys():
             term_queries = []
             for name, column in searches[term].items():
-                search_f = getattr(self, 'search_%s' % (name,), self._search_column)
+                if name is None:  # config.search_fields items
+                    search_f = self._search_column
+                else:
+                    search_f = getattr(self, 'search_%s' % (name,), self._search_column)
                 q = search_f(column, term)
                 if q is not None:
                     term_queries.append(q)
