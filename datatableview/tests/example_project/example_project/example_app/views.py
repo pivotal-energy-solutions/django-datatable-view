@@ -830,6 +830,7 @@ class ColumnsReferenceDatatableView(DemoMixin, DatatableView):
     datatable_class = None
     implementation = u""""""
 
+
 class HelpersReferenceDatatableView(DemoMixin, XEditableDatatableView):
     """
     ``datatableview.helpers`` is a module decimated to functions that can be supplied directly as
@@ -936,13 +937,13 @@ class CustomModelFieldsDatatableView(DemoMixin, DatatableView):
     implementation = u""""""
 
 
-
 class HeadlineColumn(columns.TextColumn):
     model_field_class = None
 
     def search(self, model, term):
         from django.db.models import Q
         return Q(headline__startswith=term)
+
 
 class CustomColumnQueriesDatatableView(DemoMixin, DatatableView):
     """
