@@ -52,6 +52,16 @@ class HelpersTests(DatatableViewTestCase):
         output = secondary_helper(instance, text="Special text")
         self.assertEqual(output, '<a href="#1">Special text</a>')
 
+        # Verify ``attr`` as 'self' is the identity mapping
+        secondary_helper = helper(attr='self')
+        output = secondary_helper(instance)
+        self.assertEqual(output, '<a href="#2">ExampleModel 2</a>')
+
+        # Verify ``attr`` as a getattr shorthand lookup
+        secondary_helper = helper(attr='related')
+        output = secondary_helper(instance)
+        self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
+
     def test_make_boolean_checkmark(self):
         """ Verifies that make_boolean_checkmark works. """
         helper = helpers.make_boolean_checkmark
