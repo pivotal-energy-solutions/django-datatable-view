@@ -8,6 +8,7 @@ from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import escape_uri_path
 
 from ..datatables import Datatable, DatatableOptions
 
@@ -39,8 +40,11 @@ class DatatableJSONResponseMixin(object):
         # 'total_initial_record_count', and 'unpaged_record_count' values.
         datatable.populate_records()
 
+        draw = getattr(self.request, self.request.method).get('draw', None)
+        if draw is not None:
+            draw = escape_uri_path(draw)
         response_data = {
-            'draw': getattr(self.request, self.request.method).get('draw', None),
+            'draw': draw,
             'recordsFiltered': datatable.total_initial_record_count,
             'recordsTotal': datatable.unpaged_record_count,
             'data': [dict(record, **{
