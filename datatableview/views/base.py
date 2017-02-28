@@ -8,9 +8,9 @@ from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.encoding import escape_uri_path
 
 from ..datatables import Datatable, DatatableOptions
+from ..compat import escape_uri_path
 
 log = logging.getLogger(__name__)
 
