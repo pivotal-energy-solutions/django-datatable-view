@@ -422,6 +422,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             i_begin = self.config['start_offset']
             i_end = self.config['start_offset'] + self.config['page_length']
             object_list = self._records[i_begin:i_end]
+        else:
+            object_list = self._records
 
         return object_list
 
