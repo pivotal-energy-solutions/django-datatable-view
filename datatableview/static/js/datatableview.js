@@ -149,7 +149,7 @@ var datatableview = {
             search_input.after(clear_button).after(' ');
             datatable.DataTable(options);
         });
-        return $(initialized_datatables).dataTable();
+        return $$;
     }
 }
 
