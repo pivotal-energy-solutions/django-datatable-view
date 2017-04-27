@@ -62,9 +62,6 @@ var datatableview = {
             'config-searchable': 'searchable'
         };
 
-        var template_clear_button = $('<a href="#" class="clear-search">Clear</a>');
-
-        var initialized_datatables = [];
         $$.each(function(){
             var datatable = $(this);
             var column_options = [];
@@ -131,22 +128,6 @@ var datatableview = {
 
             }
 
-            initialized_datatables.push(initialized_datatable[0]);
-
-            try {
-                initialized_datatable.fnSetFilteringDelay();
-            } catch (e) {
-                console.info("datatable plugin fnSetFilteringDelay not available");
-            }
-
-            var search_input = initialized_datatable.closest('.dataTables_wrapper').find('.dataTables_filter input');
-            var clear_button = template_clear_button.clone().click(function(){
-                $(this).trigger('clear.datatable', [initialized_datatable]);
-                return false;
-            }).bind('clear.datatable', function(){
-                search_input.val('').keyup();
-            });
-            search_input.after(clear_button).after(' ');
             datatable.DataTable(options);
         });
         return $$;
