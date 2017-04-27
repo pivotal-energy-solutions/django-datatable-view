@@ -148,7 +148,6 @@ var datatableview = {
 
             }
 
-            var initialized_datatable = datatable.dataTable(options);
             initialized_datatables.push(initialized_datatable[0]);
 
             try {
@@ -165,6 +164,7 @@ var datatableview = {
                 search_input.val('').keyup();
             });
             search_input.after(clear_button).after(' ');
+            datatable.DataTable(options);
         });
         return $(initialized_datatables).dataTable();
     }
