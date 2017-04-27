@@ -122,23 +122,6 @@ var datatableview = {
                     if (iMax != iTotal) {
                         infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
                     }
-                    // /******************************************************************
-                    //  * ##########       ###       ######         ###
-                    //  * ##########     ###  ##     ###   ##     ###  ##
-                    //  *    ###        ###   ###    ###   ##    ###   ###
-                    //  *    ###        ###   ###    ###   ##    ###   ###
-                    //  *    ###        ###   ###    ###   ##    ###   ###
-                    //  *    ###         ######      ######       ######
-                    //  * ===============================================================
-                    //  * The string at the bottom of the table showing entries being
-                    //  * looked at is always updated, but not always rendered in all
-                    //  * browsers *cough cough* Chrome, Safari.
-                    //  * This makes it so that results string always updates.
-                    //  *****************************************************************/
-                    // var n = oSettings.aanFeatures.i;
-                    // for (var i = 0, iLen = n.length; i < j; i++) {
-                    //     $(n[i]).empty();
-                    // }
                     return infoString;
                 }
             });
