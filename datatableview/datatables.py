@@ -292,6 +292,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         config['start_offset'] = self.normalize_config_start_offset(config, query_config)
         config['page_length'] = self.normalize_config_page_length(config, query_config)
         config['ordering'] = self.normalize_config_ordering(config, query_config)
+        self._ordering_columns = self.ensure_ordering_columns(config['ordering'])
 
         return config
 
@@ -364,6 +365,23 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             return default_ordering
         return ordering
 
+    def ensure_ordering_columns(self, ordering_names):
+        if ordering_names is None:
+            return {}
+
+        # Normalize declared 'ordering' to Column instances
+        ordering_columns = {}
+        for i, name in enumerate(ordering_names):
+            if name[0] in '+-':
+                name = name[1:]
+
+            if name not in self.columns:
+                field = resolve_orm_path(self.model, name)
+                column = get_column_for_modelfield(field)
+                ordering_columns[name] = column(sources=[name])
+
+        return ordering_columns
+
     def resolve_virtual_columns(self, *names):
         """
         Called with ``*args`` from the Meta.columns declaration that don't match the model's known
@@ -392,7 +410,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for i, name in enumerate(self.config['ordering']):
             if name[0] in '+-':
                 name = name[1:]
-            column = self.columns[name]
+            if name in self.columns:
+                column = self.columns[name]
+            else:
+                column = self._ordering_columns[name]
             if not column.get_db_sources(self.model):
                 break
         else:
@@ -522,7 +543,10 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 if sort_direction == '+':
                     sort_direction = ''
                 name = name[1:]
-            column = self.columns[name]
+            if name in self.columns:
+                column = self.columns[name]
+            else:
+                column = self._ordering_columns[name]
             sources = column.get_sort_fields(self.model)
             if sources:
                 fields.extend([(sort_direction + source) for source in sources])
