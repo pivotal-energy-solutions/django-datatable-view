@@ -26,6 +26,10 @@ var datatableview = (function(){
     }
 
     function getOptions(datatable) {
+        /* Reads the options found on the datatable DOM into an object ready to be sent to the
+           actual DataTable() constructor.  Is also responsible for calling the finalizeOptions()
+           hook to process what is found.
+        */
         var columnOptions = [];
         var sortingOptions = [];
 
