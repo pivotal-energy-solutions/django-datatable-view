@@ -62,13 +62,6 @@ var datatableview = (function(){
         },
 
         initialize: function($$, opts) {
-            if (typeof window.console === "undefined" || typeof window.console.log === "undefined") {
-                console = {
-                    log: function(){},
-                    info: function(){}
-                };
-            }
-
             $$.each(function(){
                 var datatable = $(this);
                 var options = datatableview.getOptions(datatable);
