@@ -27,16 +27,14 @@ def python_2_unicode_compatible(klass):
         klass.__str__ = lambda self: self.__unicode__().encode('utf-8')
     return klass
 
-
-USE_LEGACY_FIELD_API = django.VERSION < (1, 9)
-
 def get_field(opts, field_name):
     """ Retrieves a field instance from a model opts object according to Django version. """
-    if USE_LEGACY_FIELD_API:
-        field, _, direct, _ = opts.get_field_by_name(field_name)
-    else:
+    if hasattr(opts, 'get_field'):
         field = opts.get_field(field_name)
         direct = not field.auto_created
+    else:
+        # Legacy API (removed in Django 1.10)
+        field, _, direct, _ = opts.get_field_by_name(field_name)
     return field, direct
 
 def escape_uri_path(path):
