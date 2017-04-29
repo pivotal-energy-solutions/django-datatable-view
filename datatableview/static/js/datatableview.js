@@ -19,13 +19,13 @@ var datatableview = (function(){
     function initialize($$, opts) {
         $$.each(function(){
             var datatable = $(this);
-            var options = datatableview.getOptions(datatable);
+            var options = datatableview.getOptions(datatable, opts);
             datatable.DataTable(options);
         });
         return $$;
     }
 
-    function getOptions(datatable) {
+    function getOptions(datatable, opts) {
         /* Reads the options found on the datatable DOM into an object ready to be sent to the
            actual DataTable() constructor.  Is also responsible for calling the finalizeOptions()
            hook to process what is found.
