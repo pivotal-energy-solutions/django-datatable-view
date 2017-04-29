@@ -16,6 +16,22 @@ var datatableview = (function(){
     var checkGlobalConfirmHook = true;
     var autoInitialize = false;
 
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     return {
         auto_initialize: undefined,
         autoInitialize: autoInitialize,  // Legacy name
@@ -29,7 +45,7 @@ var datatableview = (function(){
             if (!options.ajaxOptions.headers) {
                 options.ajaxOptions.headers = {}
             }
-            options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
+            options.ajaxOptions.headers['X-CSRFToken'] = getCookie('csrftoken');
             options.error = function (data) {
                 var response = data.responseJSON;
                 if (response.status == 'error') {
@@ -45,22 +61,6 @@ var datatableview = (function(){
             }
         },
         make_xeditable: makeXEditable,  // Legacy name
-
-        getCookie: function(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie != '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = jQuery.trim(cookies[i]);
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        },
 
         initialize: function($$, opts) {
             $$.each(function(){
@@ -127,7 +127,7 @@ var datatableview = (function(){
                 "url": datatable.attr('data-source-url'),
                 "type": datatable.attr('data-ajax-method') || 'GET',
                 "beforeSend": function(request){
-                    request.setRequestHeader("X-CSRFToken", datatableview.getCookie('csrftoken'));
+                    request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
                 }
             });
 
