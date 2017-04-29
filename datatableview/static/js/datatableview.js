@@ -1,13 +1,24 @@
 /* For datatable view */
 
 var datatableview = (function(){
+    var defaultDataTableOptions = {
+        "serverSide": true,
+        "paging": true
+    }
+    var optionsNameMap = {
+        'name': 'name',
+        'config-sortable': 'orderable',
+        'config-sorting': 'order',
+        'config-visible': 'visible',
+        'config-searchable': 'searchable'
+    };
+
+    var autoInitialize = false;
+
     return {
         auto_initialize: undefined,
-        autoInitialize: false,  // Legacy name
-        defaults: {
-            "serverSide": true,
-            "paging": true
-        },
+        autoInitialize: autoInitialize,  // Legacy name
+        defaults: defaultDataTableOptions,
 
         makeXEditable: function(options) {
             var options = $.extend({}, options);
@@ -57,13 +68,6 @@ var datatableview = (function(){
                     info: function(){}
                 };
             }
-            var optionsNameMap = {
-                'name': 'name',
-                'config-sortable': 'orderable',
-                'config-sorting': 'order',
-                'config-visible': 'visible',
-                'config-searchable': 'searchable'
-            };
 
             $$.each(function(){
                 var datatable = $(this);
