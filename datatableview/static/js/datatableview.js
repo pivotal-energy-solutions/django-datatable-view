@@ -13,6 +13,7 @@ var datatableview = (function(){
         'config-searchable': 'searchable'
     };
 
+    var checkGlobalConfirmHook = true;
     var autoInitialize = false;
 
     return {
@@ -129,12 +130,18 @@ var datatableview = (function(){
                     request.setRequestHeader("X-CSRFToken", datatableview.getCookie('csrftoken'));
                 }
             });
-            try {
-                options = confirm_datatable_options(options, datatable);
-            } catch (e) {
 
-            }
+            options = datatableview.finalizeOptions(datatable, options);
             return options;
+        },
+
+        finalizeOptions: function(datatable, options) {
+            /* Hook for processing all options before sent to actual DataTable() constructor. */
+
+            // Legacy behavior, will be removed in favor of user providing their own finalizeOptions()
+            if (datatableview.checkGlobalConfirmHook) {
+                window.confirm_datatable_options(options, datatable);
+            }
         }
     }
 })();
