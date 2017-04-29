@@ -150,11 +150,11 @@ var datatableview = (function(){
         defaults: defaultDataTableOptions,
 
         // functions
-        initialize: initialize
+        initialize: initialize,
         getOptions: getOptions,
         finalizeOptions: finalizeOptions,
         makeXEditable: makeXEditable,
-        make_xeditable: makeXEditable,  // Legacy name
+        make_xeditable: makeXEditable  // Legacy name
     }
     return api;
 })();
