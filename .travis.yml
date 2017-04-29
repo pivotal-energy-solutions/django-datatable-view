@@ -9,7 +9,7 @@ env:
   # - DJANGO=1.4.22
   # - DJANGO=1.5.12
   # - DJANGO=1.6.11
-  - DJANGO=1.7.11
+  # - DJANGO=1.7.11
   - DJANGO=1.8.18
   - DJANGO=1.9.13
   - DJANGO=1.10.7
