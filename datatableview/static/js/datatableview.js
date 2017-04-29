@@ -1,138 +1,140 @@
 /* For datatable view */
 
-var datatableview = {
-    auto_initialize: false,
-    defaults: {
-        "serverSide": true,
-        "paging": true
-    },
+var datatableview = (function(){
+    return {
+        auto_initialize: false,
+        defaults: {
+            "serverSide": true,
+            "paging": true
+        },
 
-    make_xeditable: function(options) {
-        var options = $.extend({}, options);
-        if (!options.ajaxOptions) {
-            options.ajaxOptions = {}
-        }
-        if (!options.ajaxOptions.headers) {
-            options.ajaxOptions.headers = {}
-        }
-        options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
-        options.error = function (data) {
-            var response = data.responseJSON;
-            if (response.status == 'error') {
-                var errors = $.map(response.form_errors, function(errors, field){
+        make_xeditable: function(options) {
+            var options = $.extend({}, options);
+            if (!options.ajaxOptions) {
+                options.ajaxOptions = {}
+            }
+            if (!options.ajaxOptions.headers) {
+                options.ajaxOptions.headers = {}
+            }
+            options.ajaxOptions.headers['X-CSRFToken'] = datatableview.getCookie('csrftoken');
+            options.error = function (data) {
+                var response = data.responseJSON;
+                if (response.status == 'error') {
+                    var errors = $.map(response.form_errors, function(errors, field){
+                        return errors.join('\n');
+                    });
                     return errors.join('\n');
-                });
-                return errors.join('\n');
-            }
-        };
-        return function(nRow, mData, iDisplayIndex) {
-            $('td a[data-xeditable]', nRow).editable(options);
-            return nRow;
-        }
-    },
-
-    getCookie: function(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
                 }
-            }
-        }
-        return cookieValue;
-    },
-
-    initialize: function($$, opts) {
-        if (typeof window.console === "undefined" || typeof window.console.log === "undefined") {
-            console = {
-                log: function(){},
-                info: function(){}
             };
+            return function(nRow, mData, iDisplayIndex) {
+                $('td a[data-xeditable]', nRow).editable(options);
+                return nRow;
+            }
+        },
+
+        getCookie: function(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        },
+
+        initialize: function($$, opts) {
+            if (typeof window.console === "undefined" || typeof window.console.log === "undefined") {
+                console = {
+                    log: function(){},
+                    info: function(){}
+                };
+            }
+            var options_name_map = {
+                'name': 'name',
+                'config-sortable': 'orderable',
+                'config-sorting': 'order',
+                'config-visible': 'visible',
+                'config-searchable': 'searchable'
+            };
+
+            $$.each(function(){
+                var datatable = $(this);
+                var column_options = [];
+                var sorting_options = [];
+
+                datatable.find('thead th').each(function(){
+                    var header = $(this);
+                    var options = {};
+                    for (var i = 0; i < header[0].attributes.length; i++) {
+                        var attr = header[0].attributes[i];
+                        if (attr.specified && /^data-/.test(attr.name)) {
+                            var name = attr.name.replace(/^data-/, '');
+                            var value = attr.value;
+
+                            // Typecasting out of string
+                            name = options_name_map[name];
+                            if (/^b/.test(name)) {
+                                value = (value === 'true');
+                            }
+
+                            if (name == 'order') {
+                                // This doesn't go in the column_options
+                                var sort_info = value.split(',');
+                                sort_info[1] = parseInt(sort_info[1]);
+                                sorting_options.push(sort_info);
+                                continue;
+                            }
+
+                            options[name] = value;
+                        }
+                    }
+                    column_options.push(options);
+                });
+
+                // Arrange the sorting column requests and strip the priority information
+                sorting_options.sort(function(a, b){ return a[0] - b[0] });
+                for (var i = 0; i < sorting_options.length; i++) {
+                    sorting_options[i] = sorting_options[i].slice(1);
+                }
+
+                options = $.extend({}, datatableview.defaults, opts, {
+                    "order": sorting_options,
+                    "columns": column_options,
+                    "pageLength": datatable.attr('data-page-length'),
+                    "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
+                        $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
+                        var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
+                        if (iMax != iTotal) {
+                            infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
+                        }
+                        return infoString;
+                    }
+                });
+                options.ajax = $.extend(options.ajax, {
+                    "url": datatable.attr('data-source-url'),
+                    "type": datatable.attr('data-ajax-method') || 'GET',
+                    "beforeSend": function(request){
+                        request.setRequestHeader("X-CSRFToken", datatableview.getCookie('csrftoken'));
+                    }
+                });
+                try {
+                    options = confirm_datatable_options(options, datatable);
+                } catch (e) {
+
+                }
+
+                datatable.DataTable(options);
+            });
+            return $$;
         }
-        var options_name_map = {
-            'name': 'name',
-            'config-sortable': 'orderable',
-            'config-sorting': 'order',
-            'config-visible': 'visible',
-            'config-searchable': 'searchable'
-        };
-
-        $$.each(function(){
-            var datatable = $(this);
-            var column_options = [];
-            var sorting_options = [];
-
-            datatable.find('thead th').each(function(){
-                var header = $(this);
-                var options = {};
-                for (var i = 0; i < header[0].attributes.length; i++) {
-                    var attr = header[0].attributes[i];
-                    if (attr.specified && /^data-/.test(attr.name)) {
-                        var name = attr.name.replace(/^data-/, '');
-                        var value = attr.value;
-
-                        // Typecasting out of string
-                        name = options_name_map[name];
-                        if (/^b/.test(name)) {
-                            value = (value === 'true');
-                        }
-
-                        if (name == 'order') {
-                            // This doesn't go in the column_options
-                            var sort_info = value.split(',');
-                            sort_info[1] = parseInt(sort_info[1]);
-                            sorting_options.push(sort_info);
-                            continue;
-                        }
-
-                        options[name] = value;
-                    }
-                }
-                column_options.push(options);
-            });
-
-            // Arrange the sorting column requests and strip the priority information
-            sorting_options.sort(function(a, b){ return a[0] - b[0] });
-            for (var i = 0; i < sorting_options.length; i++) {
-                sorting_options[i] = sorting_options[i].slice(1);
-            }
-
-            options = $.extend({}, datatableview.defaults, opts, {
-                "order": sorting_options,
-                "columns": column_options,
-                "pageLength": datatable.attr('data-page-length'),
-                "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
-                    $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
-                    var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
-                    if (iMax != iTotal) {
-                        infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
-                    }
-                    return infoString;
-                }
-            });
-            options.ajax = $.extend(options.ajax, {
-                "url": datatable.attr('data-source-url'),
-                "type": datatable.attr('data-ajax-method') || 'GET',
-                "beforeSend": function(request){
-                    request.setRequestHeader("X-CSRFToken", datatableview.getCookie('csrftoken'));
-                }
-            });
-            try {
-                options = confirm_datatable_options(options, datatable);
-            } catch (e) {
-
-            }
-
-            datatable.DataTable(options);
-        });
-        return $$;
     }
-}
+})();
 
 $(function(){
     if (datatableview.auto_initialize) {
