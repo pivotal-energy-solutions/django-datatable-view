@@ -10,9 +10,9 @@ env:
   # - DJANGO=1.5.12
   # - DJANGO=1.6.11
   - DJANGO=1.7.11
-  - DJANGO=1.8.15
-  - DJANGO=1.9.10
-  - DJANGO=1.10.2
+  - DJANGO=1.8.18
+  - DJANGO=1.9.13
+  - DJANGO=1.10.7
   - DJANGO=1.11
 install:
   - pip install -q Django==$DJANGO --use-mirrors
