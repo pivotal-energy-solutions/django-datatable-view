@@ -2,13 +2,14 @@
 
 var datatableview = (function(){
     return {
-        auto_initialize: false,
+        auto_initialize: undefined,
+        autoInitialize: false,  // Legacy name
         defaults: {
             "serverSide": true,
             "paging": true
         },
 
-        make_xeditable: function(options) {
+        makeXEditable: function(options) {
             var options = $.extend({}, options);
             if (!options.ajaxOptions) {
                 options.ajaxOptions = {}
@@ -31,6 +32,7 @@ var datatableview = (function(){
                 return nRow;
             }
         },
+        make_xeditable: makeXEditable,  // Legacy name
 
         getCookie: function(name) {
             var cookieValue = null;
@@ -55,7 +57,7 @@ var datatableview = (function(){
                     info: function(){}
                 };
             }
-            var options_name_map = {
+            var optionsNameMap = {
                 'name': 'name',
                 'config-sortable': 'orderable',
                 'config-sorting': 'order',
@@ -65,8 +67,8 @@ var datatableview = (function(){
 
             $$.each(function(){
                 var datatable = $(this);
-                var column_options = [];
-                var sorting_options = [];
+                var columnOptions = [];
+                var sortingOptions = [];
 
                 datatable.find('thead th').each(function(){
                     var header = $(this);
@@ -78,34 +80,34 @@ var datatableview = (function(){
                             var value = attr.value;
 
                             // Typecasting out of string
-                            name = options_name_map[name];
+                            name = optionsNameMap[name];
                             if (/^b/.test(name)) {
                                 value = (value === 'true');
                             }
 
                             if (name == 'order') {
-                                // This doesn't go in the column_options
+                                // This doesn't go in the columnOptions
                                 var sort_info = value.split(',');
                                 sort_info[1] = parseInt(sort_info[1]);
-                                sorting_options.push(sort_info);
+                                sortingOptions.push(sort_info);
                                 continue;
                             }
 
                             options[name] = value;
                         }
                     }
-                    column_options.push(options);
+                    columnOptions.push(options);
                 });
 
                 // Arrange the sorting column requests and strip the priority information
-                sorting_options.sort(function(a, b){ return a[0] - b[0] });
-                for (var i = 0; i < sorting_options.length; i++) {
-                    sorting_options[i] = sorting_options[i].slice(1);
+                sortingOptions.sort(function(a, b){ return a[0] - b[0] });
+                for (var i = 0; i < sortingOptions.length; i++) {
+                    sortingOptions[i] = sortingOptions[i].slice(1);
                 }
 
                 options = $.extend({}, datatableview.defaults, opts, {
-                    "order": sorting_options,
-                    "columns": column_options,
+                    "order": sortingOptions,
+                    "columns": columnOptions,
                     "pageLength": datatable.attr('data-page-length'),
                     "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                         $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
@@ -137,7 +139,14 @@ var datatableview = (function(){
 })();
 
 $(function(){
-    if (datatableview.auto_initialize) {
+    var shouldInit = null;
+    if (datatableview.auto_initialize === undefined) {
+        shouldInit = datatableview.autoInitialize;
+    } else {
+        shouldInit = datatableview.auto_initialize
+    }
+
+    if (shouldInit) {
         datatableview.initialize($('.datatable'));
     }
 });
