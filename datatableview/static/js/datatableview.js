@@ -16,46 +16,6 @@ var datatableview = (function(){
     var checkGlobalConfirmHook = true;
     var autoInitialize = false;
 
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    function makeXEditable(options) {
-        var options = $.extend({}, options);
-        if (!options.ajaxOptions) {
-            options.ajaxOptions = {}
-        }
-        if (!options.ajaxOptions.headers) {
-            options.ajaxOptions.headers = {}
-        }
-        options.ajaxOptions.headers['X-CSRFToken'] = getCookie('csrftoken');
-        options.error = function (data) {
-            var response = data.responseJSON;
-            if (response.status == 'error') {
-                var errors = $.map(response.form_errors, function(errors, field){
-                    return errors.join('\n');
-                });
-                return errors.join('\n');
-            }
-        };
-        return function(nRow, mData, iDisplayIndex) {
-            $('td a[data-xeditable]', nRow).editable(options);
-            return nRow;
-        }
-    }
-
     function initialize($$, opts) {
         $$.each(function(){
             var datatable = $(this);
@@ -136,6 +96,46 @@ var datatableview = (function(){
         if (datatableview.checkGlobalConfirmHook) {
             window.confirm_datatable_options(options, datatable);
         }
+    }
+
+    function makeXEditable(options) {
+        var options = $.extend({}, options);
+        if (!options.ajaxOptions) {
+            options.ajaxOptions = {}
+        }
+        if (!options.ajaxOptions.headers) {
+            options.ajaxOptions.headers = {}
+        }
+        options.ajaxOptions.headers['X-CSRFToken'] = getCookie('csrftoken');
+        options.error = function (data) {
+            var response = data.responseJSON;
+            if (response.status == 'error') {
+                var errors = $.map(response.form_errors, function(errors, field){
+                    return errors.join('\n');
+                });
+                return errors.join('\n');
+            }
+        };
+        return function(nRow, mData, iDisplayIndex) {
+            $('td a[data-xeditable]', nRow).editable(options);
+            return nRow;
+        }
+    }
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     var api = {
