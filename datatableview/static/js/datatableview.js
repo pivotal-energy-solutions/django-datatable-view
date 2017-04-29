@@ -98,8 +98,11 @@ var datatableview = (function(){
 
         // Legacy behavior, will be removed in favor of user providing their own finalizeOptions()
         if (datatableview.checkGlobalConfirmHook) {
-            window.confirm_datatable_options(options, datatable);
+            if (window.confirm_datatable_options !== undefined) {
+                options = window.confirm_datatable_options(options, datatable);
+            }
         }
+        return options;
     }
 
     function makeXEditable(options) {
