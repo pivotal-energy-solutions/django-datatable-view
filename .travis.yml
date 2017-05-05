@@ -3,19 +3,22 @@ language: python
 python:
   - "2.7"
   - "3.4"
+  - "3.5"
+  - "3.6"
 env:
   # - DJANGO=1.4.22
   # - DJANGO=1.5.12
   # - DJANGO=1.6.11
-  - DJANGO=1.7.11
-  - DJANGO=1.8.15
-  - DJANGO=1.9.10
-  - DJANGO=1.10.2
+  # - DJANGO=1.7.11
+  - DJANGO=1.8.18
+  - DJANGO=1.9.13
+  - DJANGO=1.10.7
+  - DJANGO=1.11
 install:
-  - pip install -q Django==$DJANGO --use-mirrors
-  - pip install pep8 --use-mirrors
+  - pip install -q Django==$DJANGO
+  - pip install pep8
   - pip install pyflakes
-  - pip install -q -e . --use-mirrors
+  - pip install -q -e .
 #before_script:
   #- "pep8 --exclude=migrations --ignore=E501,E225 datatableview"
   #- pyflakes datatableview
