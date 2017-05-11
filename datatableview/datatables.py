@@ -114,26 +114,28 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     return OrderedDict(local_columns)
 
 class DatatableOptions(object):
+    """
+    Contains declarable options for a datatable, some of which can be manipuated by subsequent
+    requests by the user.
+    """
     def __init__(self, options=None):
+        # Non-mutable; server's declared preference is final
         self.model = getattr(options, 'model', None)
         self.columns = getattr(options, 'columns', None)  # table headers
         self.exclude = getattr(options, 'exclude', None)
-        self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
-        # self.start_offset = getattr(options, 'start_offset', None)  # results to skip ahead
-        self.page_length = getattr(options, 'page_length', 25)  # length of a single result page
-        # self.search = getattr(options, 'search', None)  # client search string
         self.search_fields = getattr(options, 'search_fields', None)  # extra searchable ORM fields
         self.unsortable_columns = getattr(options, 'unsortable_columns', None)
         self.hidden_columns = getattr(options, 'hidden_columns', None)  # generated, but hidden
-
+        self.labels = getattr(options, 'labels', None)
+        self.processors = getattr(options, 'processors', None)
         self.request_method = getattr(options, 'request_method', 'GET')
         self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
 
-        # Dictionaries of column names to values
-        self.labels = getattr(options, 'labels', None)
-        self.processors = getattr(options, 'processors', None)
+        # Mutable by the request
+        self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
+        self.page_length = getattr(options, 'page_length', 25)  # length of a single result page
 
 
 default_options = DatatableOptions()
