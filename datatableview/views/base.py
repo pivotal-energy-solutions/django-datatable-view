@@ -106,6 +106,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
                 setattr(opts, meta_opt, kwargs.pop(meta_opt))
 
         datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
+            '__module__': datatable_class.__module__,
             'Meta': opts,
         })
         self._datatable = datatable_class(**kwargs)
