@@ -564,9 +564,11 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         if isinstance(base_objects, QuerySet):
             num_base_objects = base_objects.count()
-            num_records = objects.count()
         else:
             num_base_objects = len(base_objects)
+        if isinstance(objects, QuerySet):
+            num_records = objects.count()
+        else:
             num_records = len(objects)
 
         self.total_initial_record_count = num_base_objects
