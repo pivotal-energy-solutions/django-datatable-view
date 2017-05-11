@@ -12,11 +12,6 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 ## Custom block for getting datatableview on the example_project path
 import sys, os.path
 sys.path.insert(0, '.')  # Main repo directory
-try:
-    import datatableview
-except ImportError:
-    # Maybe we're running ./manage.py from its local directory
-    sys.path[0] = os.path.abspath('../../../')
 ##
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
