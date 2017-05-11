@@ -29,6 +29,7 @@ from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanCol
                       FloatColumn, DisplayColumn, CompoundColumn, get_column_for_modelfield)
 from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
                     resolve_orm_path)
+from .cache import DEFAULT_CACHE_TYPE, cache_types, get_cache_key, cache_data, get_cached_data
 
 def pretty_name(name):
     if not name:
@@ -129,6 +130,7 @@ class DatatableOptions(object):
         self.labels = getattr(options, 'labels', None)
         self.processors = getattr(options, 'processors', None)
         self.request_method = getattr(options, 'request_method', 'GET')
+        self.cache_type = getattr(options, 'cache_type', cache_types.NONE)
         self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
@@ -435,6 +437,77 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return db_fields, virtual_fields
 
     # Data retrieval
+    @classmethod
+    def will_load_from_cache(cls, **kwargs):
+        """ Returns a hint concerning the presence of cache data for the given kwargs. """
+        cached_data = cls.get_cached_data(**kwargs)
+        return (type(cached_data) is not type(None))
+
+    @classmethod
+    def get_cache_key(cls, **kwargs):
+        """
+        Returns the full cache key used for object_list data, including the
+        ``settings.DATATABLEVIEW_CACHE_PREFIX`` value.
+        """
+        return get_cache_key(cls, **kwargs)
+
+    @classmethod
+    def get_cached_data(cls, **kwargs):
+        """ Returns object_list data cached for the given kwargs. """
+        return get_cached_data(cls, **kwargs)
+
+    @classmethod
+    def cache_data(cls, data, **kwargs):
+        """ Caches object_list data for the given kwargs. """
+        cache_data(cls, data, **kwargs)
+
+    def get_object_list(self):
+        """
+        Returns a cached object list if configured and available, or else the original object_list.
+        """
+
+        # Initial object_list from constructor, before filtering or ordering.
+        object_list = self.object_list
+
+        # Consult cache, if enabled
+        cache_type = self.config['cache_type']
+        if cache_type == 'default':
+            cache_type = DEFAULT_CACHE_TYPE
+
+        if cache_type:
+            cache_kwargs = {'view': self.view}
+            cached_data = self.get_cached_data(**cache_kwargs)
+
+            # If no cache is available, simplify and store the original object_list
+            if cached_data is None:
+                cached_data = self.prepare_object_list_for_cache(cache_type, object_list)
+                self.cache_data(cached_data, **cache_kwargs)
+
+            object_list = self.expand_object_list_from_cache(cache_type, cached_data)
+
+        return object_list
+
+    def prepare_object_list_for_cache(self, cache_type, object_list):
+        data = object_list
+
+        # Create the simplest reproducable query for repeated operations between requests
+        # Note that 'queryset' cache_type is unhandled so that it passes straight through.
+        if cache_type == cache_types.PK_LIST:
+            model = object_list.model
+            data = tuple(object_list.values_list('pk', flat=True))
+
+        # Objects in some other type of data structure should be pickable for cache backend
+        return data
+
+    def expand_object_list_from_cache(self, cache_type, cached_data):
+        if cache_type == cache_types.PK_LIST:
+            # Convert pk list back into queryset
+            data = self.model.objects.filter(pk__in=cached_data)
+        else:
+            # Straight passthrough of cached items
+            data = cached_data
+        return data
+
     def _get_current_page(self):
         """
         If page_length is specified in the options or AJAX request, the result list is shortened to
@@ -484,8 +557,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             self.configure()
 
         self._records = None
-        objects = self.object_list
-        objects = self.search(objects)
+        base_objects = self.get_object_list()
+        objects = self.search(base_objects)
         objects = self.sort(objects)
         self._records = objects
 
