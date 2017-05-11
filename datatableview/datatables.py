@@ -222,7 +222,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     def __init__(self, object_list, url, view=None, callback_target=None, model=None,
                  query_config=None, force_distinct=True, **kwargs):
         self.object_list = object_list
-        self.object_count = kwargs.get('object_count', 0)
         self.url = url
         self.view = view
         self.forward_callback_target = callback_target
@@ -486,7 +485,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         objects = self.search(objects)
         objects = self.sort(objects)
         self._records = objects
-        self.total_initial_record_count = self.object_count if self.object_count else len(self.object_list)  # Hit the DB
+        self.total_initial_record_count = len(self.object_list)
         self.unpaged_record_count = len(self._records)
 
     def search(self, queryset):

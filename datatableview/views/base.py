@@ -116,10 +116,8 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
     def get_datatable_kwargs(self, **kwargs):
         queryset = self.get_queryset()
-
         kwargs.update({
             'object_list': queryset,
-            'object_count': queryset.count(),
             'view': self,
             'model': self.model or queryset.model,
         })
