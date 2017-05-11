@@ -11,6 +11,7 @@ except ImportError:
 
 from django.db.models.fields import FieldDoesNotExist
 from django.template.loader import render_to_string
+from django.db.models import QuerySet
 try:
     from django.utils.encoding import force_text
 except ImportError:
@@ -485,8 +486,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         objects = self.search(objects)
         objects = self.sort(objects)
         self._records = objects
-        self.total_initial_record_count = len(self.object_list)
-        self.unpaged_record_count = len(self._records)
+
+        if isinstance(base_objects, QuerySet):
+            num_base_objects = base_objects.count()
+            num_records = objects.count()
+        else:
+            num_base_objects = len(base_objects)
+            num_records = len(objects)
+
+        self.total_initial_record_count = num_base_objects
+        self.unpaged_record_count = num_records
 
     def search(self, queryset):
         """ Performs db-only queryset searches. """
