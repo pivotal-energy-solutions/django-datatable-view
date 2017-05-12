@@ -471,7 +471,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         # Consult cache, if enabled
         cache_type = self.config['cache_type']
-        if cache_type == 'default':
+        if cache_type == cache_types.DEFAULT:
             cache_type = DEFAULT_CACHE_TYPE
 
         if cache_type:

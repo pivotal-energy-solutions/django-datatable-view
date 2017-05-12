@@ -7,6 +7,7 @@ from django.conf import settings
 
 class cache_types(object):
     NONE = None
+    DEFAULT = 'default'
     SIMPLE = 'simple'  # Stores queryset objects directly in cache
     PK_LIST = 'pk_list'  # Stores queryset pks in cache for later expansion back to queryset
 
