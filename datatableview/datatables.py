@@ -440,7 +440,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     @classmethod
     def will_load_from_cache(cls, **kwargs):
         """ Returns a hint concerning the presence of cache data for the given kwargs. """
-        cached_data = cls.get_cached_data(**kwargs)
+        cached_data = cls.get_cached_data(datatable_class=cls, **kwargs)
         return (type(cached_data) is not type(None))
 
     @classmethod
