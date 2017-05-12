@@ -83,10 +83,12 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
 
 def get_cached_data(datatable_class, **kwargs):
     """ Returns the cached object list, or None if not set. """
+    kwargs['datatable_class'] = datatable_class
     cache_key = '%s%s' % (CACHE_PREFIX, datatable_class.get_cache_key(**kwargs))
     return cache.get(cache_key)
 
 
 def cache_data(datatable_class, data, **kwargs):
+    kwargs['datatable_class'] = datatable_class
     cache_key = '%s%s' % (CACHE_PREFIX, datatable_class.get_cache_key(**kwargs))
     cache.set(cache_key, data)
