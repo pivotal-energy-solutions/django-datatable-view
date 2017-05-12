@@ -27,6 +27,7 @@ Dependencies:
 * ``MultipleDatatableView`` for configurating multiple Datatable specifications on a single view
 * ``ModelForm``-like declarative table design.
 * Support for ``ValuesQuerySet`` execution mode instead of object instances
+* Queryset caching between requests
 * Customizable table headers
 * Compound columns (columns representing more than one model field)
 * Columns backed by methods or callbacks instead of model fields

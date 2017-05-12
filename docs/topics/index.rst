@@ -6,3 +6,4 @@ Topics
    searching
    sorting
    custom-columns
+   caching
