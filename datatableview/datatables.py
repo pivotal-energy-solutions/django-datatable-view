@@ -444,6 +444,30 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return (type(cached_data) is not type(None))
 
     @classmethod
+    def get_cache_key_kwargs(cls, view=None, user=None, **kwargs):
+        """
+        Returns the dictionary of kwargs that will be sent to :py:meth:`.get_cache_key` in order to
+        generate a deterministic cache key.
+
+        ``datatable_class``, ``view``, and ``user`` are returned by default, the user being looked
+        up on the view's ``request`` attribute.
+
+        Override this classmethod in order to add or remove items from the returned dictionary if
+        you need a more specific or less specific cache key.
+        """
+        # Try to get user information if 'user' param is missing
+        if hasattr(view, 'request') and not user:
+            user = view.request.user
+
+        kwargs.update({
+            'datatable_class': cls,
+            'view': view,
+            'user': user,
+        })
+
+        return kwargs
+
+    @classmethod
     def get_cache_key(cls, **kwargs):
         """
         Returns the full cache key used for object_list data, including the
@@ -475,7 +499,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             cache_type = DEFAULT_CACHE_TYPE
 
         if cache_type:
-            cache_kwargs = {'view': self.view}
+            cache_kwargs = self.get_cache_key_kwargs(view=self.view)
             cached_data = self.get_cached_data(**cache_kwargs)
 
             # If no cache is available, simplify and store the original object_list
