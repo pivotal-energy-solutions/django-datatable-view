@@ -473,17 +473,17 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         Returns the full cache key used for object_list data, including the
         ``settings.DATATABLEVIEW_CACHE_PREFIX`` value.
         """
-        return get_cache_key(cls, **kwargs)
+        return get_cache_key(**kwargs)
 
     @classmethod
     def get_cached_data(cls, **kwargs):
         """ Returns object_list data cached for the given kwargs. """
-        return get_cached_data(cls, **kwargs)
+        return get_cached_data(**kwargs)
 
     @classmethod
     def cache_data(cls, data, **kwargs):
         """ Caches object_list data for the given kwargs. """
-        cache_data(cls, data, **kwargs)
+        cache_data(data=data, **kwargs)
 
     def get_object_list(self):
         """
