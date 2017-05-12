@@ -67,10 +67,6 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
 
     if view:
         if not inspect.isclass(view):
-            # Try to get user information if 'user' param is missing
-            if hasattr(view, 'request') and not user:
-                user = view.request.user
-
             # Reduce view to its class
             view = view.__class__
 
