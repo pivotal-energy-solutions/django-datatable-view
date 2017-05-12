@@ -439,7 +439,12 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     # Data retrieval
     @classmethod
     def will_load_from_cache(cls, **kwargs):
-        """ Returns a hint concerning the presence of cache data for the given kwargs. """
+        """
+        Returns a hint for external code concerning the presence of cache data for the given kwargs.
+
+        See :py:meth:`.get_cache_key_kwargs` for information concerning the kwargs you must send for
+        this hint to be accurate.
+        """
         cached_data = cls.get_cached_data(datatable_class=cls, **kwargs)
         return (type(cached_data) is not type(None))
 
@@ -470,8 +475,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
     @classmethod
     def get_cache_key(cls, **kwargs):
         """
-        Returns the full cache key used for object_list data, including the
-        ``settings.DATATABLEVIEW_CACHE_PREFIX`` value.
+        Returns the full cache key used for object_list data handled by this datatable class.
+        ``settings.DATATABLEVIEW_CACHE_PREFIX`` will be prepended to this value.
+
+        The kwargs sent guarantee a deterministic cache key between requests.
+
+        ``view`` and ``user`` are special kwargs that the caching system provides by default.  The
+        view instance is inspected for its ``__module__.__name__`` string, and the user for its
+        ``pk``.
+
+        All other kwargs are hashed and appended to the cache key.
         """
         return get_cache_key(**kwargs)
 
@@ -487,7 +500,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def get_object_list(self):
         """
-        Returns a cached object list if configured and available, or else the original object_list.
+        Returns a cached object list if configured and available.  When no caching strategy is
+        enabled or if the cached item is expired, the original ``object_list`` is returned.
         """
 
         # Initial object_list from constructor, before filtering or ordering.
@@ -512,6 +526,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return object_list
 
     def prepare_object_list_for_cache(self, cache_type, object_list):
+        """
+        Pre-caching hook that must prepare ``object_list`` for the cache using the strategy
+        indicated by ``cache_type``, which is the table's ``Meta``
+        :py:attr:`~datatableview.datatables.Meta.cache_type` value.
+
+        When ``cache_type`` is ``SIMPLE``, the ``object_list`` is returned unmodified.
+
+        When ``PK_LIST`` is used, ``object_list`` is queried for the list of ``pk`` values and those
+        are returned instead.
+        """
         data = object_list
 
         # Create the simplest reproducable query for repeated operations between requests
@@ -524,6 +548,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return data
 
     def expand_object_list_from_cache(self, cache_type, cached_data):
+        """
+        Deserializes the ``cached_data`` fetched from the caching backend, according to the
+        ``cache_type`` strategy that was used to originally store it.
+
+        When ``cache_type`` is ``SIMPLE``, the ``cached_data`` is returned unmodified, since the
+        ``object_list`` went into the cache unmodified.
+
+        When ``PK_LIST`` is used, ``cached_data`` is treated as a list of ``pk`` values and is used
+        to filter the model's default queryset to just those objects.
+        """
         if cache_type == cache_types.PK_LIST:
             # Convert pk list back into queryset
             data = self.model.objects.filter(pk__in=cached_data)
