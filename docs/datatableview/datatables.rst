@@ -62,6 +62,17 @@ Datatable
    .. automethod:: preload_record_data
    .. automethod:: get_extra_record_data
 
+   **Caching Methods**
+
+   .. automethod:: will_load_from_cache
+   .. automethod:: get_cache_key_kwargs
+   .. automethod:: get_cache_key
+   .. automethod:: get_cached_data
+   .. automethod:: cache_data
+   .. automethod:: get_object_list
+   .. automethod:: prepare_object_list_for_cache
+   .. automethod:: expand_object_list_from_cache
+
    **Internal Methods**
 
    .. automethod:: search
@@ -123,6 +134,13 @@ ValuesLegacyDatatable
       :Default: ``[]``
 
       A list of model field names to exclude if ``columns`` is not given.
+
+   .. attribute:: cache_type
+
+      :Default: ``None``
+
+      The identifier for caching strategy to use on the ``object_list`` sent to the datatable.  See
+      :doc:`../topics/caching` for more information.
 
    .. attribute:: ordering
 
