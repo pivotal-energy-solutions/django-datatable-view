@@ -200,7 +200,7 @@ DisplayColumn
    .. autoattribute:: lookup_types
 
 CompoundColumn
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autoclass:: CompoundColumn(**kwargs)
 
