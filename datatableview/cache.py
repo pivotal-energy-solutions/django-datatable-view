@@ -78,6 +78,18 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
     if user and user.is_authenticated():
         cache_key += '__user_%s' % (user.pk,)
 
+    # All other kwargs are used directly to create a hashed suffix
+    # Order the kwargs by key name, then convert them to their repr() values.
+    items = sorted(kwargs.items(), key=lambda item: item[0])
+    values = []
+    for k, v in items:
+        values.append('%r:%r' % (k, v))
+
+    if values:
+        kwargs_id = '__'.join(values)
+        kwargs_id = _hash_key_component(kwargs_id)
+        cache_key += '__kwargs_%s' % (kwargs_id,)
+
     return cache_key
 
 
