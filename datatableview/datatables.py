@@ -617,21 +617,40 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         self._records = None
         base_objects = self.get_object_list()
-        objects = self.search(base_objects)
-        objects = self.sort(objects)
-        self._records = objects
+        filtered_objects = self.search(base_objects)
+        filtered_objects = self.sort(filtered_objects)
+        self._records = filtered_objects
+
+        num_total, num_filtered = self.count_objects(base_objects, filtered_objects)
+        self.total_initial_record_count = num_total
+        self.unpaged_record_count = num_filtered
+
+    def count_objects(self, base_objects, filtered_objects):
+        """
+        Calculates object totals for datatable footer.  Returns a 2-tuple of counts for,
+        respectively, the total number of objects and the filtered number of objects.
+
+        Up to two ``COUNT`` queries may be issued.  If you already have heavy backend queries, this
+        might add significant overhead to every ajax fetch, such as keystroke filters.
+
+        If ``Meta.cache_type`` is configured and ``Meta.cache_queryset_count`` is set to True, the
+        resulting counts will be stored in the caching backend.
+        """
+
+        num_total = None
+        num_filtered = None
 
         if isinstance(base_objects, QuerySet):
-            num_base_objects = base_objects.count()
+            num_total = base_objects.count()
         else:
-            num_base_objects = len(base_objects)
-        if isinstance(objects, QuerySet):
-            num_records = objects.count()
-        else:
-            num_records = len(objects)
+            num_total = len(base_objects)
 
-        self.total_initial_record_count = num_base_objects
-        self.unpaged_record_count = num_records
+        if isinstance(filtered_objects, QuerySet):
+            num_filtered = filtered_objects.count()
+        else:
+            num_filtered = len(filtered_objects)
+
+        return num_total, num_filtered
 
     def search(self, queryset):
         """ Performs db-only queryset searches. """
