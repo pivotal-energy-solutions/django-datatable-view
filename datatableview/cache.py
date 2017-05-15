@@ -1,8 +1,11 @@
 import inspect
 import hashlib
+import logging
 
 from django.core.cache import caches
 from django.conf import settings
+
+log = logging.getLogger(__name__)
 
 
 class cache_types(object):
@@ -90,6 +93,8 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
         kwargs_id = _hash_key_component(kwargs_id)
         cache_key += '__kwargs_%s' % (kwargs_id,)
 
+    log.debug("Cache key derived for %r: %r (from kwargs %r)", datatable_class, cache_key, values)
+
     return cache_key
 
 
@@ -97,11 +102,14 @@ def get_cached_data(datatable_class, **kwargs):
     """ Returns the cached object list under the appropriate key, or None if not set. """
     kwargs['datatable_class'] = datatable_class
     cache_key = '%s%s' % (CACHE_PREFIX, datatable_class.get_cache_key(**kwargs))
-    return cache.get(cache_key)
+    data = cache.get(cache_key)
+    log.debug("Reading data from cache at %r: %r", cache_key, data)
+    return data
 
 
 def cache_data(datatable_class, data, **kwargs):
     """ Stores the object list in the cache under the appropriate key. """
     kwargs['datatable_class'] = datatable_class
     cache_key = '%s%s' % (CACHE_PREFIX, datatable_class.get_cache_key(**kwargs))
+    log.debug("Setting data to cache at %r: %r", cache_key, data)
     cache.set(cache_key, data)
