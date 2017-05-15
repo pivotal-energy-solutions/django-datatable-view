@@ -302,7 +302,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return config
 
     def normalize_config_search(self, config, query_config):
-        return query_config.get(OPTION_NAME_MAP['search'], '').strip()
+        terms_string = query_config.get(OPTION_NAME_MAP['search'], '').strip()
+        return set(split_terms(terms_string))
 
     def normalize_config_start_offset(self, config, query_config):
         try:
@@ -646,7 +647,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 columns[name] = self.columns[name]
 
         # Global search terms apply to all columns
-        for term in set(split_terms(self.config['search'])):
+        for term in self.config['search']:
             # NOTE: Allow global terms to overwrite identical queries that were single-column
             searches[term] = self.columns.copy()
             searches[term].update({None: column for column in self.config['search_fields']})
