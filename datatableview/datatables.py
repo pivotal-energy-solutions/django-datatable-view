@@ -130,10 +130,13 @@ class DatatableOptions(object):
         self.labels = getattr(options, 'labels', None)
         self.processors = getattr(options, 'processors', None)
         self.request_method = getattr(options, 'request_method', 'GET')
-        self.cache_type = getattr(options, 'cache_type', cache_types.NONE)
         self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
+
+        # Non-mutable; server behavior customization
+        self.cache_type = getattr(options, 'cache_type', cache_types.NONE)
+        self.cache_queryset_count = getattr(options, 'cache_queryset_count', False)
 
         # Mutable by the request
         self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
@@ -641,7 +644,14 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         num_filtered = None
 
         if isinstance(base_objects, QuerySet):
-            num_total = base_objects.count()
+            if self.config['cache_queryset_count']:
+                cache_kwargs = self.get_cache_key_kwargs(view=self.view, __num_total='__num_total')
+                num_total = self.get_cached_data(**cache_kwargs)
+
+            if num_total is None:
+                num_total = base_objects.count()
+                if self.config['cache_queryset_count']:
+                    self.cache_data(num_total, **cache_kwargs)
         else:
             num_total = len(base_objects)
 
