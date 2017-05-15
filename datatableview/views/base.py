@@ -45,8 +45,8 @@ class DatatableJSONResponseMixin(object):
             draw = escape_uri_path(draw)
         response_data = {
             'draw': draw,
-            'recordsFiltered': datatable.total_initial_record_count,
-            'recordsTotal': datatable.unpaged_record_count,
+            'recordsFiltered': datatable.unpaged_record_count,
+            'recordsTotal': datatable.total_initial_record_count,
             'data': [dict(record, **{
                 'DT_RowId': record.pop('pk'),
                 'DT_RowData': record.pop('_extra_data'),
