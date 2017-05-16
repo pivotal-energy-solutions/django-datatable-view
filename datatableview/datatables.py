@@ -441,19 +441,17 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         return db_fields, virtual_fields
 
     # Data retrieval
-    @classmethod
-    def will_load_from_cache(cls, **kwargs):
+    def will_load_from_cache(self, **kwargs):
         """
         Returns a hint for external code concerning the presence of cache data for the given kwargs.
 
         See :py:meth:`.get_cache_key_kwargs` for information concerning the kwargs you must send for
         this hint to be accurate.
         """
-        cached_data = cls.get_cached_data(datatable_class=cls, **kwargs)
+        cached_data = self.get_cached_data(datatable_class=self.__class__, **kwargs)
         return (type(cached_data) is not type(None))
 
-    @classmethod
-    def get_cache_key_kwargs(cls, view=None, user=None, **kwargs):
+    def get_cache_key_kwargs(self, view=None, user=None, **kwargs):
         """
         Returns the dictionary of kwargs that will be sent to :py:meth:`.get_cache_key` in order to
         generate a deterministic cache key.
@@ -469,15 +467,14 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             user = view.request.user
 
         kwargs.update({
-            'datatable_class': cls,
+            'datatable_class': self.__class__,
             'view': view,
             'user': user,
         })
 
         return kwargs
 
-    @classmethod
-    def get_cache_key(cls, **kwargs):
+    def get_cache_key(self, **kwargs):
         """
         Returns the full cache key used for object_list data handled by this datatable class.
         ``settings.DATATABLEVIEW_CACHE_PREFIX`` will be prepended to this value.
@@ -492,15 +489,13 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         """
         return get_cache_key(**kwargs)
 
-    @classmethod
-    def get_cached_data(cls, **kwargs):
+    def get_cached_data(self, **kwargs):
         """ Returns object_list data cached for the given kwargs. """
-        return get_cached_data(**kwargs)
+        return get_cached_data(self, **kwargs)
 
-    @classmethod
-    def cache_data(cls, data, **kwargs):
+    def cache_data(self, data, **kwargs):
         """ Caches object_list data for the given kwargs. """
-        cache_data(data=data, **kwargs)
+        cache_data(self, data=data, **kwargs)
 
     def get_object_list(self):
         """
