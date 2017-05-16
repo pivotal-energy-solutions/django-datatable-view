@@ -15,7 +15,7 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(dt.config['hidden_columns'], [])
         self.assertEqual(dt.config['search_fields'], [])
         self.assertEqual(dt.config['unsortable_columns'], [])
-        self.assertEqual(dt.config['search'], '')
+        self.assertEqual(dt.config['search'], set())
         self.assertEqual(dt.config['start_offset'], 0)
         self.assertEqual(dt.config['page_length'], 25)
         self.assertEqual(dt.config['ordering'], None)
