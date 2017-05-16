@@ -2,6 +2,43 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0-beta.6
+
+#### Streamlined ``datatableview.js`` API
+We are now using the proper ``DataTable`` "modern" API from datatables.js.
+
+The modern JS API changes the option names and query parameter names.  We've updated those as far as the server-side stuff is concerned, but you should check any options you send to the JS constructors to ensure they match the official, modern datatables API.
+
+The global JS hook ``window.confirm_datatable_options()`` is one step closer to its removal.  ``datatableview.checkGlobalConfirmHook`` will default to true for the time being, which will signal the new hook ``datatableview.finalizeOptions(datatable, options)`` to check for the global hook.  In 1.1, ``checkGlobalConfirmHook`` will default to false, and in 1.2, ``checkGlobalConfirmHook`` will be removed entirely and ``finalizeOptions()`` will be an empty hook for you to do with as you please.
+
+This update aliases names that followed Pythonic naming conventions so that things are more Javascripty:
+
+* ``datatableview.auto_initialize`` to ``datatableview.autoInitialize``
+* ``datatableview.make_xeditable`` to ``datatableview.makeXEditable``
+
+The underscore names will be removed in 1.2, simultaneous to the removal of ``datatableview.checkGlobalConfirmHook`` and code for consulting the global hook ``window.confirm_datatable_options()``.
+
+#### QuerySet Caching
+
+An official set of options exists to do automatic queryset caching on a per-View, per-User basis.  For querysets that are a little too heavy for their own good, a caching strategy offers a straightforward optimization.  There's not a good way to fix a bad queryset, but something is better than nothing!
+
+Once configured to use of your Django ``settings.CACHES``, you may opt in a datatable class to use caching via its ``Meta.cache_type`` setting.  Using the default ``cache_types.SIMPLE`` strategy, the queryset is placed directly in your cache for retrieval on subsequent requests.  If that isn't fast enough, you can use ``cache_types.PK_LIST`` instead, which runs your query once to get the pks of the objects and stores that in the cache.  Each request will have to run a ``WHERE `pk` IN (...)`` query but will be signficantly faster than evaluating the original queryset.
+
+1. Set ``settings.DATATABLEVIEW_CACHE_BACKEND`` to an appropriate Django ``CACHES`` name.
+2. Opt a python ``Datatable`` subclass into caching by setting ``Datatable.Meta.cache_type`` to one of the cache strategy constants importable at ``datatableview.datatables.cache_types``:
+  * ``cache_types.SIMPLE`` (``'simple'``): Stores the view's queryset directly
+  * ``cache_types.PK_LIST`` (``'pk_list'``): Stores only the list of pks from the view's queryset.  Each new request will re-query the database with a (hopefully) simpler ``WHERE `pk` IN (...)`` query.
+  * ``cache_types.DEFAULT`` (``'default'``): Defers to ``settings.DATATABLEVIEW_DEFAULT_CACHE_TYPE`` for a cache strategy (which is ``SIMPLE`` by default).
+
+Caching for a queryset is unique to the ``kwargs`` that come through the Datatable's ``get_cache_key_kwargs(self, **kwargs)``.  If you need to add or remove items from the dict, modify the dict returned from ``super()`` to suit your needs.
+
+By default, only three items are in the dict:
+
+* ``datatable_class``: The Datatable doing the caching
+* ``view``: The view using the Datatable
+* ``user``: The view's ``request.user``
+
+
 ## 0.9.0-beta.5
 Refinements since 0.9.0-beta.4
 
