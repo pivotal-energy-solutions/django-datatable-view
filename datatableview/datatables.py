@@ -37,7 +37,7 @@ def pretty_name(name):
     return name[0].capitalize() + name[1:]
 
 
-# Borrowed from the Django forms implementation 
+# Borrowed from the Django forms implementation
 def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
                       unsortable=None, hidden=None):
     field_list = []
@@ -81,7 +81,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
         )
     return field_dict
 
-# Borrowed from the Django forms implementation 
+# Borrowed from the Django forms implementation
 def get_declared_columns(bases, attrs, with_base_columns=True):
     """
     Create a list of form field instances from the passed in 'attrs', plus any
@@ -701,7 +701,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             q = reduce(operator.and_, table_queries)
             queryset = queryset.filter(q)
 
-        return queryset
+        return queryset.distinct()
 
     def _search_column(self, column, terms):
         """ Requests search queries to be performed against the target column.  """
