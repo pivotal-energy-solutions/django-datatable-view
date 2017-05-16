@@ -44,7 +44,7 @@ var datatableview = (function(){
 
                     // Typecasting out of string
                     name = optionsNameMap[name];
-                    if (/^b/.test(name)) {
+                    if (/^(true|false)/.test(value.toLowerCase())) {
                         value = (value === 'true');
                     }
 
