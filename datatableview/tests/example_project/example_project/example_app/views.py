@@ -618,9 +618,10 @@ class CompoundColumnsDatatableView(DemoMixin, DatatableView):
                                                   columns.TextColumn(source='headline'),
                                                   columns.DateColumn(source='pub_date')
                                               ], processor=helpers.format("{0[0]} @ {0[1]}"))
+        is_published = columns.BooleanColumn("Published?", sources=['is_published'])
 
         class Meta:
-            columns = ['id', 'headline_blog', 'headline_pub']
+            columns = ['id', 'headline_blog', 'headline_pub', 'is_published']
 
     implementation = u"""
     class MyDatatable(Datatable):
@@ -630,8 +631,9 @@ class CompoundColumnsDatatableView(DemoMixin, DatatableView):
                        columns.TextColumn(source='headline'),
                        columns.TextColumn(source='blog__name'),
                    ], processor='get_headline_data')
+        is_published = columns.BooleanColumn("Published?", sources=['is_published'])
         class Meta:
-            columns = ['id', 'headline']
+            columns = ['id', 'headline_blog', 'headline_pub', 'is_published']
 
         def get_headline_data(self, instance, **kwargs):
             return "%s (%s)" % (instance.headline, instance.blog.name)
