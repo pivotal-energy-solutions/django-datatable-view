@@ -232,6 +232,11 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                     kwargs = kwargs_getter(**kwargs)
                 if 'url' in kwargs:
                     kwargs['url'] = kwargs['url'] + "?datatable=%s" % (name,)
+
+                for meta_opt in opts.__dict__:
+                    if meta_opt in kwargs:
+                        setattr(opts, meta_opt, kwargs.pop(meta_opt))
+
                 datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
                     '__module__': datatable_class.__module__,
                     'Meta': opts,
