@@ -224,9 +224,12 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                     datatable_class = Datatable
                 else:
                     opts = datatable_class.options_class(datatable_class._meta)
+
+                kwargs = self.get_default_datatable_kwargs(object_list=queryset)
                 kwargs_getter_name = 'get_%s_datatable_kwargs' % (name,)
-                kwargs_getter = getattr(self, kwargs_getter_name, self.get_default_datatable_kwargs)
-                kwargs = kwargs_getter(**default_kwargs)
+                kwargs_getter = getattr(self, kwargs_getter_name, None)
+                if kwargs_getter:
+                    kwargs = kwargs_getter(**kwargs)
                 if 'url' in kwargs:
                     kwargs['url'] = kwargs['url'] + "?datatable=%s" % (name,)
                 datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
