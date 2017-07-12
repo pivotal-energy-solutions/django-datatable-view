@@ -220,24 +220,20 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                 if datatable_class is None:
                     class AutoMeta:
                         model = queryset.model
-                    datatable_class = type('%sDatatable' % (self.__class__.__name__,), (Datatable,), {
-                        'Meta': AutoMeta,
-                    })
-                elif datatable_class._meta.model is None:
+                    opts = AutoMeta()
+                    datatable_class = Datatable
+                else:
                     opts = datatable_class.options_class(datatable_class._meta)
-                    opts.model = queryset.model
-                    datatable_class = type('%s_WithModel' % (datatable_class.__name__,), (datatable_class,), {
-                        'Meta': opts,
-                    })
-
-                default_kwargs = {
-                    'object_list': queryset,
-                }
                 kwargs_getter_name = 'get_%s_datatable_kwargs' % (name,)
                 kwargs_getter = getattr(self, kwargs_getter_name, self.get_default_datatable_kwargs)
                 kwargs = kwargs_getter(**default_kwargs)
                 if 'url' in kwargs:
                     kwargs['url'] = kwargs['url'] + "?datatable=%s" % (name,)
+                datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
+                    '__module__': datatable_class.__module__,
+                    'Meta': opts,
+                })
+
                 self._datatables[name] = datatable_class(**kwargs)
         return self._datatables
 
