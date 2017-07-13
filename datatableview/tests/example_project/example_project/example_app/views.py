@@ -1121,11 +1121,13 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     # Demo #1 and Demo # 2 will use variations of the same options.
     class datatable_class(Datatable):
         class Meta:
+            model = Entry
             columns = ['id', 'headline']
 
     # Demo #3 will use completely separate options.
     class blog_datatable_class(Datatable):
         class Meta:
+            model = Blog
             columns = ['id', 'name', 'tagline']
 
     datatable_classes = {
@@ -1154,11 +1156,13 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     # Demo #1 and Demo #2 will use variations of the same options.
     class EntryDatatable(Datatable):
         class Meta:
+            model = Entry
             columns = ['id', 'headline']
 
     # Demo #3 will use completely separate options.
     class BlogDatatable(Datatable):
         class Meta:
+            model = Blog
             columns = ['id', 'name', 'tagline']
 
     class MultipleTablesDatatableView(MultipleDatatableView):
