@@ -49,6 +49,10 @@ Dependencies:
 ```
 pip install django-datatable-view
 ```
+to intall directly from the repo
+```
+pip install git+git://github.com/pivotal-energy-solutions/django-datatable-view.git
+```
 
 2. Add to `INSTALLED_APPS`
 ```py
