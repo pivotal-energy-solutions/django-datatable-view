@@ -77,7 +77,18 @@ class TestDataTable(DatatableView):
     {{ datatable }}
 {% endblock %}
 ```
-also dont forget to include the `datatable.js` and `datatableview.js` as shown [here](http://django-datatable-view.appspot.com/javascript-initialization/)
+also dont forget to include the `datatable.js` and `datatableview.js` as 
+shown [here](http://django-datatable-view.appspot.com/javascript-initialization/)
+
+5. initialize table using the following snippet
+```javascript
+// Standard initialization
+var opts = {};
+var datatable = datatableview.initialize($('.datatable'), opts);
+
+// Get a reference to the new API object
+var table = datatable.api();
+```
 
 # Documentation and Live Demos
 Read the module documentation at http://django-datatable-view.readthedocs.org.
