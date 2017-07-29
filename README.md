@@ -44,6 +44,52 @@ Dependencies:
 * Small library of common column markup processors
 * Full test suite
 
+# Quickstart
+1. Install from PyPI 
+```
+pip install django-datatable-view
+```
+to intall directly from the repo
+```
+pip install git+git://github.com/pivotal-energy-solutions/django-datatable-view.git
+```
+
+2. Add to `INSTALLED_APPS`
+```py
+# settings.py
+INSTALLED_APPS = [
+    ...
+    'datatableview',
+]
+```
+
+3. create a simple view like this
+```py
+# views.py
+class TestDataTable(DatatableView):
+    template_name = 'textdatatable.html'
+    model = Account
+```
+
+4. in your template render the table like this 
+```
+{% block content %}
+    {{ datatable }}
+{% endblock %}
+```
+also dont forget to include the `datatable.js` and `datatableview.js` as 
+shown [here](http://django-datatable-view.appspot.com/javascript-initialization/)
+
+5. initialize table using the following snippet
+```javascript
+// Standard initialization
+var opts = {};
+var datatable = datatableview.initialize($('.datatable'), opts);
+
+// Get a reference to the new API object
+var table = datatable.api();
+```
+
 # Documentation and Live Demos
 Read the module documentation at http://django-datatable-view.readthedocs.org.
 

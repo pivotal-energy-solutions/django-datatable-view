@@ -10,7 +10,6 @@ except ImportError:
 
 import django
 from django.db import models
-from django.db.models import Model, Manager, Q
 from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
@@ -68,7 +67,7 @@ def get_attribute_value(obj, bit):
     except (AttributeError, ObjectDoesNotExist):
         value = None
     else:
-        if callable(value) and not isinstance(value, Manager):
+        if callable(value) and not isinstance(value, models.Manager):
             if not hasattr(value, 'alters_data') or value.alters_data is not True:
                 value = value()
     return value
@@ -182,7 +181,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
             result = self.get_source_value(obj, source, **kwargs)
 
             for value in result:
-                if isinstance(value, Model):
+                if isinstance(value, models.Model):
                     value = (value.pk, value)
 
                 if value is not None:
@@ -213,7 +212,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         """
         if hasattr(source, "__call__"):
             value = source(obj)
-        elif isinstance(obj, Model):
+        elif isinstance(obj, models.Model):
             value = reduce(get_attribute_value, [obj] + source.split('__'))
         elif isinstance(obj, dict):  # ValuesQuerySet item
             value = obj[source]
@@ -362,7 +361,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                     for db_value, label in choices:
                         if term.lower() in label.lower():
                             k = '%s__exact' % (sub_source,)
-                            column_queries.append(Q(**{k: str(db_value)}))
+                            column_queries.append(models.Q(**{k: str(db_value)}))
 
                 if not lookup_types:
                     lookup_types = handler.get_lookup_types()
@@ -376,7 +375,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                         continue
 
                     k = '%s__%s' % (sub_source, lookup_type)
-                    column_queries.append(Q(**{k: coerced_term}))
+                    column_queries.append(models.Q(**{k: coerced_term}))
 
         if column_queries:
             q = reduce(operator.or_, column_queries)
