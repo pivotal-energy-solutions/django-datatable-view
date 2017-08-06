@@ -1094,10 +1094,8 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     requires deviation from the default kwargs.
 
     WARNING:
-    Declaring a custom kwargs getter like ``get_FOO_datatable_kwargs(**kwargs)`` will require you to
-    manually grab a copy of the default kwargs via a call to
-    ``get_default_datatable_kwargs(**kwargs)``, which is provided for you to use.  Think of this
-    like a call to super().
+    You can't call ``super()`` in ``get_FOO_datatable_kwargs(**kwargs)`` to get the default set of
+    ``kwargs``, so they are provided to you automatically via ``**kwargs`` sent to the method.
 
     INFO:
     ``MultipleDatatableView`` does not support the configuration strategy where you declare options
@@ -1121,11 +1119,13 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     # Demo #1 and Demo # 2 will use variations of the same options.
     class datatable_class(Datatable):
         class Meta:
+            model = Entry
             columns = ['id', 'headline']
 
     # Demo #3 will use completely separate options.
     class blog_datatable_class(Datatable):
         class Meta:
+            model = Blog
             columns = ['id', 'name', 'tagline']
 
     datatable_classes = {
@@ -1154,11 +1154,13 @@ class MultipleTablesDatatableView(DemoMixin, MultipleDatatableView):
     # Demo #1 and Demo #2 will use variations of the same options.
     class EntryDatatable(Datatable):
         class Meta:
+            model = Entry
             columns = ['id', 'headline']
 
     # Demo #3 will use completely separate options.
     class BlogDatatable(Datatable):
         class Meta:
+            model = Blog
             columns = ['id', 'name', 'tagline']
 
     class MultipleTablesDatatableView(MultipleDatatableView):
