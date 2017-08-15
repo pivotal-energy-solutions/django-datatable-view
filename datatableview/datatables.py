@@ -774,7 +774,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         kwargs = {}
         if self.forward_callback_target and \
-                getattr(self.forward_callback_target, 'preload_record_data'):
+                hasattr(self.forward_callback_target, 'preload_record_data'):
             kwargs.update(self.forward_callback_target.preload_record_data(obj))
         return kwargs
 
@@ -784,7 +784,11 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def get_extra_record_data(self, obj):
         """ Returns a dictionary of JSON-friendly data sent to the client as ``"DT_RowData"``. """
-        return {}
+        data = {}
+        if self.forward_callback_target and \
+                hasattr(self.forward_callback_target, 'get_extra_record_data'):
+            data.update(self.forward_callback_target.get_extra_record_data(obj))
+        return data
 
     def get_record_data(self, obj):
         """
