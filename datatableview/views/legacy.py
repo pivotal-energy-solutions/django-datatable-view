@@ -91,6 +91,13 @@ class LegacyDatatableMixin(DatatableMixin):
         kwargs.update(self._get_datatable_options())
         return kwargs
 
+    def preload_record_data(self, obj):
+        return {}
+
+    def get_extra_record_data(self, obj):
+        return {}
+
+
 class LegacyDatatableView(LegacyDatatableMixin, ListView):
     """
     Implements :py:class:`LegacyDatatableMixin` and the standard Django ``ListView``.
