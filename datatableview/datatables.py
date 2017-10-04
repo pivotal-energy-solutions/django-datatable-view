@@ -385,13 +385,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 name = name[1:]
 
             if name not in self.columns:
-                try:
-                    field = resolve_orm_path(self.model, name)
-                except FieldDoesNotExist:
-                    pass
-                else:
-                    column = get_column_for_modelfield(field)
-                    ordering_columns[name] = column(sources=[name])
+                field = resolve_orm_path(self.model, name)
+                column = get_column_for_modelfield(field)
+                ordering_columns[name] = column(sources=[name])
 
         return ordering_columns
 
