@@ -57,7 +57,7 @@ def get_column_for_modelfield(model_field):
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
     while model_field.remote_field:
-        model_field = model_field.remote_field.to._meta.pk
+        model_field = model_field.remote_field.model._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
