@@ -46,7 +46,10 @@ class HelpersTests(DatatableViewTestCase):
         # Verify ``key`` access to transition an instance to a related field
         secondary_helper = helper(key=lambda o: o.related)
         output = secondary_helper(instance)
-        self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
+        if django.VERSION > (2, 0):
+            self.assertEqual(output, '<a href="#1">RelatedModel object (1)</a>')
+        else:
+            self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
 
         # Verify ``key`` access version of custom text
         output = secondary_helper(instance, text="Special text")
@@ -60,7 +63,10 @@ class HelpersTests(DatatableViewTestCase):
         # Verify ``attr`` as a getattr shorthand lookup
         secondary_helper = helper(attr='related')
         output = secondary_helper(instance)
-        self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
+        if django.VERSION > (2, 0):
+            self.assertEqual(output, '<a href="#1">RelatedModel object (1)</a>')
+        else:
+            self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
 
     def test_make_boolean_checkmark(self):
         """ Verifies that make_boolean_checkmark works. """

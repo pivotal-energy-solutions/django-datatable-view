@@ -31,5 +31,5 @@ class DatatableViewTestCase(TestCase):
         """
         clear_app_cache()
         call_command(migrate_command, interactive=False, verbosity=0)
-        call_command('loaddata', initial_data_fixture, interactive=False, verbosity=0)
+        call_command('loaddata', initial_data_fixture, verbosity=0)
         super(DatatableViewTestCase, self)._pre_setup()
