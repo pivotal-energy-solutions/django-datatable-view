@@ -64,7 +64,7 @@ INSTALLED_APPS = (
     'example_project.example_app',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     # 'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

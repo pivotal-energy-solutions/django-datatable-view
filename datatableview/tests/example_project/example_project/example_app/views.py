@@ -7,7 +7,7 @@ import re
 import django
 from django.views.generic import View, TemplateView
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
@@ -502,6 +502,20 @@ class ProcessorsDatatableView(DemoMixin, DatatableView):
     Processors receive the ``instance`` object that is providing data for the current row, and
     should somehow return the final string that should be serialized to JSON for the AJAX response
     to the client.
+
+    Besides the ``instance`` object, processors are also provided with a ``default_value`` and a
+    ``rich_value``. Usage of these enables generic processors that are not specific to objects.
+    ``default_value`` is the raw value of the source that is used for sorting and
+    filtering. ``rich_value`` on the other hand is possibly something else that may include
+    presentation logic (e.g., HTML). Each source may return them as ``(default_value, rich_value)``.
+    Otherwise, the value returned would be assigned to both of them unless it is a django
+    Model object, then, ``default_value`` becomes the id, and the ``rich_value`` would
+    become the __str__() representation of it. If source is a list, ``default_value`` would be a list
+    of plain values whereas ``rich_value``s would be joined via ``.separator`` property of the
+    Column (default is space). Besides, each Column may also define an ``empty_value`` which
+    substitutes ``None`` values returned by the sources (default is empty string). If a '__' source
+    includes a ForeignKey or ManyToMany field (which cannot be traversed), both values default to
+    the ``empty_value``.
 
     INFO:
     Processors should also always receive ``**kwargs``, to maximize forward compatibility with how
