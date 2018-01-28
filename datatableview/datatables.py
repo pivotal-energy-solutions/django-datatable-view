@@ -650,7 +650,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         else:
             num_total = len(base_objects)
 
-        if len(self.config['search']) > 0:
+        if len(self.config['search']) > 0 or len(self.config['column_searches']) > 0:
             if isinstance(filtered_objects, QuerySet):
                 num_filtered = filtered_objects.count()
             else:
