@@ -279,6 +279,9 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 self.columns[column_name].sort_direction = 'desc' if name[0] == '-' else 'asc'
                 self.columns[column_name].index = index
 
+        for name in self.config['hidden_columns']:
+            self.columns[name].visible = False
+
         self._configured = True
 
     # Client request configuration mergers
