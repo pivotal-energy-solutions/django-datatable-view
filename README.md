@@ -21,6 +21,51 @@ Dependencies:
 * [Django](http://www.djangoproject.com/) >= 1.8
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 
+# Getting Started Most basic
+
+__Remember Django > 1.10 is not supported__
+
+Install the package
+
+    pip install django-datatable-view
+
+Add `datatableview` to  `INSTALLED_APPS`
+
+    INSTALLED_APPS = (
+        ...
+        'datatableview',
+        ...
+    )
+
+Import the `DatatableView` in your views
+
+    from datatableview.views import DatatableView
+
+Create the view:
+
+    class ZeroConfigurationDatatableView(DatatableView):
+        model = Entry
+
+Download `datatables` from [jquery datatables](https://datatables.net/download/index) and add them as static resources to your page
+
+    <link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}">
+    <script type="text/javascript" charset="utf8" src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+    <script type="text/javascript" charset="utf8" src="{% static 'js/datatableview.js' %}"></script>
+    <script type="text/javascript" charset="utf8">
+        datatableview.auto_initialize = true;
+    </script>
+
+Then in your template add the `{{ datatable }}`:
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="table-responsive">
+                {{ datatable }}
+            </div>
+        </div>
+    </div>
+
+
 # Features at a glance
 
 * ``DatatableView``, a drop-in replacement for ``ListView`` that allows options to be specified for the datatable that will be rendered on the page.
