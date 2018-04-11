@@ -280,7 +280,16 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
                 self.columns[column_name].index = index
 
         for name in self.config['hidden_columns']:
-            self.columns[name].visible = False
+            try:
+                self.columns[name].visible = False
+            except KeyError:
+                pass
+
+        for name in self.config['unsortable_columns']:
+            try:
+                self.columns[name].sortable = False
+            except KeyError:
+                pass
 
         self._configured = True
 
