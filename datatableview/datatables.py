@@ -282,6 +282,18 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for name in self.config['hidden_columns']:
             self.columns[name].visible = False
 
+        for name in self.config['hidden_columns']:
+            try:
+                self.columns[name].visible = False
+            except KeyError:
+                pass
+
+        for name in self.config['unsortable_columns']:
+            try:
+                self.columns[name].sortable = False
+            except KeyError:
+                pass
+
         self._configured = True
 
     # Client request configuration mergers
