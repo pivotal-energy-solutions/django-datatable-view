@@ -9,6 +9,7 @@ from .base import DatatableView
 
 from django import get_version
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import ForeignKey
 
@@ -22,16 +23,12 @@ class XEditableMixin(object):
 
     xeditable_fieldname_param = 'xeditable_field'  # GET parameter name used for choices ajax
 
-    def get(self, request, *args, **kwargs):
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, request, *args, **kwargs):
         """ Introduces the ``ensure_csrf_cookie`` decorator and handles xeditable choices ajax. """
         if request.GET.get(self.xeditable_fieldname_param):
             return self.get_ajax_xeditable_choices(request, *args, **kwargs)
-
-        # Doing this in the method body at runtime instead of at declaration-time helps prevent
-        # collisions of other subclasses also trying to decorate their own get() methods.
-        method = super(XEditableMixin, self).get
-        method = ensure_csrf_cookie(method)
-        return method(request, *args, **kwargs)
+        return super(XEditableMixin, self).dispatch(request, *args, **kwargs)
 
     def get_ajax_xeditable_choices(self, request, *args, **kwargs):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
