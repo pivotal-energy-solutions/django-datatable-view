@@ -8,6 +8,7 @@ dist
 build
 django_datatable_view.egg-info
 .tm_properties
+.python-version
 db.sqlite3
 appengine
 docs/_build
