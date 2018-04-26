@@ -7,7 +7,7 @@ import re
 import django
 from django.views.generic import View, TemplateView
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.defaultfilters import timesince
 
 import datatableview
