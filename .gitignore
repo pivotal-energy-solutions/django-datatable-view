@@ -12,3 +12,4 @@ django_datatable_view.egg-info
 db.sqlite3
 appengine
 docs/_build
+.idea
