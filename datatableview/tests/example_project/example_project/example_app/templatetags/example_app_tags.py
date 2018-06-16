@@ -7,7 +7,7 @@ register = template.Library()
 
 if get_version().split('.') < ['1', '5']:
     from django.template.defaulttags import url
-    from django.core.urlresolvers import reverse
+    from django.urls import reverse
 
     @register.simple_tag(name="url")
     def django_1_4_url_simple(url_name):
