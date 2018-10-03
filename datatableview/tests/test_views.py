@@ -3,9 +3,9 @@
 import json
 
 import django
-from django.core.urlresolvers import reverse
 
 import six
+from django.urls import reverse
 
 from .testcase import DatatableViewTestCase
 from .example_project.example_project.example_app import views
