@@ -27,11 +27,11 @@
     <h2>Database status</h2>
     {% if db_works %}
         <p class="alert alert-success">
-            Your database tables appear {{ migrate_command }}'d!  Check out the example pages at your leisure.
+            Your database tables appear migrated!  Check out the example pages at your leisure.
         </p>
     {% else %}
         <p class="alert alert-danger">
-            Make sure you've done a <code>{{ migrate_command }}</code> for the test project!  This view failed to
+            Make sure you've done a <code>migrate</code> for the test project!  This view failed to
             read from one of the example model tables!
         </p>
         <p>
@@ -42,7 +42,7 @@
         </p>
 <pre>$ cd django-datatable-view
 $ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py syncdb
-$ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py loaddata initial_data_modern
+$ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py loaddata initial_data
 $ datatableview{{ os_sep }}test{{ os_sep }}test_project{{ os_sep }}manage.py runserver
 </pre>
     {% endif %}

@@ -2,22 +2,13 @@
 
 import json
 
-import django
+from django.urls import reverse
 
 import six
-from django.urls import reverse
 
 from .testcase import DatatableViewTestCase
 from .example_project.example_project.example_app import views
 from .example_project.example_project.example_app import models
-
-
-if django.VERSION < (1, 7):
-    initial_data_fixture = 'initial_data_legacy.json'
-elif django.VERSION < (1, 10):
-    initial_data_fixture = 'initial_data_17.json'
-else:
-    initial_data_fixture = 'initial_data_modern.json'
 
 
 class FakeRequest(object):
@@ -30,7 +21,7 @@ class FakeRequest(object):
 class ViewsTests(DatatableViewTestCase):
     urls = 'datatableview.tests.example_project.example_project.example_app.urls'
 
-    fixtures = [initial_data_fixture]
+    fixtures = ['initial_data.json']
 
     def get_json_response(self, url):
         response = self.client.get(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')

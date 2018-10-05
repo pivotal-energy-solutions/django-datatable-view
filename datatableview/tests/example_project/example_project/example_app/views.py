@@ -4,7 +4,6 @@ from os import sep
 import os.path
 import re
 
-import django
 from django.urls import reverse
 from django.views.generic import View, TemplateView
 from django.template.defaultfilters import timesince
@@ -18,19 +17,13 @@ from datatableview import helpers
 from .models import Entry, Blog
 
 
-if django.VERSION < (1, 7):
-    initial_data_fixture = 'initial_data_legacy.json'
-else:
-    initial_data_fixture = 'initial_data_modern.json'
-
-
 class ResetView(View):
     """ Google App Engine view for reloading the database to a fresh state every 24 hours. """
     def get(self, request, *args, **kwargs):
         from django.core.management import call_command
         from django.http import HttpResponse
         call_command('syncdb')
-        call_command('loaddata', initial_data_fixture)
+        call_command('loaddata', 'initial_data.json')
         return HttpResponse("Done.")
 
 
@@ -47,11 +40,6 @@ class IndexView(TemplateView):
         except:
             db_works = False
         context['db_works'] = db_works
-
-        migrate_command = 'migrate'
-        if django.VERSION < (1, 7):
-            migrate_command = 'syncdb'
-        context['migrate_command'] = migrate_command
 
         path, working_directory = os.path.split(os.path.abspath('.'))
         context['working_directory'] = working_directory
