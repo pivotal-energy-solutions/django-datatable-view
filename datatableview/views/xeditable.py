@@ -4,7 +4,6 @@ import json
 import logging
 
 from ..forms import XEditableUpdateForm
-from ..compat import get_field
 from .base import DatatableView
 
 from django import get_version
@@ -58,8 +57,7 @@ class XEditableMixin(object):
             if field_name not in datatable.config['columns']:
                 return HttpResponseBadRequest("Invalid field name")
 
-        field, _ = get_field(self.model._meta, field_name)
-
+        field = self.model._meta.get_field(field_name)
         choices = self.get_field_choices(field, field_name)
         return HttpResponse(json.dumps(choices))
 

@@ -28,17 +28,6 @@ def python_2_unicode_compatible(klass):
     return klass
 
 
-USE_LEGACY_FIELD_API = django.VERSION < (1, 8)
-
-def get_field(opts, field_name):
-    """ Retrieves a field instance from a model opts object according to Django version. """
-    if not USE_LEGACY_FIELD_API:
-        field = opts.get_field(field_name)
-        direct = not field.auto_created
-    else:
-        field, _, direct, _ = opts.get_field_by_name(field_name)
-    return field, direct
-
 def escape_uri_path(path):
     if django_escape_uri_path:
         return django_escape_uri_path(path)

@@ -2,13 +2,10 @@
 
 import re
 
-from django.conf.urls import url
 try:
-    # Django < 1.10
-    from django.conf.urls import patterns
+    from django.urls import url
 except ImportError:
-    def patterns(prefix, *urls):
-        return list(urls)
+    from django.conf.urls import url
 
 from . import views
 
@@ -24,12 +21,11 @@ for attr in dir(views):
         name = name.replace("-datatable-view", "")
         urls.append(url(r'^{name}/$'.format(name=name), View.as_view(), name=name))
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name="index"),
     url(r'^reset/$', views.ResetView.as_view()),
     url(r'^migration-guide/$', views.MigrationGuideView.as_view(), name="migration-guide"),
     url(r'^column-formats/$', views.ValidColumnFormatsView.as_view(), name="column-formats"),
     url(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name="js-init"),
     url(r'^satellite/$', views.SatelliteDatatableView.as_view(), name="satellite"),
-    *urls
-)
+] + urls

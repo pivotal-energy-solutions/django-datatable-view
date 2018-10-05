@@ -56,8 +56,8 @@ def get_column_for_modelfield(model_field):
     # that as the real field.  It is possible that a ForeignKey points to a model with table
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
-    while model_field.rel:
-        model_field = model_field.rel.to._meta.pk
+    while model_field.remote_field:
+        model_field = model_field.remote_field.to._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
@@ -479,11 +479,13 @@ class DateColumn(Column):
 class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
     handles_field_classes = [models.DateTimeField]
-    lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
+    lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
 
 
-if django.VERSION >= (1, 6):
-    DateTimeColumn.lookup_types += ('hour', 'minute', 'second')
+class TimeColumn(DateColumn):
+    model_field_class = models.TimeField
+    handles_field_classes = [models.TimeField]
+    lookups_types = ('exact', 'in', 'range', 'hour', 'minute', 'second')
 
 
 class BooleanColumn(Column):
@@ -501,6 +503,7 @@ class BooleanColumn(Column):
         else:
             return None
         return super(BooleanColumn, self).prep_search_value(term, lookup_type)
+
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
