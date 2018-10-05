@@ -7,9 +7,9 @@ python:
   - "3.6"
   - "3.7"
 env:
-  - DJANGO=1.11
-  - DJANGO=2.0
-  - DJANGO=2.1
+  - DJANGO=1.11.17
+  - DJANGO=2.0.10
+  - DJANGO=2.1.3
 install:
   - pip install -q Django==$DJANGO
   # - pip install pep8
