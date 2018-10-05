@@ -20,3 +20,10 @@ install:
 #   - pyflakes datatableview
 script:
   - python datatableview/tests/example_project/manage.py test
+
+matrix:
+  exclude:
+  - python: 2.7
+    env: DJANGO=2.0.9
+  - python: 2.7
+    env: DJANGO=2.1.2
