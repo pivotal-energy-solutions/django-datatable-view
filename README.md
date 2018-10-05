@@ -22,50 +22,53 @@ Dependencies:
 * [Django](http://www.djangoproject.com/) >= 1.11
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 
-# Getting Started Most basic
+# Getting Started
 
-__Remember Django > 1.10 is not supported__
+Install the package:
 
-Install the package
+```bash
+pip install django-datatable-view
+```
 
-    pip install django-datatable-view
+Use the ``DatatableView`` like a Django ``ListView``:
 
-Add `datatableview` to  `INSTALLED_APPS`
+```python
+# settings.py
+INSTALLED_APPS = [
+    'datatableview',
+    # ...
+]
 
-    INSTALLED_APPS = (
-        ...
-        'datatableview',
-        ...
-    )
 
-Import the `DatatableView` in your views
+# views.py
+from datatableview.views import DatatableView
+class ZeroConfigurationDatatableView(DatatableView):
+    model = MyModel
+```
 
-    from datatableview.views import DatatableView
+Use the ``{{ datatable }}`` provided in the template context to render the table and initialize from server ajax:
 
-Create the view:
+```html
+<!-- myapp/mymodel_list.html -->
 
-    class ZeroConfigurationDatatableView(DatatableView):
-        model = Entry
+<!-- Load dependencies -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+		crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 
-Download `datatables` from [jquery datatables](https://datatables.net/download/index) and add them as static resources to your page
+<!-- Load js for initializing tables via their server-side options -->
+<script type="text/javascript" charset="utf8" src="{% static 'js/datatableview.js' %}"></script>
+<script type="text/javascript">
+    $(function(){
+        datatableview.initialize('.datatable');
+    });
+</script>
 
-    <link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}">
-    <script type="text/javascript" charset="utf8" src="{% static 'js/jquery.dataTables.min.js' %}"></script>
-    <script type="text/javascript" charset="utf8" src="{% static 'js/datatableview.js' %}"></script>
-    <script type="text/javascript" charset="utf8">
-        datatableview.auto_initialize = true;
-    </script>
-
-Then in your template add the `{{ datatable }}`:
-
-    <div class="row">
-        <div class="col-xs-12">
-            <div class="table-responsive">
-                {{ datatable }}
-            </div>
-        </div>
-    </div>
-
+<!-- Render the table skeleton, includes the .datatable class for the on-ready initializer. -->
+{{ datatable }}
+```
 
 # Features at a glance
 
