@@ -30,7 +30,7 @@ Install the package:
 pip install django-datatable-view
 ```
 
-Use the ``DatatableView`` like a Django ``ListView``:
+Add to ``INSTALLED_APPS`` (so default templates and js can be discovered), and use the ``DatatableView`` like a Django ``ListView``:
 
 ```python
 # settings.py
