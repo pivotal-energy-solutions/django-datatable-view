@@ -6,7 +6,7 @@ class ExampleModel(models.Model):
     name = models.CharField(max_length=15)
     value = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
-    related = models.ForeignKey('RelatedModel', blank=True, null=True)
+    related = models.ForeignKey('RelatedModel', blank=True, null=True, on_delete=models.CASCADE)
     relateds = models.ManyToManyField('RelatedM2MModel', blank=True)
 
     def __unicode__(self):
@@ -38,4 +38,4 @@ class RelatedM2MModel(models.Model):
 
 class ReverseRelatedModel(models.Model):
     name = models.CharField(max_length=15)
-    example = models.ForeignKey('ExampleModel')
+    example = models.ForeignKey('ExampleModel', on_delete=models.CASCADE)
