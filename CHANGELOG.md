@@ -2,6 +2,21 @@
 
 These logs are also available on GitHub: https://github.com/pivotal-energy-solutions/django-datatable-view/releases
 
+## 0.9.0
+This release officially supports Django 1.11, 2.0, and 2.1, and Python 2.7, 3.5, and 3.6.
+
+#### Added TimeColumn
+With support of the Django 2-series, we've added a missing TimeColumn to handle the built-in field.  In the future, we intend to look at new ways of handling built-in fields and column registration to minimize such issues.
+
+#### Notes about the future
+If you conform to the new Datatable object-style configuration system, having migrated away from legacy ``datatable_options`` dict syntax, you will be able to skip this release and move to 1.0 when it is made available.  0.9 and 1.0 will have parity at release, except that legacy syntaxes will be unrecognized in 1.0.
+
+Please see the 0.9 migration guide provided below if you need help converting to 1.0-style configurations ahead of actually making the jump to 1.0:
+
+https://django-datatable-view.readthedocs.io/en/latest/migration-guide.html
+
+Please note that as of the time of this release, we do not have a live public demo server to interact with.  The example project is included in the release, however, which contains additional short examples and code for the various ways to configure and display a table.  Brief instructions for running that example project are found in the README.
+
 ## 0.9.0-beta.6
 
 #### Streamlined ``datatableview.js`` API
