@@ -46,7 +46,7 @@ class HelpersTests(DatatableViewTestCase):
         # Verify ``key`` access to transition an instance to a related field
         secondary_helper = helper(key=lambda o: o.related)
         output = secondary_helper(instance)
-        self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
+        self.assertEqual(output, '<a href="#1">RelatedModel 1</a>')
 
         # Verify ``key`` access version of custom text
         output = secondary_helper(instance, text="Special text")

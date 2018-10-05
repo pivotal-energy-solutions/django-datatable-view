@@ -28,6 +28,12 @@ class ExampleModel(models.Model):
 class RelatedModel(models.Model):
     name = models.CharField(max_length=15)
 
+    def __unicode__(self):
+        return "RelatedModel %d" % (self.pk,)
+
+    def __str__(self):
+        return "RelatedModel %d" % (self.pk,)
+
     def get_absolute_url(self):
         return "#{pk}".format(pk=self.pk)
 
