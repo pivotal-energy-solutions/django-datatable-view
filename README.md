@@ -18,7 +18,8 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://d
 
 Dependencies:
 
-* [Django](http://www.djangoproject.com/) >= 1.8
+* Python 2.7/3.5 or later
+* [Django](http://www.djangoproject.com/) >= 1.11
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 
 # Features at a glance
@@ -47,21 +48,21 @@ Dependencies:
 # Documentation and Live Demos
 Read the module documentation at http://django-datatable-view.readthedocs.org.
 
-You can interact with live demos for the latest version at http://fixme.  For version 0.8, we will continue to keep the live demo site alive at http://django-datatable-view.appspot.com/
+A public live demo server is in the works.  For version 0.8, we will continue to keep the live demo site alive at http://django-datatable-view.appspot.com/  Please note that 0.8 does not reflect the current state or direction of the project.
 
-You can also run the live demos locally from the included example project, using a few setup steps.
+You can run the live demos locally from the included example project, using a few common setup steps.
 
 ```bash
 $ git clone https://github.com/pivotal-energy-solutions/django-datatable-view.git
 $ cd django-datatable-view
 $ mkvirtualenv datatableview
 (datatableview)$ pip install -r requirements.txt
-(datatableview)$ datatableview/tests/example_project/manage.py syncdb
-(datatableview)$ datatableview/tests/example_project/manage.py loaddata initial_data_modern
+(datatableview)$ datatableview/tests/example_project/manage.py migrate
+(datatableview)$ datatableview/tests/example_project/manage.py loaddata initial_data
 (datatableview)$ datatableview/tests/example_project/manage.py runserver
 ```
 
-The example project is configured to use a local sqlite3 database, and relies only on the ``django-datatable-view`` app itself.  In fact, it disables the normal ``django.contrib`` apps (except for ``django.contrib.staticfiles``, so that the dev server can serve the included statics) and disables all default middleware except for ``CommonMiddlware`` and ``CsrfViewMiddleware`` (the latter for supporting the x-editable demonstrations.)
+The example project is configured to use a local sqlite3 database, and relies on the ``django-datatable-view`` app itself, which is made available in the python path by simply running the project from the distributed directory root.
 
 
 ## Authors
