@@ -9,7 +9,7 @@
     }},
 
     { "model": "example_app.Author", "pk": 1, "fields": {
-        "name": "Tim Valenta",
+        "name": "Autumn Valenta",
         "email": "tvalenta@pivotalenergysolutions.com"
     }},
 
