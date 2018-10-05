@@ -3,6 +3,9 @@
 
 from setuptools import setup, find_packages
 
+with open('README.md') as f:
+    long_description = f.read()
+
 setup(name='django-datatable-view',
       version='0.9.0',
       description='This package is used in conjunction with the jQuery plugin '
@@ -10,6 +13,8 @@ setup(name='django-datatable-view',
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
                   'a class-based view, and a small collection of utilities for rendering'
                   ' table data from models.',
+      long_description=long_description,
+      long_description_content_type='text/markdown',
       author='Autumn Valenta',
       author_email='avalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
