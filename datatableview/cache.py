@@ -48,7 +48,7 @@ if CACHE_KEY_HASH:
     hash_slice = slice(None, CACHE_KEY_HASH_LENGTH)
 
 def _hash_key_component(s):
-    return hashlib.sha1(s).hexdigest()[hash_slice]
+    return hashlib.sha1(s.encode('utf-8')).hexdigest()[hash_slice]
 
 
 def get_cache_key(datatable_class, view=None, user=None, **kwargs):
