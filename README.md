@@ -21,6 +21,8 @@ Dependencies:
 * Python 2.7/3.5 or later
 * [Django](http://www.djangoproject.com/) >= 1.11
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
+* [jQuery](https://jquery.com/) >= 2
+* [dataTables.js](https://datatables.net/) >= 1.10
 
 # Getting Started
 
