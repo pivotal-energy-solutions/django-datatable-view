@@ -60,7 +60,7 @@ class HelpersTests(DatatableViewTestCase):
         # Verify ``attr`` as a getattr shorthand lookup
         secondary_helper = helper(attr='related')
         output = secondary_helper(instance)
-        self.assertEqual(output, '<a href="#1">RelatedModel object</a>')
+        self.assertEqual(output, '<a href="#1">RelatedModel 1</a>')
 
     def test_make_boolean_checkmark(self):
         """ Verifies that make_boolean_checkmark works. """
