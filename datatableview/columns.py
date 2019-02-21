@@ -479,13 +479,13 @@ class DateColumn(Column):
 class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
     handles_field_classes = [models.DateTimeField]
-    lookups_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
+    lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
 
 
 class TimeColumn(DateColumn):
     model_field_class = models.TimeField
     handles_field_classes = [models.TimeField]
-    lookups_types = ('exact', 'in', 'range', 'hour', 'minute', 'second')
+    lookup_types = ('exact', 'in', 'range', 'hour', 'minute', 'second')
 
 
 class BooleanColumn(Column):
