@@ -54,7 +54,9 @@ class XEditableMixin(object):
             datatable = self.get_datatable()
             if not hasattr(datatable, 'config'):
                 datatable.configure()
-            if field_name not in datatable.config['columns']:
+            if datatable.config['columns'] and field_name not in datatable.config['columns']:
+                return HttpResponseBadRequest("Invalid field name")
+            if datatable.config['exclude'] and field_name in datatable.config['exclude']:
                 return HttpResponseBadRequest("Invalid field name")
 
         field = self.model._meta.get_field(field_name)
