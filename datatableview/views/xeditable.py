@@ -142,7 +142,7 @@ class XEditableMixin(object):
             names = ['id', 'text']
         else:
             names = ['value', 'text']
-        choices_getter = getattr(self, 'get_field_%s_choices', None)
+        choices_getter = getattr(self, 'get_field_{}_choices'.format(field_name), None)
         if choices_getter is None:
             if isinstance(field, ForeignKey):
                 choices_getter = self._get_foreignkey_choices
