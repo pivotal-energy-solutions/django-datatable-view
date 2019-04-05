@@ -41,8 +41,8 @@ def pretty_name(name):
 def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
                       unsortable=None, hidden=None):
     field_list = []
-    opts = model._meta
-    for f in sorted(opts.fields):
+    metas_fields = model._meta.many_to_many + model._meta.fields 
+    for f in sorted(metas_fields):
         if fields is not None and f.name not in fields:
             continue
         if exclude and f.name in exclude:
