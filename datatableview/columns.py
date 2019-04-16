@@ -360,7 +360,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                     else:
                         choices = modelfield.get_flatchoices()
                     for db_value, label in choices:
-                        if term.lower() in label.lower():
+                        if term.lower() in str(label).lower():
                             k = '%s__exact' % (sub_source,)
                             column_queries.append(Q(**{k: str(db_value)}))
 
