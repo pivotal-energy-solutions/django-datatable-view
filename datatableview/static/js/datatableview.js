@@ -1,5 +1,8 @@
 /* For datatable view */
 
+//required to make Django accept Jquery POST
+//jQuery.ajaxSettings.traditional = true
+
 var datatableview = (function(){
     var defaultDataTableOptions = {
         "serverSide": true,
@@ -124,7 +127,66 @@ var datatableview = (function(){
             }
         };
         return function(nRow, mData, iDisplayIndex) {
+            options_m2m = {
+            };   
+            //options['success'] = function(response, newValue){
+            //        pk = this.dataset.pk
+            //        services = $('td a[data-pk="' + pk + '"][data-name="services"]')[0].innerText.split(',')
+            //        if ( this.dataset.name === 'services') {
+            //            services = newvalue;
+            //        }
+            //        name_field = $('td a[data-pk="' + pk + '"][data-name="name"]');
+            //        env = $('td a[data-pk="' + pk + '"][data-name="env"]').editable('getValue').env;
+            //        type_nsx = $('td a[data-pk="' + pk + '"][data-name="type_nsx"]').editable('getValue').type_nsx[0];
+            //        if (services.length === 1 ) {
+            //            service = services[0];
+            //            new_name =  `SVCG.${type_nsx}.${env}.${service}`;
+            //            name_field.editable('setValue',new_name);
+            //        }
+            //        //return newValue
+            //};
             $('td a[data-xeditable]', nRow).editable(options);
+            // because of this bug, we have to dot this way :  https://github.com/vitalets/x-editable/issues/482
+            $('td a[data-xeditable-m2m]', nRow).each( function() {
+                tmpoptions = $.extend({},options);
+                $(this).editable({
+                ajaxOptions : options.ajaxOptions,
+                select2: {
+                    minimumInputLength: 3, //TODO mettre ça en config
+                    sourceCache: true,
+                    multiple : true,
+                    tokenSeparators: [","],
+                    initSelection: function (element, callback) {
+                        var data = [];
+
+                        function splitVal(string, separator) {
+                            var val, i, l;
+                            if (string === null || string.length < 1) return [];
+                            val = string.split(separator);
+                            for (i = 0, l = val.length; i < l; i = i + 1) val[i] = $.trim(val[i]);
+                            return val;
+                        }
+                        texts =  element.parentsUntil("tr").last().text().split(',');
+
+                        $(splitVal(element.val(), ",")).each(function (i) {
+                            data.push({
+                                id: this,
+                                text: texts[i]
+                            });
+                        });
+
+                        callback(data);
+                    },
+
+
+                }
+
+                });
+            })
+            
+            //$('td a[data-xeditable="xeditable-m2m"]', nRow).editable(options);
+            //$.extend(options,options_m2m);
+            //$('td a[data-xeditable]', nRow).editable(options);
             return nRow;
         }
     }

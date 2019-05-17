@@ -69,6 +69,7 @@ class XEditableMixin(object):
         """
         self.object_list = None
         form = self.get_xeditable_form(self.get_xeditable_form_class())
+        #print(form.data)
         if form.is_valid():
             obj = self.get_update_object(form)
             if obj is None:
@@ -96,6 +97,13 @@ class XEditableMixin(object):
             'model': self.get_queryset().model,
         }
         if self.request.method in ('POST', 'PUT'):
+            #because of the way jquery POST, we have to modify the Querydict 
+            if 'value[]' in self.request.POST :
+                self.request.POST._mutable = True
+                #self.request.POST['value'] = self.request.POST.getlist('value[]')
+                self.request.POST.setlist('value', self.request.POST.getlist('value[]'))
+                self.request.POST.pop('value[]')
+                self.request.POST._mutable = False
             kwargs.update({
                 'data': self.request.POST,
             })
@@ -122,11 +130,20 @@ class XEditableMixin(object):
         """ Saves the new value to the target object. """
         field_name = form.cleaned_data['name']
         value = form.cleaned_data['value']
-        setattr(obj, field_name, value)
+        if obj._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
+            exec('obj.{0}.set(value)'.format(field_name))
+        else :
+            setattr(obj, field_name, value)
         save_kwargs = {}
         if CAN_UPDATE_FIELDS:
             save_kwargs['update_fields'] = [field_name]
-        obj.save(**save_kwargs)
+        #saving a m2m by specifiend the field will result in 
+        #"ValueError: The following fields do not exist in this model or are m2m field"
+        # so for now we save the whole objet
+        if obj._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
+            obj.save()
+        else :
+            obj.save(**save_kwargs)
 
         data = json.dumps({
             'status': 'success',
@@ -142,7 +159,7 @@ class XEditableMixin(object):
             names = ['id', 'text']
         else:
             names = ['value', 'text']
-        choices_getter = getattr(self, 'get_field_{}_choices'.format(field_name), None)
+        choices_getter = getattr(self, 'get_field_{0}_choices'.format(field_name), None)
         if choices_getter is None:
             if isinstance(field, ForeignKey):
                 choices_getter = self._get_foreignkey_choices

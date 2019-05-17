@@ -5,6 +5,7 @@ from django.forms import ValidationError
 from django.forms.models import fields_for_model
 
 
+
 class XEditableUpdateForm(forms.Form):
     """
     Represents only a single field of a given model instance.
@@ -23,7 +24,6 @@ class XEditableUpdateForm(forms.Form):
 
     def __init__(self, model, data, *args, **kwargs):
         super(XEditableUpdateForm, self).__init__(data, *args, **kwargs)
-
         self.model = model
         self.set_value_field(model, data.get('name'))
 
@@ -32,10 +32,18 @@ class XEditableUpdateForm(forms.Form):
         Adds a ``value`` field to this form that uses the appropriate formfield for the named target
         field.  This will help to ensure that the value is correctly validated.
         """
+
         fields = fields_for_model(model, fields=[field_name])
+        #we add the validators
+        for field in self.model._meta.fields :
+            if field.name == field_name :
+                for validator in field.validators:
+                    if validator not in fields[field_name].validators :
+                        fields[field_name].validators.append(validator)
         self.fields['value'] = fields[field_name]
 
     def clean_name(self):
+
         """ Validates that the ``name`` field corresponds to a field on the model. """
         field_name = self.cleaned_data['name']
         # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
@@ -46,3 +54,12 @@ class XEditableUpdateForm(forms.Form):
         if field_name not in field_names:
             raise ValidationError("%r is not a valid field." % field_name)
         return field_name
+    #def clean(self):
+    #    import ipdb; ipdb.set_trace()
+    def clean_value(self):
+        import ipdb; ipdb.set_trace()
+    #    field_value = self.cleaned_data['value']
+    #    #if isinstance(self.fields['value'], ModelMultipleChoiceField) :
+    #    #    import ipdb; ipdb.set_trace()
+    #    return field_value
+

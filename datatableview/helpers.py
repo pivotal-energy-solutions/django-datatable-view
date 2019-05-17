@@ -314,6 +314,15 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     data = kwargs.get('default_value', instance)
     rich_data = kwargs.get('rich_value', data)
 
+    field_name = kwargs['field_name']  # sent as a default kwarg to helpers
+
+    if kwargs['datatable']._meta.editable_cond :
+        if not eval(kwargs['datatable']._meta.editable_cond):
+            if instance._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
+                return data
+            else :
+                return rich_data
+
     # Compile values to appear as "data-*" attributes on the anchor tag
     default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
     valid_attr_names = set(default_attr_names + list(extra_attrs))
@@ -324,11 +333,13 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                 k = k[5:]
             attrs['data-{0}'.format(k)] = v
 
-    attrs['data-xeditable'] = "xeditable"
+
+    if instance._meta.get_field(field_name).get_internal_type() == 'ManyToManyField' and attrs.get('data-type',None) == 'select2' :
+        attrs['data-xeditable-m2m'] = "xeditable"
+    else :
+        attrs['data-xeditable'] = "xeditable"
 
     # Assign default values where they are not provided
-
-    field_name = kwargs['field_name']  # sent as a default kwarg to helpers
     if isinstance(field_name, (tuple, list)):
         # Legacy syntax
         field_name = field_name[1]
@@ -369,23 +380,27 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             else:
                 field = resolve_orm_path(instance, field_name)
 
+
             if field.choices:
                 field_type = 'select'
             else:
                 field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), 'text')
+
         else:
             field_type = 'text'
         attrs['data-type'] = field_type
+
 
     # type=select elements need to fetch their valid choice options from an AJAX endpoint.
     # Register the view for this lookup.
     if attrs['data-type'] in ('select', 'select2'):
         if 'data-source' not in attrs:
             if 'view' in kwargs:
-                attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
+                attrs['data-source'] = "{url}?{field_param}={fieldname}&pk={pk}".format(**{
                     'url': kwargs['view'].request.path,
                     'field_param': kwargs['view'].xeditable_fieldname_param,
                     'fieldname': field_name,
+                    'pk': instance.pk,
                 })
                 if attrs['data-type'] == 'select2':
                     attrs['data-source'] += '&select2=true'

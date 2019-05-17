@@ -10,7 +10,7 @@ except ImportError:
 
 import django
 from django.db import models
-from django.db.models import Model, Manager, Q
+from django.db.models import Model, Manager, Q, QuerySet
 from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
@@ -71,6 +71,8 @@ def get_attribute_value(obj, bit):
         if callable(value) and not isinstance(value, Manager):
             if not hasattr(value, 'alters_data') or value.alters_data is not True:
                 value = value()
+        elif callable(value) and  isinstance(value, Manager):
+            value = value.all()
     return value
 
 class ColumnMetaclass(type):
@@ -183,12 +185,18 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
             for value in result:
                 if isinstance(value, Model):
-                    value = (value.pk, value)
+                    value = (value.pk, str(value))
+                elif isinstance(value, QuerySet):
+                    value = (
+                             ', '.join([ str(x) for x in value]), 
+                             ','.join([ str(x.pk) for x in value]), 
+                             )
 
                 if value is not None:
                     if not isinstance(value, (tuple, list)):
                         value = (value, value)
                     values.append(value)
+
 
         if len(values) == 1:
             value = values[0]
@@ -428,6 +436,10 @@ class TextColumn(Column):
         handles_field_classes.append(models.UUIDField)
     except AttributeError:
         pass
+    try:
+        handles_field_classes.append(models.GenericIPAddressField)
+    except AttributeError:
+        pass
 
     lookup_types = ('icontains', 'in')
 
@@ -510,6 +522,10 @@ class IntegerColumn(Column):
     handles_field_classes = [models.IntegerField, models.AutoField]
     lookup_types = ('exact', 'in')
 
+class ManyColumn(Column):
+    model_field_class = models.ManyToManyField
+    handles_field_classes = [models.ManyToManyField]
+    lookup_types = ('exact', 'in')
 
 class FloatColumn(Column):
     model_field_class = models.FloatField
