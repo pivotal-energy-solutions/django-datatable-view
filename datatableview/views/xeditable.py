@@ -130,9 +130,7 @@ class XEditableMixin(object):
         """ Saves the new value to the target object. """
         field_name = form.cleaned_data['name']
         value = form.cleaned_data['value']
-        if obj._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
-            exec('obj.{0}.set(value)'.format(field_name))
-        else :
+        if obj._meta.get_field(field_name).get_internal_type() != 'ManyToManyField':
             setattr(obj, field_name, value)
         save_kwargs = {}
         if CAN_UPDATE_FIELDS:
@@ -141,7 +139,8 @@ class XEditableMixin(object):
         #"ValueError: The following fields do not exist in this model or are m2m field"
         # so for now we save the whole objet
         if obj._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
-            obj.save()
+            value = value.distinct()
+            exec('obj.{0}.set(value,clear=True)'.format(field_name))
         else :
             obj.save(**save_kwargs)
 

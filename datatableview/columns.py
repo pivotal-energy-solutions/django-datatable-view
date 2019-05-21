@@ -57,7 +57,10 @@ def get_column_for_modelfield(model_field):
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
     while model_field.related_model:
-        model_field = model_field.related_model._meta.pk
+        try :
+            model_field = model_field.related_model._meta.get_field('name')
+        except FieldDoesNotExist:
+            model_field = model_field.related_model._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
@@ -383,6 +386,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                         # Skip attempts to build multi-component searches if we only have one term
                         continue
 
+                    if sub_source[-1] == 's' or sub_source == 'env' :
+                        sub_source += '__name'
+
                     k = '%s__%s' % (sub_source, lookup_type)
                     column_queries.append(Q(**{k: coerced_term}))
 
@@ -516,16 +522,17 @@ class BooleanColumn(Column):
             return None
         return super(BooleanColumn, self).prep_search_value(term, lookup_type)
 
+class ManyColumn(Column):
+    model_field_class = models.ManyToManyField
+    handles_field_classes = [models.ManyToManyField]
+    #lookup_types = ('exact', 'in')
+    lookup_types = ('name__icontains')
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
     handles_field_classes = [models.IntegerField, models.AutoField]
     lookup_types = ('exact', 'in')
 
-class ManyColumn(Column):
-    model_field_class = models.ManyToManyField
-    handles_field_classes = [models.ManyToManyField]
-    lookup_types = ('exact', 'in')
 
 class FloatColumn(Column):
     model_field_class = models.FloatField

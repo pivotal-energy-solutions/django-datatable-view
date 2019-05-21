@@ -3816,9 +3816,11 @@ $(function(){
                // get the old data to add it to data
                var keys = $(element)[0].dataset.value.split(',');
                var texts =  $(element)[0].text.split(',');
+               var ids = data.map(x => x['id']);
                for(var i = 0; i<keys.length; i++) {
-                   if (! (keys[i] in data ) ) {
+                   if (! (keys[i] in ids ) ) {
                      data.push({ "id" : keys[i] , 'text' : texts[i] }); 
+                     ids.push(keys[i]);
                    }
              
                }
