@@ -99,14 +99,16 @@ class XEditableMixin(object):
         if self.request.method in ('POST', 'PUT'):
             #because of the way jquery POST, we have to modify the Querydict 
             if 'value[]' in self.request.POST :
-                self.request.POST._mutable = True
-                #self.request.POST['value'] = self.request.POST.getlist('value[]')
+                self.request.POST = self.request.POST.copy()
                 self.request.POST.setlist('value', self.request.POST.getlist('value[]'))
                 self.request.POST.pop('value[]')
-                self.request.POST._mutable = False
+            #when we post an empty list on many to many
+            if 'value' not in self.request.POST :
+                self.request.POST = self.request.POST.copy()
+                self.request.POST.setlist('value',[])
             kwargs.update({
                 'data': self.request.POST,
-            })
+            }) 
         return kwargs
 
     def get_xeditable_form(self, form_class):

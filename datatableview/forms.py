@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from django import forms
-from django.forms import ValidationError
+from django.forms import ValidationError, ModelMultipleChoiceField
 from django.forms.models import fields_for_model
 
 
@@ -42,6 +42,8 @@ class XEditableUpdateForm(forms.Form):
                         fields[field_name].validators.append(validator)
         self.fields['value'] = fields[field_name]
 
+        if isinstance(self.fields['value'], ModelMultipleChoiceField) :
+            self.fields['value'].required = False
     def clean_name(self):
 
         """ Validates that the ``name`` field corresponds to a field on the model. """
@@ -54,12 +56,4 @@ class XEditableUpdateForm(forms.Form):
         if field_name not in field_names:
             raise ValidationError("%r is not a valid field." % field_name)
         return field_name
-    #def clean(self):
-    #    import ipdb; ipdb.set_trace()
-    def clean_value(self):
-        import ipdb; ipdb.set_trace()
-    #    field_value = self.cleaned_data['value']
-    #    #if isinstance(self.fields['value'], ModelMultipleChoiceField) :
-    #    #    import ipdb; ipdb.set_trace()
-    #    return field_value
 
