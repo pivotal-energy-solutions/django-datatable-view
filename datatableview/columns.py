@@ -386,7 +386,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                         # Skip attempts to build multi-component searches if we only have one term
                         continue
 
-                    if sub_source[-1] == 's' or sub_source == 'env' :
+                    if modelfield.get_internal_type() in ['ManyToManyField', 'ForeignKey' ] :
                         sub_source += '__name'
 
                     k = '%s__%s' % (sub_source, lookup_type)
