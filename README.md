@@ -64,7 +64,7 @@ Use the ``{{ datatable }}`` provided in the template context to render the table
 <script type="text/javascript" charset="utf8" src="{% static 'js/datatableview.js' %}"></script>
 <script type="text/javascript">
     $(function(){
-        datatableview.initialize('.datatable');
+        datatableview.initialize($('.datatable'));
     });
 </script>
 
