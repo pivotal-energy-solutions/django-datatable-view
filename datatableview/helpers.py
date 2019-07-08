@@ -321,7 +321,8 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
             if instance._meta.get_field(field_name).get_internal_type() == 'ManyToManyField':
                 return data
             else :
-                return rich_data
+                return  getattr(instance, 'get_{}_display'.format(field_name), lambda: data)()
+                #return rich_data
 
     # Compile values to appear as "data-*" attributes on the anchor tag
     default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
