@@ -354,7 +354,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
             for sub_source in self.expand_source(source):
                 modelfield = resolve_orm_path(model, sub_source)
-                if modelfield.choices:
+                if hasattr(modelfield, 'choices') and modelfield.choices:
                     if hasattr(modelfield, 'get_choices'):
                         choices = modelfield.get_choices()
                     else:
