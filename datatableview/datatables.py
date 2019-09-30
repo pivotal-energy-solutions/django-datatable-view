@@ -26,7 +26,7 @@ import six
 
 from .exceptions import ColumnError, SkipRecord
 from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
-                      FloatColumn, DisplayColumn, CompoundColumn, get_column_for_modelfield)
+                      FloatColumn, DisplayColumn, CompoundColumn, ManyColumn,  get_column_for_modelfield)
 from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
                     resolve_orm_path)
 from .cache import DEFAULT_CACHE_TYPE, cache_types, get_cache_key, cache_data, get_cached_data
@@ -41,14 +41,16 @@ def pretty_name(name):
 def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
                       unsortable=None, hidden=None):
     field_list = []
-    opts = model._meta
-    for f in sorted(opts.fields):
+    metas_fields = model._meta.many_to_many + model._meta.fields 
+    for f in sorted(metas_fields):
         if fields is not None and f.name not in fields:
             continue
         if exclude and f.name in exclude:
             continue
 
         column_class = get_column_for_modelfield(f)
+        #if f.name == 'services' :
+        #    column_class = ManyColumn
         if column_class is None:
             raise ColumnError("Unhandled model field %r." % (f,))
         if labels and f.name in labels:
@@ -134,6 +136,7 @@ class DatatableOptions(object):
         self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
+        self.editable_cond = getattr(options, 'editable_cond', False)
 
         # Non-mutable; server behavior customization
         self.cache_type = getattr(options, 'cache_type', cache_types.NONE)

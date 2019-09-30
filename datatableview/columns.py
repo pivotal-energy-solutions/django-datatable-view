@@ -10,7 +10,7 @@ except ImportError:
 
 import django
 from django.db import models
-from django.db.models import Model, Manager, Q
+from django.db.models import Model, Manager, Q, QuerySet
 from django.db.models.fields import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
@@ -57,7 +57,10 @@ def get_column_for_modelfield(model_field):
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
     while model_field.related_model:
-        model_field = model_field.related_model._meta.pk
+        try :
+            model_field = model_field.related_model._meta.get_field('name')
+        except FieldDoesNotExist:
+            model_field = model_field.related_model._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
@@ -71,6 +74,8 @@ def get_attribute_value(obj, bit):
         if callable(value) and not isinstance(value, Manager):
             if not hasattr(value, 'alters_data') or value.alters_data is not True:
                 value = value()
+        elif callable(value) and  isinstance(value, Manager):
+            value = value.all()
     return value
 
 class ColumnMetaclass(type):
@@ -183,12 +188,18 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
             for value in result:
                 if isinstance(value, Model):
-                    value = (value.pk, value)
+                    value = (value.pk, str(value))
+                elif isinstance(value, QuerySet):
+                    value = (
+                             ', '.join([ str(x) for x in value]), 
+                             ','.join([ str(x.pk) for x in value]), 
+                             )
 
                 if value is not None:
                     if not isinstance(value, (tuple, list)):
                         value = (value, value)
                     values.append(value)
+
 
         if len(values) == 1:
             value = values[0]
@@ -360,7 +371,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                     else:
                         choices = modelfield.get_flatchoices()
                     for db_value, label in choices:
-                        if term.lower() in label.lower():
+                        if term.lower() in str(label).lower():
                             k = '%s__exact' % (sub_source,)
                             column_queries.append(Q(**{k: str(db_value)}))
 
@@ -374,6 +385,9 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                     elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
                         # Skip attempts to build multi-component searches if we only have one term
                         continue
+
+                    if modelfield.get_internal_type() in ['ManyToManyField', 'ForeignKey' ] :
+                        sub_source += '__name'
 
                     k = '%s__%s' % (sub_source, lookup_type)
                     column_queries.append(Q(**{k: coerced_term}))
@@ -421,11 +435,15 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField]
+    handles_field_classes = [models.CharField, models.TextField, models.FileField, models.GenericIPAddressField]
 
     # Add UUIDField if present in this version of Django
     try:
         handles_field_classes.append(models.UUIDField)
+    except AttributeError:
+        pass
+    try:
+        handles_field_classes.append(models.GenericIPAddressField)
     except AttributeError:
         pass
 
@@ -504,6 +522,11 @@ class BooleanColumn(Column):
             return None
         return super(BooleanColumn, self).prep_search_value(term, lookup_type)
 
+class ManyColumn(Column):
+    model_field_class = models.ManyToManyField
+    handles_field_classes = [models.ManyToManyField]
+    #lookup_types = ('exact', 'in')
+    lookup_types = ('name__icontains')
 
 class IntegerColumn(Column):
     model_field_class = models.IntegerField

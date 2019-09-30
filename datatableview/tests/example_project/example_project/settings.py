@@ -48,7 +48,7 @@ TEMPLATES = [
     },
 ]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['10.48.161.180', '10.254.36.99']
 
 
 # Application definition

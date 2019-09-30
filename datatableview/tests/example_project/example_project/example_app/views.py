@@ -3,6 +3,8 @@
 from os import sep
 import os.path
 import re
+import django
+
 
 from django.urls import reverse
 from django.views.generic import View, TemplateView
