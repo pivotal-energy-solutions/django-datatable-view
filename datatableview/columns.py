@@ -588,3 +588,29 @@ class DisplayColumn(Column):
 
     model_field_class = None
     lookup_types = ()
+
+
+class CheckBoxSelectColumn(DisplayColumn):
+    """
+    Renders a column of checkboxes with Select all items checkbox on the top
+    Example here: https://datatables.net/extensions/select/examples/initialisation/checkbox.html
+    """
+
+    def __init__(self, label='Select all', show_select_checkbox=True, *args, **kwargs):
+        if show_select_checkbox:
+            label += """
+                <input
+                data-id='all'
+                type='checkbox'
+                onchange="
+                if ($(this).is(':checked')) {
+                $(this).closest('table').DataTable().rows().select();
+                } else {
+                $(this).closest('table').DataTable().rows().deselect();
+                }
+                ">
+                """
+        super(CheckBoxSelectColumn, self).__init__(label=label, *args, **kwargs)
+
+    def value(self, obj, **kwargs):
+        return ''

@@ -2,7 +2,7 @@
 
 from .datatables import Datatable, ValuesDatatable, LegacyDatatable
 from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
-                      FloatColumn, DisplayColumn, CompoundColumn)
+                      FloatColumn, DisplayColumn, CompoundColumn, CheckBoxSelectColumn)
 from .exceptions import SkipRecord
 
 __name__ = 'datatableview'

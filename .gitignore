@@ -13,3 +13,4 @@ db.sqlite3
 appengine
 docs/_build
 .idea
+.venv/

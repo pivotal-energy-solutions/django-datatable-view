@@ -3,7 +3,7 @@
 from os import sep
 import os.path
 import re
-
+import django
 from django.urls import reverse
 from django.views.generic import View, TemplateView
 from django.template.defaultfilters import timesince
@@ -1335,6 +1335,28 @@ class MultiFilterDatatableView(DemoMixin, DatatableView):
         class Meta:
             columns = ['headline', 'blog']
             footer = True
+
+    implementation = u"""dummy"""  # don't hide the block, overridden in template
+
+
+class SelectRowDatatableView(DemoMixin, DatatableView):
+    """
+    The official <a href="https://datatables.net/extensions/select/">``Select``
+    extension</a> is easy to add to any existing table.  To use it, make sure you include the
+    appropriate javascript source file, and add to config following options
+    ```{
+        style: 'multi',
+        selector: 'td:first-child'
+    }```
+    """
+    model = Entry
+
+    class datatable_class(Datatable):
+        select_data = columns.CheckBoxSelectColumn()
+        blog = columns.TextColumn("Blog", sources=['blog__name'])
+
+        class Meta:
+            columns = ['select_data', 'headline', 'blog']
 
     implementation = u"""dummy"""  # don't hide the block, overridden in template
 
