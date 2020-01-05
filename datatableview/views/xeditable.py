@@ -7,6 +7,7 @@ from ..forms import XEditableUpdateForm
 from .base import DatatableView
 
 from django import get_version
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -120,6 +121,18 @@ class XEditableMixin(object):
         """ Saves the new value to the target object. """
         field_name = form.cleaned_data['name']
         value = form.cleaned_data['value']
+
+        for validator in obj._meta.get_field(field_name).validators:
+            try:
+                validator(value)
+            except ValidationError as e:
+                data = json.dumps({
+                    'status': 'error',
+                    'message': "Invalid request",
+                    'form_errors': {field_name: [e.message]},
+                })
+                return HttpResponse(data, content_type="application/json", status=400)
+
         setattr(obj, field_name, value)
         save_kwargs = {}
         if CAN_UPDATE_FIELDS:
