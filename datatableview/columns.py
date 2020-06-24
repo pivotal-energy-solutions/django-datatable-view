@@ -496,6 +496,11 @@ class BooleanColumn(Column):
     def prep_search_value(self, term, lookup_type):
         try:
             term = term.lower()
+        except AttributeError:
+            pass
+
+        # In some cases self.label is None
+        try:
             label = self.label.lower()
         except AttributeError:
             label = ""
