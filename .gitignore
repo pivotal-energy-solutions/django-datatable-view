@@ -14,3 +14,4 @@ appengine
 docs/_build
 .idea
 .venv/
+venv
