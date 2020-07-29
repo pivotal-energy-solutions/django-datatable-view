@@ -78,7 +78,7 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
             view_id = _hash_key_component(view_id)
         cache_key += '__view_%s' % (view_id,)
 
-    if user and user.is_authenticated():
+    if user and user.is_authenticated:
         cache_key += '__user_%s' % (user.pk,)
 
     # All other kwargs are used directly to create a hashed suffix
