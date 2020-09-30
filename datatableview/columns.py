@@ -421,7 +421,8 @@ class Column(six.with_metaclass(ColumnMetaclass)):
 
 class TextColumn(Column):
     model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField]
+    handles_field_classes = [models.CharField, models.TextField, models.FileField,
+                             models.GenericIPAddressField]
 
     # Add UUIDField if present in this version of Django
     try:

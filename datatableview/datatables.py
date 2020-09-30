@@ -681,7 +681,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         for term in self.config['search']:
             # NOTE: Allow global terms to overwrite identical queries that were single-column
             searches[term] = self.columns.copy()
-            searches[term].update({None: column for column in self.config['search_fields']})
+            searches[term].update({column.sources[0]: column for column in self.config['search_fields']})
 
         for term in searches.keys():
             term_queries = []
