@@ -48,6 +48,15 @@ def register_simple_modelfield(model_field):
     column_class = get_column_for_modelfield(model_field)
     COLUMN_CLASSES.insert(0, (column_class, [model_field]))
 
+def get_rel_to(model_field):
+    # as per https://gist.github.com/ofalk/404f9f637b7b4520e26dcdd520dbe248
+    rel_to = None
+    if hasattr(model_field, 'rel'):
+        rel_to = model_field.rel.to if model_field.rel else None
+    elif hasattr(model_field, 'remote_field'):
+        rel_to = model_field.remote_field.model if model_field.remote_field else None
+    return rel_to
+
 def get_column_for_modelfield(model_field):
     """ Return the built-in Column class for a model field class. """
 
@@ -55,14 +64,11 @@ def get_column_for_modelfield(model_field):
     # that as the real field.  It is possible that a ForeignKey points to a model with table
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
+    rel_to = get_rel_to(model_field)
     while model_field.rel:
-        rel_to = None
-        if hasattr(model_field, 'rel'):
-            rel_to = model_field.rel.to if model_field.rel else None
-        elif hasattr(model_field, 'remote_field'):
-            rel_to = model_field.remote_field.model if model_field.remote_field else None
-
         model_field = rel_to._meta.pk
+        rel_to = get_rel_to(model_field)
+
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
