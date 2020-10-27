@@ -6,7 +6,7 @@ except ImportError:
     pass
 
 from django.db import models
-from django.core.exceptions FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import smart_split
 try:
     from django.db.models.related import RelatedObject
