@@ -56,7 +56,13 @@ def get_column_for_modelfield(model_field):
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
     while model_field.rel:
-        model_field = model_field.rel.to._meta.pk
+        rel_to = None
+        if hasattr(model_field, 'rel'):
+            rel_to = model_field.rel.to if model_field.rel else None
+        elif hasattr(model_field, 'remote_field'):
+            rel_to = model_field.remote_field.model if model_field.remote_field else None
+
+        model_field = rel_to._meta.pk
     for ColumnClass, modelfield_classes in COLUMN_CLASSES:
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
