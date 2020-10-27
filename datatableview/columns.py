@@ -57,7 +57,7 @@ def get_column_for_modelfield(model_field):
     # inheritance, however, so we need to traverse the internal OneToOneField as well, so this will
     # climb the 'pk' field chain until we have something real.
     rel_to = get_rel_to(model_field)
-    while model_field.rel:
+    while rel_to:
         model_field = rel_to._meta.pk
         rel_to = get_rel_to(model_field)
 
