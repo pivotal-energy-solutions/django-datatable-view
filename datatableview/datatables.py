@@ -9,7 +9,7 @@ try:
 except ImportError:
     pass
 
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.db.models import QuerySet
 try:
