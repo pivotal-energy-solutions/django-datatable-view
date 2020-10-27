@@ -11,8 +11,7 @@ except ImportError:
 import django
 from django.db import models
 from django.db.models import Model, Manager, Q
-from django.db.models.fields import FieldDoesNotExist
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 try:

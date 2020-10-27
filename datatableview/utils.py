@@ -6,7 +6,7 @@ except ImportError:
     pass
 
 from django.db import models
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions FieldDoesNotExist
 from django.utils.text import smart_split
 try:
     from django.db.models.related import RelatedObject
@@ -63,7 +63,7 @@ XEDITABLE_FIELD_TYPES = {
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
-    path ends up referring to a bad field name, ``django.db.models.fields.FieldDoesNotExist`` will
+    path ends up referring to a bad field name, ``django.core.exceptions.FieldDoesNotExist`` will
     be raised.
 
     """
