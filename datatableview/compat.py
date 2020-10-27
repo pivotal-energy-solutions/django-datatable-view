@@ -43,3 +43,13 @@ def escape_uri_path(path):
     if django_escape_uri_path:
         return django_escape_uri_path(path)
     return escape(path)
+
+def get_rel_to(model_field):
+    # as per https://gist.github.com/ofalk/404f9f637b7b4520e26dcdd520dbe248
+    rel_to = None
+    if hasattr(model_field, 'rel'):
+        rel_to = model_field.rel.to if model_field.rel else None
+    elif hasattr(model_field, 'remote_field'):
+        rel_to = model_field.remote_field.model if model_field.remote_field else None
+    return rel_to
+

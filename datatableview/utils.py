@@ -15,7 +15,7 @@ except ImportError:
     from django.db.models.fields.related import RelatedField
     USE_RELATED_OBJECT = False
 
-from .compat import get_field
+from .compat import get_field, get_rel_to
 
 MINIMUM_PAGE_LENGTH = 1
 DEFAULT_EMPTY_VALUE = ""
@@ -96,11 +96,12 @@ def get_model_at_related_field(model, attr):
             # -- Django <1.8 mode
             return field.model
 
-    if hasattr(field, 'rel') and field.rel:  # Forward/m2m relationship
-        return field.rel.to
+    rel_to = get_rel_to(field)
+    if rel_to:  # Forward/m2m relationship
+        return rel_to
 
     if hasattr(field, 'field'):  # Forward GenericForeignKey in Django 1.6+
-        return field.field.rel.to
+        return get_rel_to(field.field)
 
     raise ValueError("{0}.{1} ({2}) is not a relationship field.".format(model.__name__, attr,
                                                                          field.__class__.__name__))
