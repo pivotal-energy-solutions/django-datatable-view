@@ -7,7 +7,7 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(name='django-datatable-view',
-      version='0.9.0',
+      version='0.9.1',
       description='This package is used in conjunction with the jQuery plugin '
                   '(http://http://datatables.net/), and supports state-saving detection'
                   ' with (http://datatables.net/plug-ins/api).  The package consists of '
@@ -15,7 +15,7 @@ setup(name='django-datatable-view',
                   ' table data from models.',
       long_description=long_description,
       long_description_content_type='text/markdown',
-      author='Autumn Valenta',
+      author='Autumn Valenta, HeidiPay Ltd.',
       author_email='avalenta@pivotalenergysolutions.com',
       url='https://github.com/pivotal-energy-solutions/django-datatable-view',
       download_url='https://github.com/pivotal-energy-solutions/django-datatable-view/tarball/django-datatable-view-0.9.0',
