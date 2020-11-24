@@ -6,7 +6,10 @@ except ImportError:
     pass
 
 from django.db import models
-from django.db.models.fields import FieldDoesNotExist
+try:
+    from django.db.models.fields import FieldDoesNotExist
+except ImportError:
+    from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import smart_split
 
 
