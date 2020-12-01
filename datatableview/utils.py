@@ -6,10 +6,7 @@ except ImportError:
     pass
 
 from django.db import models
-try:
-    from django.db.models.fields import FieldDoesNotExist
-except ImportError:
-    from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import smart_split
 
 
@@ -112,4 +109,3 @@ def contains_plural_field(model, fields):
 
 def split_terms(s):
     return filter(None, map(lambda t: t.strip("'\" "), smart_split(s)))
-
