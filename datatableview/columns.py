@@ -8,7 +8,6 @@ try:
 except ImportError:
     pass
 
-import django
 from django.db import models
 from django.db.models import Model, Manager, Q
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist

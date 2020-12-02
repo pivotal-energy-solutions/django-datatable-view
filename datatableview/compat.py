@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
 """ Backports of code left behind by new versions of Django. """
 
-import django
 from django.utils.html import escape
 try:
     from django.utils.encoding import escape_uri_path as django_escape_uri_path
