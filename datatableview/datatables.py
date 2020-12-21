@@ -14,7 +14,9 @@ from django.db.models import QuerySet
 from django.utils.encoding import force_text
 
 from .exceptions import ColumnError, SkipRecord
-from .columns import (Column, TextColumn, get_column_for_modelfield)
+from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn,  # noqa: F401
+                      IntegerColumn, FloatColumn, DisplayColumn, CompoundColumn,  # noqa: F401
+                      get_column_for_modelfield)
 from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
                     resolve_orm_path)
 from .cache import DEFAULT_CACHE_TYPE, cache_types, get_cache_key, cache_data, get_cached_data
