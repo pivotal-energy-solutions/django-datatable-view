@@ -1,31 +1,30 @@
-sudo: false
-language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  # - "3.7"
-env:
-  - DJANGO=1.11.16
-  - DJANGO=2.0.9
-  - DJANGO=2.1.2
-install:
-  - pip install -q Django==$DJANGO
-  # - pip install pep8
-  # - pip install pyflakes
-  - pip install -q -e .
-# before_script:
-#   - "pep8 --exclude=migrations --ignore=E501,E225 datatableview"
-#   - pyflakes datatableview
-script:
-  - python datatableview/tests/example_project/manage.py test
+dist: xenial
 
-matrix:
-  exclude:
-  - python: "2.7"
-    env: DJANGO=2.0.9
-  - python: "2.7"
-    env: DJANGO=2.1.2
-  - python: "3.4"
-    env: DJANGO=2.1.2
+language: python
+
+sudo: false
+
+git:
+  depth: 1
+  quiet: true
+
+cache: pip
+
+python:
+  - "3.7"
+  - "3.8"
+  - "3.9"
+  - "3.10-dev"
+
+install:
+  - 'pip install tox-travis pyyaml python-coveralls'
+
+script: tox
+
+notifications:
+    slack:
+      rooms:
+        - pivotalenergy:SvNSkVaLVlZeu82utL37wSvy#travis
+
+after_success:
+  - coveralls

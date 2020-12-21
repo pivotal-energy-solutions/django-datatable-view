@@ -1,21 +1,20 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from datetime import datetime
 from functools import partial
 
 import django
+from django.apps import apps
 
 from datatableview import helpers
 
-import six
-
 from .testcase import DatatableViewTestCase
-from .test_app.models import ExampleModel, RelatedM2MModel
 
-if django.VERSION < (1, 7):
-    test_data_fixture = 'test_data_legacy.json'
-else:
-    test_data_fixture = 'test_data.json'
+ExampleModel = apps.get_model('test_app', 'ExampleModel')
+RelatedModel = apps.get_model('test_app', 'RelatedModel')
+RelatedM2MModel = apps.get_model('test_app', 'RelatedM2MModel')
+
+test_data_fixture = 'test_data.json'
 
 
 class HelpersTests(DatatableViewTestCase):
@@ -38,7 +37,7 @@ class HelpersTests(DatatableViewTestCase):
         self.assertEqual(output, '<a href="#1">ExampleModel 1</a>')
 
         # Verify text override
-        output = helper(instance, text="Special text")
+        output = helper(instance, text='Special text')
         self.assertEqual(output, '<a href="#1">Special text</a>')
 
 
@@ -49,7 +48,7 @@ class HelpersTests(DatatableViewTestCase):
         self.assertEqual(output, '<a href="#1">RelatedModel 1</a>')
 
         # Verify ``key`` access version of custom text
-        output = secondary_helper(instance, text="Special text")
+        output = secondary_helper(instance, text='Special text')
         self.assertEqual(output, '<a href="#1">Special text</a>')
 
         # Verify ``attr`` as 'self' is the identity mapping
@@ -67,15 +66,15 @@ class HelpersTests(DatatableViewTestCase):
         helper = helpers.make_boolean_checkmark
 
         # Verify simple use
-        output = helper("True-ish value")
+        output = helper('True-ish value')
         self.assertEqual(output, '&#10004;')
-        output = helper("")
+        output = helper('')
         self.assertEqual(output, '&#10008;')
 
         # Verify custom values
-        output = helper("True-ish value", true_value="Yes", false_value="No")
+        output = helper('True-ish value', true_value='Yes', false_value='No')
         self.assertEqual(output, 'Yes')
-        output = helper("", true_value="Yes", false_value="No")
+        output = helper('', true_value='Yes', false_value='No')
         self.assertEqual(output, 'No')
 
     def test_format_date(self):
@@ -84,15 +83,15 @@ class HelpersTests(DatatableViewTestCase):
 
         # Verify simple use
         data = datetime.now()
-        secondary_helper = helper("%m/%d/%Y")
+        secondary_helper = helper('%m/%d/%Y')
         output = secondary_helper(data)
-        self.assertEqual(output, data.strftime("%m/%d/%Y"))
+        self.assertEqual(output, data.strftime('%m/%d/%Y'))
 
         # Verify that None objects get swallowed without complaint.
         # This helps promise that the helper won't blow up for models.DateTimeField that are allowed
         # to be null.
         output = secondary_helper(None)
-        self.assertEqual(output, "")
+        self.assertEqual(output, '')
 
     def test_format(self):
         """ Verifies that format works. """
@@ -100,15 +99,15 @@ class HelpersTests(DatatableViewTestCase):
 
         # Verify simple use
         data = 1234567890
-        secondary_helper = helper("{0:,}")
+        secondary_helper = helper('{0:,}')
         output = secondary_helper(data)
-        self.assertEqual(output, "{0:,}".format(data))
+        self.assertEqual(output, '{0:,}'.format(data))
 
         # Verify ``cast`` argument
-        data = "1234.56789"
-        secondary_helper = helper("{0:.2f}", cast=float)
+        data = '1234.56789'
+        secondary_helper = helper('{0:.2f}', cast=float)
         output = secondary_helper(data)
-        self.assertEqual(output, "{0:.2f}".format(float(data)))
+        self.assertEqual(output, '{0:.2f}'.format(float(data)))
 
     def test_through_filter(self):
         """ Verifies that through_filter works. """
@@ -117,15 +116,15 @@ class HelpersTests(DatatableViewTestCase):
         target_function = lambda data, arg=None: (data, arg)
 
         # Verify simple use
-        data = "Data string"
+        data = 'Data string'
         secondary_helper = helper(target_function)
         output = secondary_helper(data)
         self.assertEqual(output, (data, None))
 
         # Verify ``arg`` argument
-        secondary_helper = helper(target_function, arg="Arg data")
+        secondary_helper = helper(target_function, arg='Arg data')
         output = secondary_helper(data)
-        self.assertEqual(output, (data, "Arg data"))
+        self.assertEqual(output, (data, 'Arg data'))
 
     def test_itemgetter(self):
         """ Verifies that itemgetter works. """
@@ -146,12 +145,12 @@ class HelpersTests(DatatableViewTestCase):
         data = str(range(10))
         secondary_helper = helper(slice(0, 5), ellipsis=True)
         output = secondary_helper(data)
-        self.assertEqual(output, data[:5] + "...")
+        self.assertEqual(output, data[:5] + '...')
 
         # Verify ellipsis can be customized
-        secondary_helper = helper(slice(0, 5), ellipsis="custom")
+        secondary_helper = helper(slice(0, 5), ellipsis='custom')
         output = secondary_helper(data)
-        self.assertEqual(output, data[:5] + "custom")
+        self.assertEqual(output, data[:5] + 'custom')
 
         # Verify ellipsis does nothing for non-string data types
         data = range(10)
@@ -191,8 +190,8 @@ class HelpersTests(DatatableViewTestCase):
         # Verify chain ends with provision of a value
         data = ExampleModel.objects.get(pk=1)
         # This needs a "url" arg because we want to test successful use
-        output = tertiary_helper(data, url="/", **internals)
-        self.assertTrue(isinstance(output, six.string_types))
+        output = tertiary_helper(data, url='/', **internals)
+        self.assertTrue(isinstance(output, str))
 
         # Verify that no "view" kwarg means the url is required from the call
         with self.assertRaises(ValueError) as cm:
@@ -212,16 +211,16 @@ class HelpersTests(DatatableViewTestCase):
         # Verify default kwarg names end up as attributes
         data = ExampleModel.objects.get(pk=1)
         kwargs = {
-            'pk': "PK DATA",
-            'type': "TYPE DATA",
-            'url': "URL DATA",
-            'source': "SOURCE DATA",
-            'title': "TITLE DATA",
-            'placeholder': "PLACEHOLDER DATA",
+            'pk': 'PK DATA',
+            'type': 'TYPE DATA',
+            'url': 'URL DATA',
+            'source': 'SOURCE DATA',
+            'title': 'TITLE DATA',
+            'placeholder': 'PLACEHOLDER DATA',
 
             # Extra stuff not in anticipated to appear in rendered string
-            'special': "SPECIAL DATA",
-            'data_custom': "DATA-CUSTOM DATA",
+            'special': 'SPECIAL DATA',
+            'data_custom': 'DATA-CUSTOM DATA',
         }
         secondary_helper = helper(**kwargs)
         output = secondary_helper(data, **internals)

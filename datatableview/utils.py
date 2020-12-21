@@ -1,18 +1,12 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-try:
-    from functools import reduce
-except ImportError:
-    pass
+from functools import reduce
 
-from django.db import models
-from django.db.models.fields import FieldDoesNotExist
 from django.utils.text import smart_split
 
-
 MINIMUM_PAGE_LENGTH = 1
-DEFAULT_EMPTY_VALUE = ""
-DEFAULT_MULTIPLE_SEPARATOR = u" "
+DEFAULT_EMPTY_VALUE = ''
+DEFAULT_MULTIPLE_SEPARATOR = u' '
 
 # Since it's rather painful to deal with the datatables.js naming scheme in Python, this map changes
 # the Pythonic names to the javascript ones in the GET request
@@ -53,6 +47,7 @@ XEDITABLE_FIELD_TYPES = {
     'ForeignKey': 'select',
 }
 
+
 def resolve_orm_path(model, orm_path):
     """
     Follows the queryset-style query path of ``orm_path`` starting from ``model`` class.  If the
@@ -69,6 +64,7 @@ def resolve_orm_path(model, orm_path):
         field = endpoint_model._meta.get_field(bits[-1])
     return field
 
+
 def get_model_at_related_field(model, attr):
     """
     Looks up ``attr`` as a field of ``model`` and returns the related model class.  If ``attr`` is
@@ -81,11 +77,12 @@ def get_model_at_related_field(model, attr):
     if hasattr(field, 'related_model'):
         return field.related_model
 
-    raise ValueError("{model}.{attr} ({klass}) is not a relationship field.".format(**{
+    raise ValueError('{model}.{attr} ({klass}) is not a relationship field.'.format(**{
         'model': model.__name__,
         'attr': attr,
         'klass': field.__class__.__name__,
     }))
+
 
 def get_first_orm_bit(column):
     """ Returns the first ORM path component of a field definition's declared db field. """
@@ -93,6 +90,7 @@ def get_first_orm_bit(column):
         return None
 
     return column.sources[0].split('__')[0]
+
 
 def contains_plural_field(model, fields):
     """ Returns a boolean indicating if ``fields`` contains a relationship to multiple items. """
@@ -107,6 +105,6 @@ def contains_plural_field(model, fields):
             model = get_model_at_related_field(model, bit)
     return False
 
+
 def split_terms(s):
     return filter(None, map(lambda t: t.strip("'\" "), smart_split(s)))
-

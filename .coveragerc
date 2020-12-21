@@ -1,0 +1,10 @@
+[run]
+branch = True
+omit =
+    */migrations/*
+
+[report]
+fail_under = 70
+omit =
+    */migrations/*
+    */test*

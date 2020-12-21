@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from django import forms
 from django.forms import ValidationError
@@ -44,5 +44,5 @@ class XEditableUpdateForm(forms.Form):
         else:
             field_names = self.model._meta.get_all_field_names()
         if field_name not in field_names:
-            raise ValidationError("%r is not a valid field." % field_name)
+            raise ValidationError('%r is not a valid field.' % field_name)
         return field_name

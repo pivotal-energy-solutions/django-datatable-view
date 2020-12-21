@@ -1,34 +1,25 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import operator
 from datetime import datetime
-try:
-    from functools import reduce
-except ImportError:
-    pass
+from functools import reduce
+import logging
 
-import django
 from django.db import models
 from django.db.models import Model, Manager, Q
-from django.db.models.fields import FieldDoesNotExist
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
-try:
-    from django.forms.utils import flatatt
-except ImportError:
-    from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.template.defaultfilters import slugify
-try:
-    from django.utils.encoding import python_2_unicode_compatible
-except ImportError:
-    from .compat import python_2_unicode_compatible
 
-import six
 import dateutil.parser
 
 from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
+
+
+log = logging.getLogger(__name__)
 
 # Registry of Column subclasses to their declared corresponding ModelFields.
 # The registery is an ordered priority list, containing 2-tuples of a Column subclass and a list of
@@ -38,16 +29,18 @@ COLUMN_CLASSES = []
 STRPTIME_PLACEHOLDERS = {
     'year': ('%y', '%Y'),
     'month': ('%m', '%b', '%B'),
-    'day': ('%d',),# '%a', '%A'),  # day names are hard because they depend on other date info
+    'day': ('%d',),  # '%a', '%A'),  # day names are hard because they depend on other date info
     'hour': ('%H', '%I'),
     'minute': ('%M',),
     'second': ('%S',),
     'week_day': ('%w',),
 }
 
+
 def register_simple_modelfield(model_field):
     column_class = get_column_for_modelfield(model_field)
     COLUMN_CLASSES.insert(0, (column_class, [model_field]))
+
 
 def get_column_for_modelfield(model_field):
     """ Return the built-in Column class for a model field class. """
@@ -62,6 +55,7 @@ def get_column_for_modelfield(model_field):
         if isinstance(model_field, tuple(modelfield_classes)):
             return ColumnClass
 
+
 def get_attribute_value(obj, bit):
     try:
         value = getattr(obj, bit)
@@ -73,8 +67,10 @@ def get_attribute_value(obj, bit):
                 value = value()
     return value
 
+
 class ColumnMetaclass(type):
     """ Column type for automatic registration of column types as ModelField handlers. """
+
     def __new__(cls, name, bases, attrs):
         new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
         if new_class.model_field_class:
@@ -85,8 +81,7 @@ class ColumnMetaclass(type):
 
 
 # Corollary to django.forms.fields.Field
-@python_2_unicode_compatible
-class Column(six.with_metaclass(ColumnMetaclass)):
+class Column(metaclass=ColumnMetaclass):
     """ Generic table column using CharField for rendering. """
 
     model_field_class = None
@@ -196,7 +191,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                 value = self.empty_value
         elif len(values) > 0:
             plain_value = [v[0] for v in values]
-            rich_value = self.separator.join(map(six.text_type, [v[1] for v in values]))
+            rich_value = self.separator.join(map(str, [v[1] for v in values]))
             value = (plain_value, rich_value)
         else:
             value = self.empty_value
@@ -211,14 +206,14 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         ``Column`` instances will have sources of their own and need to return a value per nested
         source.
         """
-        if hasattr(source, "__call__"):
+        if hasattr(source, '__call__'):
             value = source(obj)
         elif isinstance(obj, Model):
             value = reduce(get_attribute_value, [obj] + source.split('__'))
         elif isinstance(obj, dict):  # ValuesQuerySet item
             value = obj[source]
         else:
-            raise ValueError("Unknown object type %r" % (repr(obj),))
+            raise ValueError('Unknown object type %r' % (repr(obj),))
         return [value]
 
     def get_processor_kwargs(self, **extra_kwargs):
@@ -267,7 +262,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
     def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
-        if hasattr(source, "__call__"):
+        if hasattr(source, '__call__'):
             return None
         try:
             return resolve_orm_path(model, source)
@@ -288,15 +283,15 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         # We avoid making changes that the Django ORM can already do for us
         multi_terms = None
 
-        if isinstance(term, six.text_type):
-            if lookup_type == "in":
+        if isinstance(term, str):
+            if lookup_type == 'in':
                 in_bits = re.split(r',\s*', term)
                 if len(in_bits) > 1:
                     multi_terms = in_bits
                 else:
                     term = None
 
-            if lookup_type == "range":
+            if lookup_type == 'range':
                 range_bits = re.split(r'\s*-\s*', term)
                 if len(range_bits) == 2:
                     multi_terms = range_bits
@@ -304,12 +299,14 @@ class Column(six.with_metaclass(ColumnMetaclass)):
                     term = None
 
         if multi_terms:
-            return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms))
+            return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in
+                                 multi_terms))
 
         model_field = self.model_field_class()
         try:
             term = model_field.get_prep_value(term)
-        except:
+        except Exception as err:
+            log.warning(f'model_field.get_prep_value({term}) - {err}')
             term = None
 
         return term
@@ -410,7 +407,7 @@ class Column(six.with_metaclass(ColumnMetaclass)):
         }
 
         if self.sort_priority is not None:
-            attributes['data-config-sorting'] = ','.join(map(six.text_type, [
+            attributes['data-config-sorting'] = ','.join(map(str, [
                 self.sort_priority,
                 self.index,
                 self.sort_direction,
@@ -455,7 +452,8 @@ class DateColumn(Column):
             if lookup_type == 'week_day':
                 try:
                     test_term = int(test_term) - 1  # Django ORM uses 1-7, python strptime uses 0-6
-                except:
+                except Exception as err:
+                    log.warning(f'int({test_term}) - 1 -- {err}')
                     return None
                 else:
                     test_term = str(test_term)
@@ -479,7 +477,8 @@ class DateColumn(Column):
 class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
     handles_field_classes = [models.DateTimeField]
-    lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
+    lookup_types = (
+        'exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
 
 
 class TimeColumn(DateColumn):

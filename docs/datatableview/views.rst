@@ -40,7 +40,7 @@ Use :py:class:`LegacyDatatableView` as your view's base class instead of :py:cla
 
    .. autoattribute:: datatable_class
       :annotation: = LegacyDatatable
-      
+
       The :py:class:`~datatableview.datatables.LegacyDatatable` will help convert the more
       extravagant legacy tuple syntaxes into full :py:class:`~datatableview.columns.Column`
       instances.

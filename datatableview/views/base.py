@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import json
 import logging
@@ -8,9 +8,9 @@ from django.views.generic.list import MultipleObjectMixin
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import escape_uri_path
 
-from ..datatables import Datatable, DatatableOptions
-from ..compat import escape_uri_path
+from ..datatables import Datatable
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
 
         response_data = self.get_json_response_object(self._datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
-                                content_type="application/json")
+                                content_type='application/json')
 
         return response
 
@@ -95,6 +95,7 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
         if datatable_class is None:
             class AutoMeta:
                 model = self.model or self.get_queryset().model
+
             opts = AutoMeta()
             datatable_class = Datatable
         else:
@@ -143,7 +144,6 @@ class DatatableMixin(DatatableJSONResponseMixin, MultipleObjectMixin):
                 kwargs[k] = v
         return kwargs
 
-
     # Runtime per-object hook
     def preload_record_data(self, obj):
         return {}
@@ -185,7 +185,7 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
 
         response_data = self.get_json_response_object(self._datatable)
         response = HttpResponse(self.serialize_to_json(response_data),
-                                content_type="application/json")
+                                content_type='application/json')
 
         return response
 
@@ -213,13 +213,14 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                 queryset_getter_name = 'get_%s_datatable_queryset' % (name,)
                 queryset_getter = getattr(self, queryset_getter_name, None)
                 if queryset_getter is None:
-                    raise ValueError("%r must declare a method %r." % (self.__class__.__name__,
+                    raise ValueError('%r must declare a method %r.' % (self.__class__.__name__,
                                                                        queryset_getter_name))
 
                 queryset = queryset_getter()
                 if datatable_class is None:
                     class AutoMeta:
                         model = queryset.model
+
                     opts = AutoMeta()
                     datatable_class = Datatable
                 else:
@@ -231,16 +232,17 @@ class MultipleDatatableMixin(DatatableJSONResponseMixin):
                 if kwargs_getter:
                     kwargs = kwargs_getter(**kwargs)
                 if 'url' in kwargs:
-                    kwargs['url'] = kwargs['url'] + "?datatable=%s" % (name,)
+                    kwargs['url'] = kwargs['url'] + '?datatable=%s' % (name,)
 
                 for meta_opt in opts.__dict__:
                     if meta_opt in kwargs:
                         setattr(opts, meta_opt, kwargs.pop(meta_opt))
 
-                datatable_class = type('%s_Synthesized' % (datatable_class.__name__,), (datatable_class,), {
-                    '__module__': datatable_class.__module__,
-                    'Meta': opts,
-                })
+                datatable_class = type(
+                    '%s_Synthesized' % (datatable_class.__name__,),
+                    (datatable_class,), {
+                        '__module__': datatable_class.__module__,
+                        'Meta': opts})
 
                 self._datatables[name] = datatable_class(**kwargs)
         return self._datatables

@@ -337,7 +337,7 @@ class MyDatatableView(DatatableView):
     def get_json_response_object(self, object_list, *args, **kwargs):
         data = super(MyDatatableView, self).get_json_response_object(object_list, *args, **kwargs)
 
-        # Keep customizations JSON-compatible! :) 
+        # Keep customizations JSON-compatible! :)
         data.update({
             'special_arg': self.kwargs['special_arg'],
         })

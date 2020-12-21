@@ -1,0 +1,10 @@
+psycopg2-binary
+jsonfield2
+python-decouple
+mock
+flake8
+tox
+isort
+coverage
+pre-commit
+coveralls

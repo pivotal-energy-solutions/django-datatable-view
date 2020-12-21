@@ -1,16 +1,10 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from django.test import TestCase
-from django.test import override_settings
 from django.core.management import call_command
 from django.apps import apps
 
 
-@override_settings(INSTALLED_APPS=[
-    'datatableview',
-    'datatableview.tests.test_app',
-    'datatableview.tests.example_project.example_project.example_app',
-])
 class DatatableViewTestCase(TestCase):
     def _pre_setup(self):
         """

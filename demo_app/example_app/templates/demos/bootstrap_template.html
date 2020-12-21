@@ -1,0 +1,10 @@
+{% extends "example_base.html" %}
+
+{% block static %}
+    {{ block.super }}
+
+    <!-- Resources for "Bootstrap support" demo -->
+    <link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
+    <script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+
+{% endblock static %}

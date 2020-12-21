@@ -1,35 +1,24 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import copy
 import operator
 from collections import OrderedDict
-try:
-    from functools import reduce
-except ImportError:
-    pass
 
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
+
+from functools import reduce
+
 from django.template.loader import render_to_string
 from django.db.models import QuerySet
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-try:
-    from django.utils.encoding import python_2_unicode_compatible
-except ImportError:
-    from .compat import python_2_unicode_compatible
-
-import six
-
+from django.utils.encoding import force_text
 
 from .exceptions import ColumnError, SkipRecord
-from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn, IntegerColumn,
-                      FloatColumn, DisplayColumn, CompoundColumn, get_column_for_modelfield)
+from .columns import (Column, TextColumn, get_column_for_modelfield)
 from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
                     resolve_orm_path)
 from .cache import DEFAULT_CACHE_TYPE, cache_types, get_cache_key, cache_data, get_cached_data
+
 
 def pretty_name(name):
     if not name:
@@ -50,7 +39,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
 
         column_class = get_column_for_modelfield(f)
         if column_class is None:
-            raise ColumnError("Unhandled model field %r." % (f,))
+            raise ColumnError('Unhandled model field %r.' % (f,))
         if labels and f.name in labels:
             label = labels[f.name]
         else:
@@ -77,9 +66,10 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
     if fields:
         field_dict = OrderedDict(
             [(f, field_dict.get(f)) for f in fields
-                if (not exclude) or (exclude and f not in exclude)]
+             if (not exclude) or (exclude and f not in exclude)]
         )
     return field_dict
+
 
 # Borrowed from the Django forms implementation
 def get_declared_columns(bases, attrs, with_base_columns=True):
@@ -94,9 +84,8 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     Also integrates any additional media definitions
     """
     local_columns = [
-        (column_name, attrs.pop(column_name)) \
-                for column_name, obj in list(six.iteritems(attrs)) \
-                if isinstance(obj, Column)
+        (column_name, attrs.pop(column_name))
+        for column_name, obj in list(attrs.items()) if isinstance(obj, Column)
     ]
     local_columns.sort(key=lambda x: x[1].creation_counter)
 
@@ -106,19 +95,21 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     if with_base_columns:
         for base in bases[::-1]:
             if hasattr(base, 'base_columns'):
-                local_columns = list(six.iteritems(base.base_columns)) + local_columns
+                local_columns = list(base.base_columns.items()) + local_columns
     else:
         for base in bases[::-1]:
             if hasattr(base, 'declared_columns'):
-                local_columns = list(six.iteritems(base.declared_columns)) + local_columns
+                local_columns = list(base.declared_columns.items()) + local_columns
 
     return OrderedDict(local_columns)
+
 
 class DatatableOptions(object):
     """
     Contains declarable options for a datatable, some of which can be manipuated by subsequent
     requests by the user.
     """
+
     def __init__(self, options=None):
         # Non-mutable; server's declared preference is final
         self.id = getattr(options, 'id', '')
@@ -131,7 +122,8 @@ class DatatableOptions(object):
         self.labels = getattr(options, 'labels', None)
         self.processors = getattr(options, 'processors', None)
         self.request_method = getattr(options, 'request_method', 'GET')
-        self.structure_template = getattr(options, 'structure_template', "datatableview/default_structure.html")
+        self.structure_template = getattr(options, 'structure_template',
+                                          'datatableview/default_structure.html')
         self.footer = getattr(options, 'footer', False)
         self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
 
@@ -145,6 +137,7 @@ class DatatableOptions(object):
 
 
 default_options = DatatableOptions()
+
 
 class DatatableMetaclass(type):
     """
@@ -161,8 +154,9 @@ class DatatableMetaclass(type):
         opts = new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
         if opts.model:
             columns = columns_for_model(opts.model, opts.columns, opts.exclude, opts.labels,
-                                        opts.processors, opts.unsortable_columns, opts.hidden_columns)
-            none_model_columns = [k for k, v in six.iteritems(columns) if not v]
+                                        opts.processors, opts.unsortable_columns,
+                                        opts.hidden_columns)
+            none_model_columns = [k for k, v in columns.items() if not v]
             missing_columns = set(none_model_columns) - set(declared_columns.keys())
 
             for name, column in declared_columns.items():
@@ -195,7 +189,7 @@ class DatatableMetaclass(type):
                 opts.search_fields = list(opts.search_fields)
             for i, column in enumerate(opts.search_fields):
                 # Build a column object
-                if isinstance(column, six.string_types):
+                if isinstance(column, str):
                     name = column
                     field = resolve_orm_path(opts.model, name)
                     column = get_column_for_modelfield(field)
@@ -212,8 +206,7 @@ class DatatableMetaclass(type):
         return new_class
 
 
-@python_2_unicode_compatible
-class Datatable(six.with_metaclass(DatatableMetaclass)):
+class Datatable(metaclass=DatatableMetaclass):
     """
     Declaration container for a clientside datatable, containing an optional Meta inner class,
     class-level field declarations, and callbacks for filtering and post-processing values requested
@@ -352,7 +345,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         for sort_queue_i in range(len(columns_list)):
             try:
-                column_index = int(query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+                column_index = int(
+                    query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
             except ValueError:
                 continue
 
@@ -362,7 +356,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if column.name in config['unsortable_columns']:
                 continue
 
-            sort_direction = query_config.get(OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+            sort_direction = query_config.get(
+                OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
 
             if sort_direction == 'asc':
                 sort_modifier = ''
@@ -403,7 +398,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         an apparent configuration error.
         """
         if names:
-            raise ColumnError("Unknown column name(s): %r" % (names,))
+            raise ColumnError('Unknown column name(s): %r' % (names,))
 
     # Reflection methods for wrapped columns
     def get_ordering_splits(self):
@@ -417,8 +412,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         if self.config['ordering'] is None:
             return [], []
 
-        db_fields = []
-        virtual_fields = []
         i = 0
         for i, name in enumerate(self.config['ordering']):
             if name[0] in '+-':
@@ -453,7 +446,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         this hint to be accurate.
         """
         cached_data = self.get_cached_data(datatable_class=self.__class__, **kwargs)
-        return (type(cached_data) is not type(None))
+        return not isinstance(cached_data, type(None))
 
     def get_cache_key_kwargs(self, view=None, user=None, **kwargs):
         """
@@ -544,7 +537,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
         # Create the simplest reproducable query for repeated operations between requests
         # Note that 'queryset' cache_type is unhandled so that it passes straight through.
         if cache_type == cache_types.PK_LIST:
-            model = object_list.model
+            # model = object_list.model
             data = tuple(object_list.values_list('pk', flat=True))
 
         # Objects in some other type of data structure should be pickable for cache backend
@@ -755,11 +748,13 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
     def force_distinct(self, object_list):
         seen = set()
+
         def is_unseen(obj):
             if obj.pk in seen:
                 return False
             seen.add(obj.pk)
             return True
+
         return tuple(obj for obj in object_list if is_unseen(obj))
 
     # Per-record callbacks
@@ -825,10 +820,8 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             if isinstance(value, (tuple, list)):
                 value = value[1]
 
-            if six.PY2 and isinstance(value, str):  # not unicode
-                value = value.decode('utf-8')
             if value is not None:
-                value = six.text_type(value)
+                value = str(value)
             data[str(i)] = value
         return data
 
@@ -874,7 +867,7 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
 
         column_name = column.name
         if isinstance(self, LegacyDatatable):
-            name = force_text(column.label, errors="ignore")
+            name = force_text(column.label, errors='ignore')
             if not name:
                 name = column.sources[0]
             column_name = re.sub(r'[\W_]+', '_', name)
@@ -897,7 +890,6 @@ class Datatable(six.with_metaclass(DatatableMetaclass)):
             return f
 
         return None
-
 
     # Template rendering features
     def __str__(self):
@@ -933,6 +925,7 @@ class ValuesDatatable(Datatable):
     Processor callbacks will no longer receive model instances, but instead the dict of selected
     values.
     """
+
     def get_valuesqueryset(self, queryset):
         # Figure out the full list of ORM path names
         self.value_queries = OrderedDict({'pk': 'pk'})

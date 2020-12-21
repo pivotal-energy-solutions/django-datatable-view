@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import logging
 from collections import namedtuple
@@ -6,10 +6,9 @@ from collections import namedtuple
 from django.views.generic.list import ListView
 
 from .base import DatatableMixin
-from ..datatables import Datatable, LegacyDatatable
+from ..datatables import LegacyDatatable
 
 log = logging.getLogger(__name__)
-
 
 FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
 ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
@@ -24,9 +23,10 @@ DEFAULT_OPTIONS = {
     'search_fields': [],  # extra ORM paths to search; not displayed
     'unsortable_columns': [],  # table headers not allowed to be sorted
     'hidden_columns': [],  # table headers to be generated, but hidden by the client
-    'structure_template': "datatableview/legacy_structure.html",
+    'structure_template': 'datatableview/legacy_structure.html',
     'result_counter_id': 'id_count',  # HTML element ID to display the total results
 }
+
 
 def get_field_definition(field_definition):
     """ Normalizes a field definition into its component parts, even if some are missing. """
@@ -42,7 +42,7 @@ def get_field_definition(field_definition):
     elif len(field_definition) == 3:
         field = field_definition
     else:
-        raise ValueError("Invalid field definition format.")
+        raise ValueError('Invalid field definition format.')
 
     if not isinstance(field[1], (tuple, list)):
         field[1] = (field[1],)
@@ -102,4 +102,3 @@ class LegacyDatatableView(LegacyDatatableMixin, ListView):
     """
     Implements :py:class:`LegacyDatatableMixin` and the standard Django ``ListView``.
     """
-

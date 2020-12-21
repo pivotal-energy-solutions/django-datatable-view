@@ -1,11 +1,15 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from django.apps import apps
+from django.core.management import call_command
+
+from datatableview.columns import Column, COLUMN_CLASSES
 from .testcase import DatatableViewTestCase
-from .test_app import models
-from ..columns import Column, COLUMN_CLASSES
-from ..exceptions import ColumnError
-from .. import utils
+
+ExampleModel = apps.get_model('test_app', 'ExampleModel')
+
 
 class ColumnTests(DatatableViewTestCase):
+
     def test_custom_column_registers_itself(self):
         previous_length = len(COLUMN_CLASSES)
 
@@ -19,7 +23,7 @@ class ColumnTests(DatatableViewTestCase):
         del COLUMN_CLASSES[:1]
 
     def test_value_is_pair(self):
-        obj = models.ExampleModel.objects.create(name="test name 1")
+        obj = ExampleModel.objects.create(name='test name 1')
 
         column = Column()
         value = column.value(obj)
@@ -32,7 +36,7 @@ class ColumnTests(DatatableViewTestCase):
         def processor(value, **kwargs):
             processed.append(value)
 
-        obj = models.ExampleModel.objects.create(name="test name 1")
+        obj = ExampleModel.objects.create(name='test name 1')
 
         # Verify bad source names don't find values
         processed[:] = []

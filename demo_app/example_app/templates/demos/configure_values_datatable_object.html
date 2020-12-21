@@ -1,0 +1,30 @@
+{% extends "example_base.html" %}
+
+{% block description %}
+    {{ block.super }}
+
+<pre class="brush: python">
+{
+    'pk': 6,  # ValuesDatatable requires automatic selection of 'pk'
+    'id': 6,  # This happens to be the 'pk' field, so it found its way into the object
+
+    # The full set of ORM names taken from the various ``column.sources`` lists.
+    # Simple columns (where the names matched the orm query path) require no modification,
+    # but notice the "blog__id" and "blog__name" entries that came from a single column
+    # declaration.
+    'headline': u'',
+    'n_comments': 0,
+    'n_pingbacks': 0,
+    'pub_date': datetime.date(2013, 1, 1),
+    'blog__id': 2,
+    'blog__name': u'Second Blog',
+
+    # Aliases have been given to the object for column names that didn't match the actual
+    # ``sources`` names.  Note how 'blog' is a list, because it had multiple sources.
+    'publication_date': datetime.date(2013, 1, 1),
+    'blog': [2, u'Second Blog'],
+
+}
+</pre>
+
+{% endblock description %}

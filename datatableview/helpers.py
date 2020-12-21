@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 A collection of small helper functions for generating small pieces of datatable output in custom
 methods on a view.
@@ -12,21 +12,12 @@ in any way.
 from functools import partial, wraps
 import operator
 
-from django import get_version
 from django.db.models import Model
-try:
-    from django.forms.utils import flatatt
-except ImportError:
-    from django.forms.util import flatatt
-
-import six
+from django.forms.utils import flatatt
 
 from .utils import resolve_orm_path, XEDITABLE_FIELD_TYPES
 
-if [int(v) for v in get_version().split('.')[0:2]] >= [1, 5]:
-    from django.utils.timezone import localtime
-else:
-    localtime = None
+from django.utils.timezone import localtime
 
 
 def keyed_helper(helper):
@@ -69,7 +60,7 @@ def keyed_helper(helper):
 
         if attr:
             if attr == 'self':
-                key = lambda obj: obj
+                key = lambda obj: obj  # noqa: E731
             else:
                 key = operator.attrgetter(attr)
 
@@ -78,10 +69,12 @@ def keyed_helper(helper):
         @wraps(helper)
         def helper_wrapper(instance, *args, **kwargs):
             return helper(key(instance), *args, **kwargs)
+
         return helper_wrapper
 
     wrapper._is_wrapped = True
     return wrapper
+
 
 @keyed_helper
 def link_to_model(instance, text=None, *args, **kwargs):
@@ -116,12 +109,12 @@ def link_to_model(instance, text=None, *args, **kwargs):
                                           processor=link_to_model(key=getattr('relatedobject')))
     """
     if not text:
-        text = kwargs.get('rich_value') or six.text_type(instance)
+        text = kwargs.get('rich_value') or str(instance)
     return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
 @keyed_helper
-def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;", *args, **kwargs):
+def make_boolean_checkmark(value, true_value='&#10004;', false_value='&#10008;', *args, **kwargs):
     """
     Returns a unicode ✔ or ✘, configurable by pre-calling the helper with ``true_value`` and/or
     ``false_value`` arguments, based on the incoming value.
@@ -169,15 +162,16 @@ def itemgetter(k, ellipsis=False, key=None):
                                          processor=itemgetter(slice(None, 30), ellipsis=True))
 
     """
+
     def helper(instance, *args, **kwargs):
         default_value = kwargs.get('default_value')
         if default_value is None:
             default_value = instance
         value = default_value[k]
-        if ellipsis and isinstance(k, slice) and isinstance(value, six.string_types) and \
+        if ellipsis and isinstance(k, slice) and isinstance(value, str) and \
                 len(default_value) > len(value):
             if ellipsis is True:
-                value += "..."
+                value += '...'
             else:
                 value += ellipsis
         return value
@@ -205,6 +199,7 @@ def attrgetter(attr, key=None):
                                      processor=attrgetter('get_address'))
 
     """
+
     def helper(instance, *args, **kwargs):
         value = instance
         for bit in attr.split('.'):
@@ -243,7 +238,7 @@ def format_date(format_string, localize=False, key=None):
         else:
             value = kwargs.get('default_value', value)
         if not value:  # Empty or missing default_value
-            return ""
+            return ''
         if localize:
             value = localtime(value)
         return value.strftime(format_string)
@@ -266,7 +261,7 @@ def format(format_string, cast=lambda x: x):
     the ``cast`` function.
 
     Examples::
-    
+
         # Perform some 0 padding
         item_number = columns.FloatColumn("Item No.", sources=['number'],
                                           processor=format("{:03d}))
@@ -283,10 +278,11 @@ def format(format_string, cast=lambda x: x):
             value = instance
         value = cast(value)
         return format_string.format(value, obj=instance)
+
     return helper
 
 
-def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
+def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):  # noqa: C901
     """
     Converts the contents of the column into an ``<a>`` tag with the required DOM attributes to
     power the X-Editable UI.
@@ -296,9 +292,12 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
 
         * ``type`` - Defaults to the basic type of the HTML input ("text", "number", "datetime")
         * ``title`` - Defaults to an empty string, controls the HTML "title" attribute.
-        * ``placeholder`` - Defaults to whatever "title" is, controls the HTML "placeholder" attribute.
-        * ``url`` - Defaults to the ``request.path`` of the view, which will automatically serve the X-Editable interface as long as it inherits from ``XEditableDatatableView``.
-        * ``source`` - Defaults to the ``request.path`` of the view, which will automatically serve X-Editable requests for ``choices`` data about a field.
+        * ``placeholder`` - Defaults to whatever "title" is, controls the HTML
+            "placeholder" attribute.
+        * ``url`` - Defaults to the ``request.path`` of the view, which will automatically
+            serve the X-Editable interface as long as it inherits from ``XEditableDatatableView``.
+        * ``source`` - Defaults to the ``request.path`` of the view, which will automatically
+            serve X-Editable requests for ``choices`` data about a field.
 
     Supplying a list of names via ``extra_attrs`` will enable arbitrary other keyword arguments to
     be rendered in the HTML as attribute as well.  ``extra_attrs`` serves as a whitelist of extra
@@ -324,7 +323,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
                 k = k[5:]
             attrs['data-{0}'.format(k)] = v
 
-    attrs['data-xeditable'] = "xeditable"
+    attrs['data-xeditable'] = 'xeditable'
 
     # Assign default values where they are not provided
 
@@ -334,7 +333,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         field_name = field_name[1]
         if isinstance(field_name, (tuple, list)):
             raise ValueError("'make_xeditable' helper needs a single-field data column,"
-                             " not {0!r}".format(field_name))
+                             ' not {0!r}'.format(field_name))
     attrs['data-name'] = field_name
 
     if isinstance(rich_data, Model):
@@ -352,14 +351,14 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
         if not url_provider:
             url_provider = getattr(instance, provider_name, None)
             if not url_provider and 'view' in kwargs:
-                url_provider = lambda field_name: kwargs['view'].request.path
+                url_provider = lambda field_name: kwargs['view'].request.path  # noqa: E731
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'url'.")
         if url_provider:
             attrs['data-url'] = url_provider(field_name=field_name)
 
     if 'data-placeholder' not in attrs:
-        attrs['data-placeholder'] = attrs.get('data-title', "")
+        attrs['data-placeholder'] = attrs.get('data-title', '')
 
     if 'data-type' not in attrs:
         if hasattr(instance, '_meta'):
@@ -382,7 +381,7 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):
     if attrs['data-type'] in ('select', 'select2'):
         if 'data-source' not in attrs:
             if 'view' in kwargs:
-                attrs['data-source'] = "{url}?{field_param}={fieldname}".format(**{
+                attrs['data-source'] = '{url}?{field_param}={fieldname}'.format(**{
                     'url': kwargs['view'].request.path,
                     'field_param': kwargs['view'].xeditable_fieldname_param,
                     'fieldname': field_name,
@@ -416,6 +415,7 @@ def make_processor(func, arg=None):
     ``func``.  If you need to sent more arguments, consider wrapping your ``func`` in a
     ``functools.partial``, and use that as ``func`` instead.
     """
+
     def helper(instance, *args, **kwargs):
         value = kwargs.get('default_value')
         if value is None:
@@ -425,6 +425,8 @@ def make_processor(func, arg=None):
         else:
             extra_arg = []
         return func(value, *extra_arg)
+
     return helper
+
 
 through_filter = make_processor

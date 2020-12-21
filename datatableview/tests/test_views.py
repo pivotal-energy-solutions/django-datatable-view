@@ -1,14 +1,17 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import json
 
 from django.urls import reverse
 
-import six
+from example_app.views import ZeroConfigurationDatatableView
+from example_app.models import Entry
+from example_app.views import BootstrapTemplateDatatableView, PrettyNamesDatatableView,\
+    SpecificColumnsDatatableView, CustomizedTemplateDatatableView, MultipleTablesDatatableView, \
+    SatelliteDatatableView, ColumnBackedByMethodDatatableView, CompoundColumnsDatatableView, \
+    HelpersReferenceDatatableView, DefaultCallbackNamesDatatableView, ManyToManyFieldsDatatableView
 
 from .testcase import DatatableViewTestCase
-from .example_project.example_project.example_app import views
-from .example_project.example_project.example_app import models
 
 
 class FakeRequest(object):
@@ -26,24 +29,23 @@ class ViewsTests(DatatableViewTestCase):
     def get_json_response(self, url):
         response = self.client.get(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         content = response.content
-        if six.PY3:
-            content = content.decode()
+        content = content.decode()
         return json.loads(content)
 
     def test_zero_configuration_datatable_view(self):
         """ Verifies that no column definitions means all local fields are used. """
-        view = views.ZeroConfigurationDatatableView
+        view = ZeroConfigurationDatatableView
         url = reverse('zero-configuration')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         self.assertEqual(
             len(list(response.context['datatable'])),
-            len(models.Entry._meta.local_fields)
+            len(Entry._meta.local_fields)
         )
 
     def test_specific_columns_datatable_view(self):
         """ Verifies that "columns" list matches context object length. """
-        view = views.SpecificColumnsDatatableView()
+        view = SpecificColumnsDatatableView()
         url = reverse('specific-columns')
         view.request = FakeRequest(url)
         response = self.client.get(url)
@@ -54,7 +56,7 @@ class ViewsTests(DatatableViewTestCase):
 
     def test_pretty_names_datatable_view(self):
         """ Verifies that a pretty name definition is used instead of the verbose name. """
-        view = views.PrettyNamesDatatableView()
+        view = PrettyNamesDatatableView()
         url = reverse('pretty-names')
         view.request = FakeRequest(url)
         response = self.client.get(url)
@@ -62,7 +64,7 @@ class ViewsTests(DatatableViewTestCase):
             len(list(response.context['datatable'])),
             len(view.get_datatable().columns)
         )
-        self.assertEqual(response.context['datatable'].columns['pub_date'].label, "Publication date")
+        self.assertEqual(response.context['datatable'].columns['pub_date'].label, 'Publication date')
 
     # def test_x_editable_columns_datatable_view(self):
     #     view = views.XEditableColumnsDatatableView
@@ -73,7 +75,7 @@ class ViewsTests(DatatableViewTestCase):
         """
         Verify that the custom structure template is getting rendered instead of the default one.
         """
-        view = views.CustomizedTemplateDatatableView()
+        view = CustomizedTemplateDatatableView()
         url = reverse('customized-template')
         view.request = FakeRequest(url)
         response = self.client.get(url)
@@ -83,14 +85,14 @@ class ViewsTests(DatatableViewTestCase):
         """
         Verify that the custom structure template is getting rendered instead of the default one.
         """
-        view = views.BootstrapTemplateDatatableView()
+        view = BootstrapTemplateDatatableView()
         url = reverse('bootstrap-template')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         self.assertContains(response, """<table class="display datatable table table-striped table-bordered" """)
 
     def test_multiple_tables_datatable_view(self):
-        view = views.MultipleTablesDatatableView()
+        view = MultipleTablesDatatableView()
         url = reverse('multiple-tables')
         view.request = FakeRequest(url)
         response = self.client.get(url)
@@ -98,15 +100,15 @@ class ViewsTests(DatatableViewTestCase):
         self.assertIn('demo2_datatable', response.context)
         self.assertIn('demo3_datatable', response.context)
 
-        demo1_obj = self.get_json_response(str(url) + "?datatable=demo1")
+        demo1_obj = self.get_json_response(str(url) + '?datatable=demo1')
         self.assertEqual(len(demo1_obj['data'][0]), 2 + 2)  # 2 built-in DT items
-        demo2_obj = self.get_json_response(str(url) + "?datatable=demo2")
+        demo2_obj = self.get_json_response(str(url) + '?datatable=demo2')
         self.assertEqual(len(demo2_obj['data'][0]), 1 + 2)  # 2 built-in DT items
-        demo3_obj = self.get_json_response(str(url) + "?datatable=demo3")
+        demo3_obj = self.get_json_response(str(url) + '?datatable=demo3')
         self.assertEqual(len(demo3_obj['data'][0]), 3 + 2)  # 2 built-in DT items
 
     def test_embedded_table_datatable_view(self):
-        view = views.SatelliteDatatableView()
+        view = SatelliteDatatableView()
         url = reverse('embedded-table')
         view.request = FakeRequest(url)
         response = self.client.get(url)
@@ -122,42 +124,42 @@ class ViewsTests(DatatableViewTestCase):
     # make certain that they don't generate errors.
 
     def test_column_backed_by_method_datatable_view(self):
-        view = views.ColumnBackedByMethodDatatableView
+        view = ColumnBackedByMethodDatatableView
         url = reverse('column-backed-by-method')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         obj = self.get_json_response(url)
 
     def test_compound_columns_datatable_view(self):
-        view = views.CompoundColumnsDatatableView
+        view = CompoundColumnsDatatableView
         url = reverse('compound-columns')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         obj = self.get_json_response(url)
 
     def test_many_to_many_fields_datatable_view(self):
-        view = views.ManyToManyFieldsDatatableView
+        view = ManyToManyFieldsDatatableView
         url = reverse('many-to-many-fields')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         obj = self.get_json_response(url)
 
     def test_default_callback_names_datatable_view(self):
-        view = views.DefaultCallbackNamesDatatableView
+        view = DefaultCallbackNamesDatatableView
         url = reverse('default-callback-names')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         obj = self.get_json_response(url)
 
     def test_helpers_reference_datatable_view(self):
-        view = views.HelpersReferenceDatatableView
+        view = HelpersReferenceDatatableView
         url = reverse('helpers-reference')
         view.request = FakeRequest(url)
         response = self.client.get(url)
         obj = self.get_json_response(url)
 
     def test_satellite_datatable_view(self):
-        view = views.SatelliteDatatableView
+        view = SatelliteDatatableView
         url = reverse('satellite')
         view.request = FakeRequest(url)
         response = self.client.get(url)

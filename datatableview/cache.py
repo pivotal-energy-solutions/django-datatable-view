@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import inspect
 import hashlib
 import logging
@@ -42,10 +43,10 @@ except AttributeError:
 
 cache = caches[CACHE_BACKEND]
 
-
 hash_slice = None
 if CACHE_KEY_HASH:
     hash_slice = slice(None, CACHE_KEY_HASH_LENGTH)
+
 
 def _hash_key_component(s):
     return hashlib.sha1(s.encode('utf-8')).hexdigest()[hash_slice]
@@ -93,7 +94,7 @@ def get_cache_key(datatable_class, view=None, user=None, **kwargs):
         kwargs_id = _hash_key_component(kwargs_id)
         cache_key += '__kwargs_%s' % (kwargs_id,)
 
-    log.debug("Cache key derived for %r: %r (from kwargs %r)", datatable_class, cache_key, values)
+    log.debug('Cache key derived for %r: %r (from kwargs %r)', datatable_class, cache_key, values)
 
     return cache_key
 
@@ -102,12 +103,12 @@ def get_cached_data(datatable, **kwargs):
     """ Returns the cached object list under the appropriate key, or None if not set. """
     cache_key = '%s%s' % (CACHE_PREFIX, datatable.get_cache_key(**kwargs))
     data = cache.get(cache_key)
-    log.debug("Reading data from cache at %r: %r", cache_key, data)
+    log.debug('Reading data from cache at %r: %r', cache_key, data)
     return data
 
 
 def cache_data(datatable, data, **kwargs):
     """ Stores the object list in the cache under the appropriate key. """
     cache_key = '%s%s' % (CACHE_PREFIX, datatable.get_cache_key(**kwargs))
-    log.debug("Setting data to cache at %r: %r", cache_key, data)
+    log.debug('Setting data to cache at %r: %r', cache_key, data)
     cache.set(cache_key, data)

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block static %}
+    {{ block.super }}
+    <script src="{{ STATIC_URL }}syntaxhighlighter/shBrushJScript.js" type="text/javascript"></script>
+{% endblock static %}
+
+{% block content %}
+    <h2>Migration checklist for moving up to release 0.9</h2>
+
+    <p>
+        The jump from the 0.8.x series to 0.9 is covered in sections below.
+    </p>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="list-group">
+                <a class="list-group-item" href="#datatables-1-10">dataTables.js 1.10</a>
+                <a class="list-group-item" href="#configuration-style">Update configuration style</a>
+                <a class="list-group-item" href="#new-vocabulary">New vocabulary</a>
+                <a class="list-group-item" href="#no-automatic-column-processors">No more automatic column callbacks</a>
+                <a class="list-group-item" href="#no-automatic-datatable-initialization">No more automatic DataTables.js initialization</a>
+                <a class="list-group-item" href="#default-structure-template">Double check any structure templates</a>
+                <a class="list-group-item" href="#complex-columns">Update complex column definitions</a>
+                <a class="list-group-item" href="#custom-fields">Custom model fields</a>
+                <a class="list-group-item" href="#values-datatable">Experiment with the new <code>ValuesDatatable</code></a>
+            </div>
+        </div>
+    </div>
+
+    <br><br>
+    <h3>
+        <a id="datatables-1-10" name="datatables-1-10" href="#datatables-1-10">
+            dataTables.js 1.10
+        </a>
+    </h3>
+    <h6>See <a href="http://datatables.net/blog/2014-05-01">the official 1.10 announcement</a> if you've been living under a rock!</h6>
+    <p>
+        DataTables 1.10 provides a brand new api for getting things done, and it's a good thing too,
+        because doing anything fancy in the old api pretty much required Allan to write yet another
+        block of example code that everyone just copies and pastes.
+    </p>
+    <p>
+        For our 0.9 release of django-datatable-view, we still use the "legacy" constructor to get
+        things going, but that's okay, because the legacy api is still completely supported (even if
+        all of its Hungarian notation keeps us up at night).  The drawback at this stage is that we
+        can't yet accept configuration settings that are "new-style only".
+    </p>
+    <p>
+        Despite the fact that we're using the legacy constructor for a while longer, you can access
+        the table's fancy new API object with one simple line:
+    </p>
+    <pre class="brush: javascript">
+// Standard initialization
+var opts = {};
+var datatable = datatableview.initialize($('.datatable'), opts);
+
+// Get a reference to the new API object
+var table = datatable.api();
+    </pre>
+
+    <br><br>
+    <h3>
+        <a id="configuration-style" name="configuration-style" href="#configuration-style">
+            Update configuration style
+        </a>
+    </h3>
+    <h6>See <a href="{% url "configure-datatable-object" %}">Datatable object and <code>Meta</code></a> for examples.</h6>
+    <p>
+        The preferred way to configure columns for a view is now to use the
+        <code>datatableview.Datatable</code> class.  It has similarities to the Django
+        <code>ModelForm</code>: the class uses an inner <code>Meta</code> class to specify all of
+        the options that we used to provide in your view's <code>datatable_options</code> dict.
+    </p>
+    <p>
+        You want to just unpack the keys and values from your existing
+        <code>datatable_options</code> dict and set those as attributes on a
+        <code>Datatable.Meta</code>.  Then just assign this Datatable subclass on your view:
+    </p>
+    <pre class="brush: python">
+class MyDatatable(Datatable):
+    class Meta:
+        columns = [ ... ]
+        search_fields = [ ... ]
+        # etc
+
+class MyDatatableView(DatatableView):
+    datatable_class = MyDatatable
+    </pre>
+    <p>
+        An alternate abbreviated style is available: as with class-based views that use Django
+        forms, you can set these Meta attributes directly on the view class,
+        <a href="{% url "configure-inline" %}">shown in more detail here</a>.  Please note that if
+        you're declaring anything fancier than simple model fields or methods as columns (typically
+        anything that would have required the 2-tuple or 3-tuple column syntax), please use the new
+        <code>Datatable</code> object strategy.
+    </p>
+    <p>
+        The new <code>Datatable</code> object doubles as the old 0.8 <code>DatatableOptions</code>
+        template renderable object.  <code>DatatableOptions</code> and
+        <code>utils.get_datatable_structure()</code> have both been removed, since
+        <code>Datatable</code> itself is all you need.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="new-vocabulary" name="new-vocabulary" href="#new-vocabulary">
+            New vocabulary
+        </a>
+    </h3>
+    <h6>We're becoming more sophisticated!</h6>
+    <p>
+        Now that we spent a bunch of time learning how to use the tools we created, it felt like a
+        good time to change some of the terms used internally.
+    </p>
+    <p>
+        In connection with <a href="{% url "configure-datatable-object" %}">the new
+        <code>Datatable</code></a> object that helps you design the datatable,
+        <strong>we've started referring to column data callbacks as "processors"</strong>.  This
+        means that we will stop relying on callbacks in the documentation being named in the pattern
+        of <code>"get_column_FOO_data()"</code>.  Instead, you'll notice names like
+        <code>"get_FOO_data()"</code>, and we'll be specifying the callback in a column definition
+        via a <code>processor</code> keyword argument.  See
+        <a href="{% url "processors" %}">Postprocessors</a> for a examples of this.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="no-automatic-column-processors" name="no-automatic-column-processors" href="#no-automatic-column-processors">
+            No more automatic column callbacks
+        </a>
+    </h3>
+    <h6>
+        <em>Explicit is better than implicit.</em> -- The Zen of Python (that thing you knew you
+        should be following, but inevitably lazily ignored)
+    </h6>
+    <p>
+        We knew that implicit callbacks was a bad idea, but in our defense,
+        <a href="{% url "column-formats" %}">the deprecated column format was really cumbersome to
+        use</a>.  <strong>This behavior is going away.</strong>  If you have any column callbacks
+        (we're calling them "processors" now) that aren't explicitly named in the column definition,
+        it won't be used.
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="no-automatic-datatable-initialization" name="no-automatic-datatable-initialization" href="#no-automatic-datatable-initialization">
+            No more automatic DataTables.js initialization
+        </a>
+    </h3>
+    <h6>Bye bye <code>function confirm_datatable_options(options){ ... }</code></h6>
+    <p>
+        Automatic initialization has gone the way of the buffalo, meaning that it doesn't exist
+        anymore.  The global JavaScript function <code>confirm_datatable_options</code> only ever
+        existed because auto initialization took away your chance to set custom options during the
+        init process.  You should initialize your datatables via a simple call to the global
+        function <code>datatableview.initialize($('.datatable'), opts)</code>.  This JS function
+        reads DOM attributes from the table structure and builds some of the column options for
+        you, but you can pass literally any other supported option in as the second argument. Just
+        give it an object, and everything will be normal.
+    </p>
+    <p class="alert alert-info">
+        There is a configurable Javascript flag <code>datatableview.auto_initialize</code> that
+        previously defaulted to <code>true</code>, but in 0.9 its default value is now
+        <code>false</code>.  If you need 0.9 to behave the way it did in 0.8, set this flag globally
+        or per-page as needed.  (Be careful not to do it in a <code>$(document).ready()</code>
+        handler, since auto initialization runs during that hook.  You might end up flagging for
+        auto initialization after datatableview.js has already finished checking it, and nothing
+        will happen.)
+    </p>
+
+    <br><br>
+    <h3>
+        <a id="default-structure-template" name="default-structure-template" href="#default-structure-template">
+            Double check your default structure template
+        </a>
+    </h3>
+    <h6>See <a href="{% url "customized-template" %}">Custom render template</a> for examples.</h6>
+    <p>
+        If you haven't gone out of your way to override the default structure template or create
+        your own template, this shouldn't apply to you.
+    </p>
+    <p>
+        The 0.9 default structure template at <code>datatableview/default_structure.html</code> has
+        been modified to include a reference to a
+        <code>{% templatetag openvariable %} config {% templatetag closevariable %}</code> variable,
+        which holds all of the configuration values for the table.  The render context for this
+        template previously held a few select loose values for putting <code>data-*</code>
+        attributes on the main <code>&lt;table&gt;</code> tag, but the template should now read
+        from the following values (note the leading <code>config.</code>:
+    </p>
+    <ul>
+        <li><code>{% templatetag openvariable %} config.result_counter_id {% templatetag closevariable %}</code></li>
+        <li><code>{% templatetag openvariable %} config.page_length {% templatetag closevariable %}</code></li>
+    </ul>
+
+
+    <br><br>
+    <h3>
+        <a id="complex-columns" name="complex-columns" href="#complex-columns">
+            Update complex column definitions
+        </a>
+    </h3>
+    <h6>See <a href="/pretty-names/">Custom verbose names</a>, <a href="/column-backed-by-method/">Model method-backed columns</a>, <a href="/processors/">Postprocessing values</a>, and <a href="/compound-columns/">Compound columns</a> for examples.</h6>
+    <p>
+        The <a href="/column-formats/">now-deprecated 0.8 column definition format</a> had a lot of
+        overloaded syntax.  It grew out of a desire for a simple zero-configuration example, but
+        became unwieldy, using nested tuples and optional tuple lengths to mean different things.
+    </p>
+    <p>
+        The new format can be thought of as a clone of the built-in Django forms framework.  In that
+        comparison, the new <code>Datatable</code> class is like a Form, complete with Meta options
+        that describe its features, and it defines <code>Column</code> objects instead of
+        FormFields.  A <code>Datatable</code> configuration object is then given to the view in the
+        place of the old <code>datatable_options</code> dictionary.
+    </p>
+    <p>
+        In summary, the old <code>datatable_options</code> dict is replaced by making a Datatable
+        configuration object that has a <code>Meta</code>.
+    </p>
+    <p>
+        The task of <a href="/specific-columns/">showing just a few specific columns</a> is made a
+        bit heavier than before, but (as with the forms framework) the new Meta options can all be
+        provided as class attributes on the view to keep the simplest cases simple.
+    </p>
+
+
+    <br><br>
+    <h3>
+        <a id="custom-fields" name="custom-fields" href="#custom-fields">
+            Custom model fields
+        </a>
+    </h3>
+    <h6>See <a href="/custom-model-fields/">Custom model fields</a> for new registration strategy.</h6>
+    <p>
+        Custom model fields were previously registered in a dict in
+        <code>datatableview.utils.FIELD_TYPES</code>, where the type (such as <code>'text'</code>)
+        would map to a list of model fields that conformed to the text-style ORM query types (such
+        as <code>__icontains</code>).
+    </p>
+    <p>
+        In 0.9, the registration mechanism has changed to a priority system list, which associates
+        instances of the new <code>Column</code> class to the model fields it can handle.  See
+        <a href="/custom-model-fields/">Custom model fields</a> for examples showing how to register
+        model fields to a built-in <code>Column</code> class, and how to write a new
+        <code>Column</code> subclass if there are custom ORM query types that the field should
+        support.
+    </p>
+
+
+    <br><br>
+    <h3>
+        <a id="values-datatable" name="values-datatable" href="#values-datatable">
+            Experiment with the new <code>ValuesDatatable</code>
+        </a>
+    </h3>
+    <h6>See <a href="{% url "configure-values-datatable-object" %}">ValuesDatatable object</a> for examples.</h6>
+    <p>
+        An elegant simplification of the datatable strategy is to select the values you want to show
+        directly from the database and just put them through to the frontend with little or no
+        processing.  If you can give up declaration of column sources as model methods and
+        properties and rely just on the data itself to be usable, try swapping in a
+        <code>ValuesDatatable</code> as the base class for your table, rather than the default
+        <code>Datatable</code>.
+    </p>
+
+    <p>
+        This saves Django the trouble of instantiating model instances for each row, and might even
+        encourage the developer to think about their data with fewer layers of abstraction.
+    </p>
+    <br><br>
+{% endblock content %}

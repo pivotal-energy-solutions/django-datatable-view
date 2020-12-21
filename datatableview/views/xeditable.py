@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import json
 import logging
@@ -33,7 +33,7 @@ class XEditableMixin(object):
         """ AJAX GET handler for xeditable queries asking for field choice lists. """
         field_name = request.GET.get(self.xeditable_fieldname_param)
         if not field_name:
-            return HttpResponseBadRequest("Field name must be given")
+            return HttpResponseBadRequest('Field name must be given')
 
         queryset = self.get_queryset()
         if not self.model:
@@ -49,13 +49,13 @@ class XEditableMixin(object):
                 if name == field_name:
                     break
             else:
-                return HttpResponseBadRequest("Invalid field name")
+                return HttpResponseBadRequest('Invalid field name')
         else:
             datatable = self.get_datatable()
             if not hasattr(datatable, 'config'):
                 datatable.configure()
             if field_name not in datatable.config['columns']:
-                return HttpResponseBadRequest("Invalid field name")
+                return HttpResponseBadRequest('Invalid field name')
 
         field = self.model._meta.get_field(field_name)
         choices = self.get_field_choices(field, field_name)
@@ -72,17 +72,17 @@ class XEditableMixin(object):
             if obj is None:
                 data = json.dumps({
                     'status': 'error',
-                    'message': "Object does not exist."
+                    'message': 'Object does not exist.'
                 })
-                return HttpResponse(data, content_type="application/json", status=404)
+                return HttpResponse(data, content_type='application/json', status=404)
             return self.update_object(form, obj)
         else:
             data = json.dumps({
                 'status': 'error',
-                'message': "Invalid request",
+                'message': 'Invalid request',
                 'form_errors': form.errors,
             })
-            return HttpResponse(data, content_type="application/json", status=400)
+            return HttpResponse(data, content_type='application/json', status=400)
 
     def get_xeditable_form_class(self):
         """ Returns ``self.xeditable_form_class``. """
@@ -129,7 +129,7 @@ class XEditableMixin(object):
         data = json.dumps({
             'status': 'success',
         })
-        return HttpResponse(data, content_type="application/json")
+        return HttpResponse(data, content_type='application/json')
 
     def get_field_choices(self, field, field_name):
         """

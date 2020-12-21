@@ -236,5 +236,5 @@ ValuesLegacyDatatable
       :py:attr:`~datatableview.columns.Column.processor` callback.  The mapped values may be
       direct references to callables, or strings that name a method on the Datatable or view.
 
-      :Example: 
+      :Example:
           ``processors = {'name': 'get_name_data'}``
