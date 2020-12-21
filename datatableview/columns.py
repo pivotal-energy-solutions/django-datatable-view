@@ -18,7 +18,6 @@ import dateutil.parser
 
 from .utils import resolve_orm_path, DEFAULT_EMPTY_VALUE, DEFAULT_MULTIPLE_SEPARATOR
 
-
 log = logging.getLogger(__name__)
 
 # Registry of Column subclasses to their declared corresponding ModelFields.
@@ -494,14 +493,25 @@ class BooleanColumn(Column):
     lookup_types = ('exact', 'in')
 
     def prep_search_value(self, term, lookup_type):
-        term = term.lower()
+        try:
+            term = term.lower()
+        except AttributeError:
+            pass
+
+        # In some cases self.label is None
+        try:
+            label = self.label.lower()
+        except AttributeError:
+            label = ''
+
         # Allow column's own label to represent a true value
-        if term == 'true' or term.lower() in self.label.lower():
+        if term in ['True', 'true'] or term in label:
             term = True
-        elif term == 'false':
+        elif term in ['False', 'false']:
             term = False
         else:
             return None
+
         return super(BooleanColumn, self).prep_search_value(term, lookup_type)
 
 

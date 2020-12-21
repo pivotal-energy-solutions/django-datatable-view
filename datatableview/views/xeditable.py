@@ -128,10 +128,10 @@ class XEditableMixin(object):
             except ValidationError as e:
                 data = json.dumps({
                     'status': 'error',
-                    'message': "Invalid request",
+                    'message': 'Invalid request',
                     'form_errors': {field_name: [e.message]},
                 })
-                return HttpResponse(data, content_type="application/json", status=400)
+                return HttpResponse(data, content_type='application/json', status=400)
 
         setattr(obj, field_name, value)
         save_kwargs = {}
