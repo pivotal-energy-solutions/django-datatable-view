@@ -1,32 +1,32 @@
 repos:
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v1.4.0
+    rev: v2.3.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=500']
       - id: check-byte-order-marker
+        exclude: .*\.csv|.*\.xsd|.*\.xlsx|.*\.xml
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
       - id: detect-private-key
-      - id: flake8
-        files: datatableview
-        exclude: tests/*
-        args: ['--config=tox.ini']
       - id: fix-encoding-pragma
       - id: end-of-file-fixer
-        exclude: .idea/*
+        exclude: .idea/.*|.*\.blg|.*\.json|.*\.dat
       - id: trailing-whitespace
-        exclude: .idea/*
+        exclude: .idea/.*|.*\.blg|.*\.json|.*\.dat
       - id: mixed-line-ending
-        exclude: .idea/*
+        exclude: .idea/.*
       - id: double-quote-string-fixer
-        exclude: .idea/*
+        exclude: .idea/.*|.*\.blg|.*\.dat
       - id: check-json
-        files: .gitignore
+      - id: flake8
+        exclude: migrations/.*\.py
+        args:
+          - --max-line-length=120
   - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.16  # Use the revision sha / tag you want to point at
+    rev: v4.3.20
     hooks:
       - id: isort
-        files: datatableview
+        name: iSort
         args: ['--recursive', '--diff']

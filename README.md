@@ -123,7 +123,7 @@ The example project is configured to use a local sqlite3 database, and relies on
 
 ## Copyright and license
 
-Copyright (c) 2012-2018 Pivotal Energy Solutions.  All rights reserved.
+Copyright 2011-2020 Pivotal Energy Solutions.  All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.
