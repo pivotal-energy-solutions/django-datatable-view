@@ -3,7 +3,7 @@ repos:
     rev: v2.3.0
     hooks:
       - id: check-added-large-files
-        args: ['--maxkb=500']
+        args: [ '--maxkb=500' ]
       - id: check-byte-order-marker
         exclude: .*\.csv|.*\.xsd|.*\.xlsx|.*\.xml
       - id: check-case-conflict
@@ -20,6 +20,9 @@ repos:
       - id: double-quote-string-fixer
         exclude: .idea/.*|.*\.blg|.*\.dat
       - id: check-json
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.3
+    hooks:
       - id: flake8
         exclude: migrations/.*\.py
         args:
@@ -29,4 +32,4 @@ repos:
     hooks:
       - id: isort
         name: iSort
-        args: ['--recursive', '--diff']
+        args: [ '--recursive', '--diff' ]
