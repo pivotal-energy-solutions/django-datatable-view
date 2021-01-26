@@ -9,11 +9,11 @@
 
     { "model": "test_app.ExampleModel", "pk": 1, "fields": {
         "name": "Example 1",
-        "date_created": "2013-01-01"
+        "date_created": "2013-01-01T17:41:28+00:00"
     }},
     { "model": "test_app.ExampleModel", "pk": 2, "fields": {
         "name": "Example 2",
-        "date_created": "2013-01-01",
+        "date_created": "2013-01-01T17:41:28+00:00",
         "related": 1
     }}
 ]

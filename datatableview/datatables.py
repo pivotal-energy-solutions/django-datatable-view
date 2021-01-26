@@ -11,7 +11,7 @@ from functools import reduce
 
 from django.template.loader import render_to_string
 from django.db.models import QuerySet
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from .exceptions import ColumnError, SkipRecord
 from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn,  # noqa: F401
@@ -869,7 +869,7 @@ class Datatable(metaclass=DatatableMetaclass):
 
         column_name = column.name
         if isinstance(self, LegacyDatatable):
-            name = force_text(column.label, errors='ignore')
+            name = force_str(column.label, errors='ignore')
             if not name:
                 name = column.sources[0]
             column_name = re.sub(r'[\W_]+', '_', name)

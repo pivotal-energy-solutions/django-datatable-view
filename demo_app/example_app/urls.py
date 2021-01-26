@@ -3,9 +3,9 @@
 import re
 
 try:
-    from django.urls import url
+    from django.urls import url, re_path
 except ImportError:
-    from django.conf.urls import url
+    from django.conf.urls import url, re_path
 
 from . import views
 
@@ -19,13 +19,13 @@ for attr in dir(views):
     if is_demo:
         name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1-', attr).lower()
         name = name.replace('-datatable-view', '')
-        urls.append(url(r'^{name}/$'.format(name=name), View.as_view(), name=name))
+        urls.append(re_path(r'^{name}/$'.format(name=name), View.as_view(), name=name))
 
 urlpatterns = [
-    url(r'^$', views.IndexView.as_view(), name='index'),
-    url(r'^reset/$', views.ResetView.as_view()),
-    url(r'^migration-guide/$', views.MigrationGuideView.as_view(), name='migration-guide'),
-    url(r'^column-formats/$', views.ValidColumnFormatsView.as_view(), name='column-formats'),
-    url(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name='js-init'),
-    url(r'^satellite/$', views.SatelliteDatatableView.as_view(), name='satellite'),
+    re_path(r'^$', views.IndexView.as_view(), name='index'),
+    re_path(r'^reset/$', views.ResetView.as_view()),
+    re_path(r'^migration-guide/$', views.MigrationGuideView.as_view(), name='migration-guide'),
+    re_path(r'^column-formats/$', views.ValidColumnFormatsView.as_view(), name='column-formats'),
+    re_path(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name='js-init'),
+    re_path(r'^satellite/$', views.SatelliteDatatableView.as_view(), name='satellite'),
 ] + urls
