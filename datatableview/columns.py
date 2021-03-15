@@ -471,7 +471,8 @@ class DateColumn(Column):
                         term = getattr(date_obj, lookup_type)
                     return str(term)
 
-        return super(DateColumn, self).prep_search_value(term, lookup_type)
+        # At this point we have garbage..
+        return None
 
 
 class DateTimeColumn(DateColumn):
