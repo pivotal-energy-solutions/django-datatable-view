@@ -18,8 +18,8 @@ This package is used in conjunction with the jQuery plugin [DataTables](http://d
 
 Dependencies:
 
-* Python 2.7/3.5 or later
-* [Django](http://www.djangoproject.com/) >= 1.11
+* Python 3.8 or later
+* [Django](http://www.djangoproject.com/) >= 2.2
 * [dateutil](http://labix.org/python-dateutil) library for flexible, fault-tolerant date parsing.
 * [jQuery](https://jquery.com/) >= 2
 * [dataTables.js](https://datatables.net/) >= 1.10
@@ -123,7 +123,7 @@ The example project is configured to use a local sqlite3 database, and relies on
 
 ## Copyright and license
 
-Copyright 2011-2020 Pivotal Energy Solutions.  All rights reserved.
+Copyright 2011-2021 Pivotal Energy Solutions.  All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.
