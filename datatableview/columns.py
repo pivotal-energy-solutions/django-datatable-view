@@ -305,7 +305,7 @@ class Column(metaclass=ColumnMetaclass):
         try:
             term = model_field.get_prep_value(term)
         except Exception as err:
-            log.warning(f'model_field.get_prep_value({term}) - {err}')
+            log.info(f'model_field.get_prep_value({term}) - {err}')
             term = None
 
         return term
@@ -453,7 +453,7 @@ class DateColumn(Column):
                 try:
                     test_term = int(test_term) - 1  # Django ORM uses 1-7, python strptime uses 0-6
                 except Exception as err:
-                    log.warning(f'int({test_term}) - 1 -- {err}')
+                    log.info(f'int({test_term}) - 1 -- {err}')
                     return None
                 else:
                     test_term = str(test_term)
