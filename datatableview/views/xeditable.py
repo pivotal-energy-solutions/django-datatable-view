@@ -174,6 +174,13 @@ class XEditableMixin(object):
             # will consequently try to assume initial=None, forcing the blank option to appear.
             formfield_kwargs["empty_label"] = None
         formfield = field.formfield(**formfield_kwargs)
+        
+        # In case of using Foreignkey limit_choices_to, django prepares model form and handles
+        # form validation correctly, so does django-datatableview with x-editable plugin. However
+        # this piece of code helps filtering limited choices to be only visible choices,else
+        # all the choices are visible.
+        if formfield.limit_choices_to:
+            formfield.queryset = formfield.queryset.filter(**formfield.limit_choices_to)
         return formfield.choices
 
     def _get_default_choices(self, field, field_name):
