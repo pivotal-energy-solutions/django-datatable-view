@@ -26,8 +26,3 @@ repos:
       rev: 3.9.2
       hooks:
       - id: flake8
-  - repo: https://github.com/pivotal-energy-solutions/pre-commit-hooks
-    rev: ee64c7bc9b4e56eb4bab54df3dbdc001b6370218
-    hooks:
-      - id: copyright-checker
-        exclude: manage.py|wsgi.py|migrations/.*\.py
