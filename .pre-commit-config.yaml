@@ -17,19 +17,17 @@ repos:
         exclude: .idea/.*|.*\.blg|.*\.json|.*\.dat
       - id: mixed-line-ending
         exclude: .idea/.*
-      - id: double-quote-string-fixer
-        exclude: .idea/.*|.*\.blg|.*\.dat
       - id: check-json
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.3
-    hooks:
+  -   repo: https://github.com/ambv/black
+      rev: stable
+      hooks:
+      - id: black
+  -   repo: https://gitlab.com/pycqa/flake8
+      rev: 3.9.2
+      hooks:
       - id: flake8
-        exclude: migrations/.*\.py
-        args:
-          - --max-line-length=120
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.20
+  - repo: https://github.com/pivotal-energy-solutions/pre-commit-hooks
+    rev: ee64c7bc9b4e56eb4bab54df3dbdc001b6370218
     hooks:
-      - id: isort
-        name: iSort
-        args: [ '--recursive', '--diff' ]
+      - id: copyright-checker
+        exclude: manage.py|wsgi.py|migrations/.*\.py

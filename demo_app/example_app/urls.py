@@ -17,15 +17,19 @@ for attr in dir(views):
     except TypeError:
         continue
     if is_demo:
-        name = re.sub(r'([a-z]|[A-Z]+)(?=[A-Z])', r'\1-', attr).lower()
-        name = name.replace('-datatable-view', '')
-        urls.append(re_path(r'^{name}/$'.format(name=name), View.as_view(), name=name))
+        name = re.sub(r"([a-z]|[A-Z]+)(?=[A-Z])", r"\1-", attr).lower()
+        name = name.replace("-datatable-view", "")
+        urls.append(re_path(r"^{name}/$".format(name=name), View.as_view(), name=name))
 
 urlpatterns = [
-    re_path(r'^$', views.IndexView.as_view(), name='index'),
-    re_path(r'^reset/$', views.ResetView.as_view()),
-    re_path(r'^migration-guide/$', views.MigrationGuideView.as_view(), name='migration-guide'),
-    re_path(r'^column-formats/$', views.ValidColumnFormatsView.as_view(), name='column-formats'),
-    re_path(r'^javascript-initialization/$', views.JavascriptInitializationView.as_view(), name='js-init'),
-    re_path(r'^satellite/$', views.SatelliteDatatableView.as_view(), name='satellite'),
+    re_path(r"^$", views.IndexView.as_view(), name="index"),
+    re_path(r"^reset/$", views.ResetView.as_view()),
+    re_path(r"^migration-guide/$", views.MigrationGuideView.as_view(), name="migration-guide"),
+    re_path(r"^column-formats/$", views.ValidColumnFormatsView.as_view(), name="column-formats"),
+    re_path(
+        r"^javascript-initialization/$",
+        views.JavascriptInitializationView.as_view(),
+        name="js-init",
+    ),
+    re_path(r"^satellite/$", views.SatelliteDatatableView.as_view(), name="satellite"),
 ] + urls

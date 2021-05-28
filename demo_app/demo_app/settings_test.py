@@ -16,4 +16,4 @@ class DisableMigrations(object):
 MIGRATION_MODULES = DisableMigrations()
 
 # Handle system warning as log messages
-warnings.simplefilter('once')
+warnings.simplefilter("once")

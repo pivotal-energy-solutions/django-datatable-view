@@ -49,17 +49,19 @@ def keyed_helper(helper):
     def wrapper(instance=None, key=None, attr=None, *args, **kwargs):
         if set((instance, key, attr)) == {None}:
             # helper was called in place with neither important arg
-            raise ValueError("If called directly, helper function '%s' requires either a model"
-                             " instance, or a 'key' or 'attr' keyword argument." % helper.__name__)
+            raise ValueError(
+                "If called directly, helper function '%s' requires either a model"
+                " instance, or a 'key' or 'attr' keyword argument." % helper.__name__
+            )
 
         if instance is not None:
             return helper(instance, *args, **kwargs)
 
         if key is None and attr is None:
-            attr = 'self'
+            attr = "self"
 
         if attr:
-            if attr == 'self':
+            if attr == "self":
                 key = lambda obj: obj  # noqa: E731
             else:
                 key = operator.attrgetter(attr)
@@ -109,12 +111,12 @@ def link_to_model(instance, text=None, *args, **kwargs):
                                           processor=link_to_model(key=getattr('relatedobject')))
     """
     if not text:
-        text = kwargs.get('rich_value') or str(instance)
-    return u"""<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
+        text = kwargs.get("rich_value") or str(instance)
+    return """<a href="{0}">{1}</a>""".format(instance.get_absolute_url(), text)
 
 
 @keyed_helper
-def make_boolean_checkmark(value, true_value='&#10004;', false_value='&#10008;', *args, **kwargs):
+def make_boolean_checkmark(value, true_value="&#10004;", false_value="&#10008;", *args, **kwargs):
     """
     Returns a unicode ✔ or ✘, configurable by pre-calling the helper with ``true_value`` and/or
     ``false_value`` arguments, based on the incoming value.
@@ -134,7 +136,7 @@ def make_boolean_checkmark(value, true_value='&#10004;', false_value='&#10008;',
                                               processor=make_boolean_checkmark(false_value=""))
 
     """
-    value = kwargs.get('default_value', value)
+    value = kwargs.get("default_value", value)
     if value:
         return true_value
     return false_value
@@ -164,14 +166,18 @@ def itemgetter(k, ellipsis=False, key=None):
     """
 
     def helper(instance, *args, **kwargs):
-        default_value = kwargs.get('default_value')
+        default_value = kwargs.get("default_value")
         if default_value is None:
             default_value = instance
         value = default_value[k]
-        if ellipsis and isinstance(k, slice) and isinstance(value, str) and \
-                len(default_value) > len(value):
+        if (
+            ellipsis
+            and isinstance(k, slice)
+            and isinstance(value, str)
+            and len(default_value) > len(value)
+        ):
             if ellipsis is True:
-                value += '...'
+                value += "..."
             else:
                 value += ellipsis
         return value
@@ -202,7 +208,7 @@ def attrgetter(attr, key=None):
 
     def helper(instance, *args, **kwargs):
         value = instance
-        for bit in attr.split('.'):
+        for bit in attr.split("."):
             value = getattr(value, bit)
             if callable(value):
                 value = value()
@@ -229,16 +235,16 @@ def format_date(format_string, localize=False, key=None):
         raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
 
     def helper(value, *args, **kwargs):
-        inner_localize = kwargs.get('localize', localize)
+        inner_localize = kwargs.get("localize", localize)
         if inner_localize is not False and localtime is None:
             raise Exception("Cannot use format_date argument 'localize' with Django < 1.5")
 
         if key:
             value = key(value)
         else:
-            value = kwargs.get('default_value', value)
+            value = kwargs.get("default_value", value)
         if not value:  # Empty or missing default_value
-            return ''
+            return ""
         if localize:
             value = localtime(value)
         return value.strftime(format_string)
@@ -273,7 +279,7 @@ def format(format_string, cast=lambda x: x):
     """
 
     def helper(instance, *args, **kwargs):
-        value = kwargs.get('default_value')
+        value = kwargs.get("default_value")
         if value is None:
             value = instance
         value = cast(value)
@@ -310,91 +316,95 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):  # noqa: C90
         return helper
 
     # Immediate finalization, return the xeditable structure
-    data = kwargs.get('default_value', instance)
-    rich_data = kwargs.get('rich_value', data)
+    data = kwargs.get("default_value", instance)
+    rich_data = kwargs.get("rich_value", data)
 
     # Compile values to appear as "data-*" attributes on the anchor tag
-    default_attr_names = ['pk', 'type', 'url', 'source', 'title', 'placeholder']
+    default_attr_names = ["pk", "type", "url", "source", "title", "placeholder"]
     valid_attr_names = set(default_attr_names + list(extra_attrs))
     attrs = {}
     for k, v in kwargs.items():
         if k in valid_attr_names:
-            if k.startswith('data_'):
+            if k.startswith("data_"):
                 k = k[5:]
-            attrs['data-{0}'.format(k)] = v
+            attrs["data-{0}".format(k)] = v
 
-    attrs['data-xeditable'] = 'xeditable'
+    attrs["data-xeditable"] = "xeditable"
 
     # Assign default values where they are not provided
 
-    field_name = kwargs['field_name']  # sent as a default kwarg to helpers
+    field_name = kwargs["field_name"]  # sent as a default kwarg to helpers
     if isinstance(field_name, (tuple, list)):
         # Legacy syntax
         field_name = field_name[1]
         if isinstance(field_name, (tuple, list)):
-            raise ValueError("'make_xeditable' helper needs a single-field data column,"
-                             ' not {0!r}'.format(field_name))
-    attrs['data-name'] = field_name
+            raise ValueError(
+                "'make_xeditable' helper needs a single-field data column,"
+                " not {0!r}".format(field_name)
+            )
+    attrs["data-name"] = field_name
 
     if isinstance(rich_data, Model):
-        attrs['data-value'] = rich_data.pk
+        attrs["data-value"] = rich_data.pk
     else:
-        attrs['data-value'] = rich_data
+        attrs["data-value"] = rich_data
 
-    if 'data-pk' not in attrs:
-        attrs['data-pk'] = instance.pk
+    if "data-pk" not in attrs:
+        attrs["data-pk"] = instance.pk
 
-    if 'data-url' not in attrs:
+    if "data-url" not in attrs:
         # Look for a backup data-url
-        provider_name = 'get_update_url'
-        url_provider = getattr(kwargs.get('view'), provider_name, None)
+        provider_name = "get_update_url"
+        url_provider = getattr(kwargs.get("view"), provider_name, None)
         if not url_provider:
             url_provider = getattr(instance, provider_name, None)
-            if not url_provider and 'view' in kwargs:
-                url_provider = lambda field_name: kwargs['view'].request.path  # noqa: E731
+            if not url_provider and "view" in kwargs:
+                url_provider = lambda field_name: kwargs["view"].request.path  # noqa: E731
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'url'.")
         if url_provider:
-            attrs['data-url'] = url_provider(field_name=field_name)
+            attrs["data-url"] = url_provider(field_name=field_name)
 
-    if 'data-placeholder' not in attrs:
-        attrs['data-placeholder'] = attrs.get('data-title', '')
+    if "data-placeholder" not in attrs:
+        attrs["data-placeholder"] = attrs.get("data-title", "")
 
-    if 'data-type' not in attrs:
-        if hasattr(instance, '_meta'):
+    if "data-type" not in attrs:
+        if hasattr(instance, "_meta"):
             # Try to fetch a reasonable type from the field's class
-            if field_name == 'pk':  # special field name not in Model._meta.fields
+            if field_name == "pk":  # special field name not in Model._meta.fields
                 field = instance._meta.pk
             else:
                 field = resolve_orm_path(instance, field_name)
 
             if field.choices:
-                field_type = 'select'
+                field_type = "select"
             else:
-                field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), 'text')
+                field_type = XEDITABLE_FIELD_TYPES.get(field.get_internal_type(), "text")
         else:
-            field_type = 'text'
-        attrs['data-type'] = field_type
+            field_type = "text"
+        attrs["data-type"] = field_type
 
     # type=select elements need to fetch their valid choice options from an AJAX endpoint.
     # Register the view for this lookup.
-    if attrs['data-type'] in ('select', 'select2'):
-        if 'data-source' not in attrs:
-            if 'view' in kwargs:
-                attrs['data-source'] = '{url}?{field_param}={fieldname}'.format(**{
-                    'url': kwargs['view'].request.path,
-                    'field_param': kwargs['view'].xeditable_fieldname_param,
-                    'fieldname': field_name,
-                })
-                if attrs['data-type'] == 'select2':
-                    attrs['data-source'] += '&select2=true'
+    if attrs["data-type"] in ("select", "select2"):
+        if "data-source" not in attrs:
+            if "view" in kwargs:
+                attrs["data-source"] = "{url}?{field_param}={fieldname}".format(
+                    **{
+                        "url": kwargs["view"].request.path,
+                        "field_param": kwargs["view"].xeditable_fieldname_param,
+                        "fieldname": field_name,
+                    }
+                )
+                if attrs["data-type"] == "select2":
+                    attrs["data-source"] += "&select2=true"
             else:
                 raise ValueError("'make_xeditable' cannot determine a value for 'source'.")
 
         # Choice fields will want to display their readable label instead of db data
-        data = getattr(instance, 'get_{0}_display'.format(field_name), lambda: data)()
+        data = getattr(instance, "get_{0}_display".format(field_name), lambda: data)()
 
-    data = u"""<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
+    data = """<a href="#"{attrs}>{data}</a>""".format(attrs=flatatt(attrs), data=data)
     return data
 
 
@@ -417,7 +427,7 @@ def make_processor(func, arg=None):
     """
 
     def helper(instance, *args, **kwargs):
-        value = kwargs.get('default_value')
+        value = kwargs.get("default_value")
         if value is None:
             value = instance
         if arg is not None:

@@ -25,7 +25,7 @@ class XEditableUpdateForm(forms.Form):
         super(XEditableUpdateForm, self).__init__(data, *args, **kwargs)
 
         self.model = model
-        self.set_value_field(model, data.get('name'))
+        self.set_value_field(model, data.get("name"))
 
     def set_value_field(self, model, field_name):
         """
@@ -33,16 +33,16 @@ class XEditableUpdateForm(forms.Form):
         field.  This will help to ensure that the value is correctly validated.
         """
         fields = fields_for_model(model, fields=[field_name])
-        self.fields['value'] = fields[field_name]
+        self.fields["value"] = fields[field_name]
 
     def clean_name(self):
-        """ Validates that the ``name`` field corresponds to a field on the model. """
-        field_name = self.cleaned_data['name']
+        """Validates that the ``name`` field corresponds to a field on the model."""
+        field_name = self.cleaned_data["name"]
         # get_all_field_names is deprecated in Django 1.8, this also fixes proxied models
-        if hasattr(self.model._meta, 'get_fields'):
+        if hasattr(self.model._meta, "get_fields"):
             field_names = [field.name for field in self.model._meta.get_fields()]
         else:
             field_names = self.model._meta.get_all_field_names()
         if field_name not in field_names:
-            raise ValidationError('%r is not a valid field.' % field_name)
+            raise ValidationError("%r is not a valid field." % field_name)
         return field_name

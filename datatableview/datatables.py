@@ -14,23 +14,38 @@ from django.db.models import QuerySet
 from django.utils.encoding import force_str
 
 from .exceptions import ColumnError, SkipRecord
-from .columns import (Column, TextColumn, DateColumn, DateTimeColumn, BooleanColumn,  # noqa: F401
-                      IntegerColumn, FloatColumn, DisplayColumn, CompoundColumn,  # noqa: F401
-                      get_column_for_modelfield)
-from .utils import (OPTION_NAME_MAP, MINIMUM_PAGE_LENGTH, contains_plural_field, split_terms,
-                    resolve_orm_path)
+from .columns import (
+    Column,
+    TextColumn,
+    DateColumn,
+    DateTimeColumn,
+    BooleanColumn,  # noqa: F401
+    IntegerColumn,
+    FloatColumn,
+    DisplayColumn,
+    CompoundColumn,  # noqa: F401
+    get_column_for_modelfield,
+)
+from .utils import (
+    OPTION_NAME_MAP,
+    MINIMUM_PAGE_LENGTH,
+    contains_plural_field,
+    split_terms,
+    resolve_orm_path,
+)
 from .cache import DEFAULT_CACHE_TYPE, cache_types, get_cache_key, cache_data, get_cached_data
 
 
 def pretty_name(name):
     if not name:
-        return ''
+        return ""
     return name[0].capitalize() + name[1:]
 
 
 # Borrowed from the Django forms implementation
-def columns_for_model(model, fields=None, exclude=None, labels=None, processors=None,
-                      unsortable=None, hidden=None):
+def columns_for_model(
+    model, fields=None, exclude=None, labels=None, processors=None, unsortable=None, hidden=None
+):
     field_list = []
     opts = model._meta
     for f in sorted(opts.fields):
@@ -41,7 +56,7 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
 
         column_class = get_column_for_modelfield(f)
         if column_class is None:
-            raise ColumnError('Unhandled model field %r.' % (f,))
+            raise ColumnError("Unhandled model field %r." % (f,))
         if labels and f.name in labels:
             label = labels[f.name]
         else:
@@ -59,16 +74,20 @@ def columns_for_model(model, fields=None, exclude=None, labels=None, processors=
         else:
             visible = True
         label = (labels or {}).get(f.name, pretty_name(f.verbose_name))
-        column = column_class(sources=[f.name], label=label, processor=processor, sortable=sortable,
-                              visible=visible)
+        column = column_class(
+            sources=[f.name], label=label, processor=processor, sortable=sortable, visible=visible
+        )
         column.name = f.name
         field_list.append((f.name, column))
 
     field_dict = OrderedDict(field_list)
     if fields:
         field_dict = OrderedDict(
-            [(f, field_dict.get(f)) for f in fields
-             if (not exclude) or (exclude and f not in exclude)]
+            [
+                (f, field_dict.get(f))
+                for f in fields
+                if (not exclude) or (exclude and f not in exclude)
+            ]
         )
     return field_dict
 
@@ -87,7 +106,8 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     """
     local_columns = [
         (column_name, attrs.pop(column_name))
-        for column_name, obj in list(attrs.items()) if isinstance(obj, Column)
+        for column_name, obj in list(attrs.items())
+        if isinstance(obj, Column)
     ]
     local_columns.sort(key=lambda x: x[1].creation_counter)
 
@@ -96,11 +116,11 @@ def get_declared_columns(bases, attrs, with_base_columns=True):
     # order to preserve the correct order of columns.
     if with_base_columns:
         for base in bases[::-1]:
-            if hasattr(base, 'base_columns'):
+            if hasattr(base, "base_columns"):
                 local_columns = list(base.base_columns.items()) + local_columns
     else:
         for base in bases[::-1]:
-            if hasattr(base, 'declared_columns'):
+            if hasattr(base, "declared_columns"):
                 local_columns = list(base.declared_columns.items()) + local_columns
 
     return OrderedDict(local_columns)
@@ -114,28 +134,29 @@ class DatatableOptions(object):
 
     def __init__(self, options=None):
         # Non-mutable; server's declared preference is final
-        self.id = getattr(options, 'id', '')
-        self.model = getattr(options, 'model', None)
-        self.columns = getattr(options, 'columns', None)  # table headers
-        self.exclude = getattr(options, 'exclude', None)
-        self.search_fields = getattr(options, 'search_fields', None)  # extra searchable ORM fields
-        self.unsortable_columns = getattr(options, 'unsortable_columns', None)
-        self.hidden_columns = getattr(options, 'hidden_columns', None)  # generated, but hidden
-        self.labels = getattr(options, 'labels', None)
-        self.processors = getattr(options, 'processors', None)
-        self.request_method = getattr(options, 'request_method', 'GET')
-        self.structure_template = getattr(options, 'structure_template',
-                                          'datatableview/default_structure.html')
-        self.footer = getattr(options, 'footer', False)
-        self.result_counter_id = getattr(options, 'result_counter_id', 'id_count')
+        self.id = getattr(options, "id", "")
+        self.model = getattr(options, "model", None)
+        self.columns = getattr(options, "columns", None)  # table headers
+        self.exclude = getattr(options, "exclude", None)
+        self.search_fields = getattr(options, "search_fields", None)  # extra searchable ORM fields
+        self.unsortable_columns = getattr(options, "unsortable_columns", None)
+        self.hidden_columns = getattr(options, "hidden_columns", None)  # generated, but hidden
+        self.labels = getattr(options, "labels", None)
+        self.processors = getattr(options, "processors", None)
+        self.request_method = getattr(options, "request_method", "GET")
+        self.structure_template = getattr(
+            options, "structure_template", "datatableview/default_structure.html"
+        )
+        self.footer = getattr(options, "footer", False)
+        self.result_counter_id = getattr(options, "result_counter_id", "id_count")
 
         # Non-mutable; server behavior customization
-        self.cache_type = getattr(options, 'cache_type', cache_types.NONE)
-        self.cache_queryset_count = getattr(options, 'cache_queryset_count', False)
+        self.cache_type = getattr(options, "cache_type", cache_types.NONE)
+        self.cache_queryset_count = getattr(options, "cache_queryset_count", False)
 
         # Mutable by the request
-        self.ordering = getattr(options, 'ordering', None)  # override to Model._meta.ordering
-        self.page_length = getattr(options, 'page_length', 25)  # length of a single result page
+        self.ordering = getattr(options, "ordering", None)  # override to Model._meta.ordering
+        self.page_length = getattr(options, "page_length", 25)  # length of a single result page
 
 
 default_options = DatatableOptions()
@@ -153,11 +174,17 @@ class DatatableMetaclass(type):
         declared_columns = get_declared_columns(bases, attrs, with_base_columns=False)
         new_class = super(DatatableMetaclass, cls).__new__(cls, name, bases, attrs)
 
-        opts = new_class._meta = new_class.options_class(getattr(new_class, 'Meta', None))
+        opts = new_class._meta = new_class.options_class(getattr(new_class, "Meta", None))
         if opts.model:
-            columns = columns_for_model(opts.model, opts.columns, opts.exclude, opts.labels,
-                                        opts.processors, opts.unsortable_columns,
-                                        opts.hidden_columns)
+            columns = columns_for_model(
+                opts.model,
+                opts.columns,
+                opts.exclude,
+                opts.labels,
+                opts.processors,
+                opts.unsortable_columns,
+                opts.hidden_columns,
+            )
             none_model_columns = [k for k, v in columns.items() if not v]
             missing_columns = set(none_model_columns) - set(declared_columns.keys())
 
@@ -223,14 +250,23 @@ class Datatable(metaclass=DatatableMetaclass):
 
     options_class = DatatableOptions
 
-    def __init__(self, object_list, url, view=None, callback_target=None, model=None,
-                 query_config=None, force_distinct=True, **kwargs):
+    def __init__(
+        self,
+        object_list,
+        url,
+        view=None,
+        callback_target=None,
+        model=None,
+        query_config=None,
+        force_distinct=True,
+        **kwargs,
+    ):
         self.object_list = object_list
         self.url = url
         self.view = view
         self.forward_callback_target = callback_target
         self.model = model or self._meta.model
-        if self.model is None and hasattr(object_list, 'model'):
+        if self.model is None and hasattr(object_list, "model"):
             self.model = object_list.model
         if query_config is None:
             query_config = {}
@@ -248,23 +284,23 @@ class Datatable(metaclass=DatatableMetaclass):
         valid AJAX GET parameters from client modifications to the data they see.
         """
 
-        if hasattr(self, '_configured'):
+        if hasattr(self, "_configured"):
             return
 
         self.resolve_virtual_columns(*tuple(self.missing_columns))
 
         self.config = self.normalize_config(self._meta.__dict__, self.query_config)
 
-        self.config['column_searches'] = {}
+        self.config["column_searches"] = {}
         for i, name in enumerate(self.columns.keys()):
-            column_search = self.query_config.get(OPTION_NAME_MAP['search_column'] % i, None)
+            column_search = self.query_config.get(OPTION_NAME_MAP["search_column"] % i, None)
             if column_search:
-                self.config['column_searches'][name] = column_search
+                self.config["column_searches"][name] = column_search
 
         column_order = list(self.columns.keys())
-        if self.config['ordering']:
-            for i, name in enumerate(self.config['ordering']):
-                column_name = name.lstrip('-+')
+        if self.config["ordering"]:
+            for i, name in enumerate(self.config["ordering"]):
+                column_name = name.lstrip("-+")
                 try:
                     index = column_order.index(column_name)
                 except ValueError:
@@ -272,10 +308,10 @@ class Datatable(metaclass=DatatableMetaclass):
                     # specify a field name that is not present on the datatable columns list.
                     continue
                 self.columns[column_name].sort_priority = i
-                self.columns[column_name].sort_direction = 'desc' if name[0] == '-' else 'asc'
+                self.columns[column_name].sort_direction = "desc" if name[0] == "-" else "asc"
                 self.columns[column_name].index = index
 
-        for name in self.config['hidden_columns']:
+        for name in self.config["hidden_columns"]:
             self.columns[name].visible = False
 
         self._configured = True
@@ -288,28 +324,28 @@ class Datatable(metaclass=DatatableMetaclass):
         """
 
         # Core options, not modifiable by client updates
-        if config['hidden_columns'] is None:
-            config['hidden_columns'] = []
-        if config['search_fields'] is None:
-            config['search_fields'] = []
-        if config['unsortable_columns'] is None:
-            config['unsortable_columns'] = []
+        if config["hidden_columns"] is None:
+            config["hidden_columns"] = []
+        if config["search_fields"] is None:
+            config["search_fields"] = []
+        if config["unsortable_columns"] is None:
+            config["unsortable_columns"] = []
 
-        config['search'] = self.normalize_config_search(config, query_config)
-        config['start_offset'] = self.normalize_config_start_offset(config, query_config)
-        config['page_length'] = self.normalize_config_page_length(config, query_config)
-        config['ordering'] = self.normalize_config_ordering(config, query_config)
-        self._ordering_columns = self.ensure_ordering_columns(config['ordering'])
+        config["search"] = self.normalize_config_search(config, query_config)
+        config["start_offset"] = self.normalize_config_start_offset(config, query_config)
+        config["page_length"] = self.normalize_config_page_length(config, query_config)
+        config["ordering"] = self.normalize_config_ordering(config, query_config)
+        self._ordering_columns = self.ensure_ordering_columns(config["ordering"])
 
         return config
 
     def normalize_config_search(self, config, query_config):
-        terms_string = query_config.get(OPTION_NAME_MAP['search'], '').strip()
+        terms_string = query_config.get(OPTION_NAME_MAP["search"], "").strip()
         return set(split_terms(terms_string))
 
     def normalize_config_start_offset(self, config, query_config):
         try:
-            start_offset = query_config.get(OPTION_NAME_MAP['start_offset'], 0)
+            start_offset = query_config.get(OPTION_NAME_MAP["start_offset"], 0)
             start_offset = int(start_offset)
         except ValueError:
             start_offset = 0
@@ -320,10 +356,10 @@ class Datatable(metaclass=DatatableMetaclass):
 
     def normalize_config_page_length(self, config, query_config):
         try:
-            page_length = query_config.get(OPTION_NAME_MAP['page_length'], config['page_length'])
+            page_length = query_config.get(OPTION_NAME_MAP["page_length"], config["page_length"])
             page_length = int(page_length)
         except ValueError:
-            page_length = config['page_length']
+            page_length = config["page_length"]
         else:
             if page_length == -1:  # dataTables' way of asking for all items, no pagination
                 pass
@@ -332,11 +368,11 @@ class Datatable(metaclass=DatatableMetaclass):
         return page_length
 
     def normalize_config_ordering(self, config, query_config):
-        default_ordering = config['ordering']
-        if default_ordering is None and config['model']:
-            default_ordering = config['model']._meta.ordering
+        default_ordering = config["ordering"]
+        if default_ordering is None and config["model"]:
+            default_ordering = config["model"]._meta.ordering
 
-        sort_declarations = [k for k in query_config if re.match(r'^order\[\d+\]\[column\]$', k)]
+        sort_declarations = [k for k in query_config if re.match(r"^order\[\d+\]\[column\]$", k)]
 
         # Default sorting from view or model definition
         if len(sort_declarations) == 0:
@@ -348,28 +384,30 @@ class Datatable(metaclass=DatatableMetaclass):
         for sort_queue_i in range(len(columns_list)):
             try:
                 column_index = int(
-                    query_config.get(OPTION_NAME_MAP['sort_column'] % sort_queue_i, ''))
+                    query_config.get(OPTION_NAME_MAP["sort_column"] % sort_queue_i, "")
+                )
             except ValueError:
                 continue
 
             column = columns_list[column_index]
 
             # Reject requests for unsortable columns
-            if column.name in config['unsortable_columns']:
+            if column.name in config["unsortable_columns"]:
                 continue
 
             sort_direction = query_config.get(
-                OPTION_NAME_MAP['sort_column_direction'] % sort_queue_i, None)
+                OPTION_NAME_MAP["sort_column_direction"] % sort_queue_i, None
+            )
 
-            if sort_direction == 'asc':
-                sort_modifier = ''
-            elif sort_direction == 'desc':
-                sort_modifier = '-'
+            if sort_direction == "asc":
+                sort_modifier = ""
+            elif sort_direction == "desc":
+                sort_modifier = "-"
             else:
                 # Aggressively skip invalid specification
                 continue
 
-            ordering.append('%s%s' % (sort_modifier, column.name))
+            ordering.append("%s%s" % (sort_modifier, column.name))
 
         if not ordering:
             return default_ordering
@@ -382,7 +420,7 @@ class Datatable(metaclass=DatatableMetaclass):
         # Normalize declared 'ordering' to Column instances
         ordering_columns = {}
         for i, name in enumerate(ordering_names):
-            if name[0] in '+-':
+            if name[0] in "+-":
                 name = name[1:]
 
             if name not in self.columns:
@@ -400,7 +438,7 @@ class Datatable(metaclass=DatatableMetaclass):
         an apparent configuration error.
         """
         if names:
-            raise ColumnError('Unknown column name(s): %r' % (names,))
+            raise ColumnError("Unknown column name(s): %r" % (names,))
 
     # Reflection methods for wrapped columns
     def get_ordering_splits(self):
@@ -411,12 +449,12 @@ class Datatable(metaclass=DatatableMetaclass):
         ordering fields matters, we can't respect those until manual ordering has been done on the
         intervening non-db fields.
         """
-        if self.config['ordering'] is None:
+        if self.config["ordering"] is None:
             return [], []
 
         i = 0
-        for i, name in enumerate(self.config['ordering']):
-            if name[0] in '+-':
+        for i, name in enumerate(self.config["ordering"]):
+            if name[0] in "+-":
                 name = name[1:]
             if name in self.columns:
                 column = self.columns[name]
@@ -425,11 +463,11 @@ class Datatable(metaclass=DatatableMetaclass):
             if not column.get_db_sources(self.model):
                 break
         else:
-            i = len(self.config['ordering'])
-        return self.config['ordering'][:i], self.config['ordering'][i:]
+            i = len(self.config["ordering"])
+        return self.config["ordering"][:i], self.config["ordering"][i:]
 
     def get_db_splits(self):
-        """ Legacy utility for fetching the database columns and non-database columns. """
+        """Legacy utility for fetching the database columns and non-database columns."""
         db_fields = []
         virtual_fields = []
         for name, column in self.columns.items():
@@ -462,14 +500,16 @@ class Datatable(metaclass=DatatableMetaclass):
         you need a more specific or less specific cache key.
         """
         # Try to get user information if 'user' param is missing
-        if hasattr(view, 'request') and not user:
+        if hasattr(view, "request") and not user:
             user = view.request.user
 
-        kwargs.update({
-            'datatable_class': self.__class__,
-            'view': view,
-            'user': user,
-        })
+        kwargs.update(
+            {
+                "datatable_class": self.__class__,
+                "view": view,
+                "user": user,
+            }
+        )
 
         return kwargs
 
@@ -489,11 +529,11 @@ class Datatable(metaclass=DatatableMetaclass):
         return get_cache_key(**kwargs)
 
     def get_cached_data(self, **kwargs):
-        """ Returns object_list data cached for the given kwargs. """
+        """Returns object_list data cached for the given kwargs."""
         return get_cached_data(self, **kwargs)
 
     def cache_data(self, data, **kwargs):
-        """ Caches object_list data for the given kwargs. """
+        """Caches object_list data for the given kwargs."""
         cache_data(self, data=data, **kwargs)
 
     def get_object_list(self):
@@ -506,7 +546,7 @@ class Datatable(metaclass=DatatableMetaclass):
         object_list = self.object_list
 
         # Consult cache, if enabled
-        cache_type = self.config['cache_type']
+        cache_type = self.config["cache_type"]
         if cache_type == cache_types.DEFAULT:
             cache_type = DEFAULT_CACHE_TYPE
 
@@ -540,7 +580,7 @@ class Datatable(metaclass=DatatableMetaclass):
         # Note that 'queryset' cache_type is unhandled so that it passes straight through.
         if cache_type == cache_types.PK_LIST:
             # model = object_list.model
-            data = tuple(object_list.values_list('pk', flat=True))
+            data = tuple(object_list.values_list("pk", flat=True))
 
         # Objects in some other type of data structure should be pickable for cache backend
         return data
@@ -571,9 +611,9 @@ class Datatable(metaclass=DatatableMetaclass):
         """
 
         # Narrow the results to the appropriate page length for serialization
-        if self.config['page_length'] != -1:
-            i_begin = self.config['start_offset']
-            i_end = self.config['start_offset'] + self.config['page_length']
+        if self.config["page_length"] != -1:
+            i_begin = self.config["start_offset"]
+            i_end = self.config["start_offset"] + self.config["page_length"]
             object_list = self._records[i_begin:i_end]
         else:
             object_list = self._records
@@ -588,7 +628,7 @@ class Datatable(metaclass=DatatableMetaclass):
 
         Returns the final list of processed results.
         """
-        if not hasattr(self, '_records'):
+        if not hasattr(self, "_records"):
             self.populate_records()
 
         page_data = []
@@ -609,7 +649,7 @@ class Datatable(metaclass=DatatableMetaclass):
 
         No paging will take place at this stage!
         """
-        if not hasattr(self, 'config'):
+        if not hasattr(self, "config"):
             self.configure()
 
         self._records = None
@@ -638,18 +678,18 @@ class Datatable(metaclass=DatatableMetaclass):
         num_filtered = None
 
         if isinstance(base_objects, QuerySet):
-            if self.config['cache_queryset_count']:
-                cache_kwargs = self.get_cache_key_kwargs(view=self.view, __num_total='__num_total')
+            if self.config["cache_queryset_count"]:
+                cache_kwargs = self.get_cache_key_kwargs(view=self.view, __num_total="__num_total")
                 num_total = self.get_cached_data(**cache_kwargs)
 
             if num_total is None:
                 num_total = base_objects.count()
-                if self.config['cache_queryset_count']:
+                if self.config["cache_queryset_count"]:
                     self.cache_data(num_total, **cache_kwargs)
         else:
             num_total = len(base_objects)
 
-        if len(self.config['search']) > 0 or len(self.config['column_searches']) > 0:
+        if len(self.config["search"]) > 0 or len(self.config["column_searches"]) > 0:
             if isinstance(filtered_objects, QuerySet):
                 num_filtered = filtered_objects.count()
             else:
@@ -660,23 +700,25 @@ class Datatable(metaclass=DatatableMetaclass):
         return num_total, num_filtered
 
     def search(self, queryset):
-        """ Performs db-only queryset searches. """
+        """Performs db-only queryset searches."""
 
         table_queries = []
 
         searches = {}
 
         # Add per-column searches where necessary
-        for name, term in self.config['column_searches'].items():
+        for name, term in self.config["column_searches"].items():
             for term in set(split_terms(term)):
                 columns = searches.setdefault(term, {})
                 columns[name] = self.columns[name]
 
         # Global search terms apply to all columns
-        for term in self.config['search']:
+        for term in self.config["search"]:
             # NOTE: Allow global terms to overwrite identical queries that were single-column
             searches[term] = self.columns.copy()
-            searches[term].update({column.sources[0]: column for column in self.config['search_fields']})
+            searches[term].update(
+                {column.sources[0]: column for column in self.config["search_fields"]}
+            )
 
         for term in searches.keys():
             term_queries = []
@@ -684,7 +726,7 @@ class Datatable(metaclass=DatatableMetaclass):
                 if name is None:  # config.search_fields items
                     search_f = self._search_column
                 else:
-                    search_f = getattr(self, 'search_%s' % (name,), self._search_column)
+                    search_f = getattr(self, "search_%s" % (name,), self._search_column)
                 q = search_f(column, term)
                 if q is not None:
                     term_queries.append(q)
@@ -698,7 +740,7 @@ class Datatable(metaclass=DatatableMetaclass):
         return queryset.distinct()
 
     def _search_column(self, column, terms):
-        """ Requests search queries to be performed against the target column.  """
+        """Requests search queries to be performed against the target column."""
         return column.search(self.model, terms)
 
     def sort(self, queryset):
@@ -708,11 +750,11 @@ class Datatable(metaclass=DatatableMetaclass):
         fields = []
         db, virtual = self.get_ordering_splits()
         for name in db:
-            sort_direction = ''
-            if name[0] in '+-':
+            sort_direction = ""
+            if name[0] in "+-":
                 sort_direction = name[0]
-                if sort_direction == '+':
-                    sort_direction = ''
+                if sort_direction == "+":
+                    sort_direction = ""
                 name = name[1:]
             if name in self.columns:
                 column = self.columns[name]
@@ -740,8 +782,8 @@ class Datatable(metaclass=DatatableMetaclass):
 
             for name in virtual[::-1]:  # stable sorting, top priority sort comes last
                 reverse = False
-                if name[0] in '+-':
-                    reverse = (name[0] == '-')
+                if name[0] in "+-":
+                    reverse = name[0] == "-"
                     name = name[1:]
                 column = self.columns[name]
                 object_list.sort(key=lambda o: flatten(column.value(o)[0]), reverse=reverse)
@@ -774,20 +816,22 @@ class Datatable(metaclass=DatatableMetaclass):
         """
 
         kwargs = {}
-        if self.forward_callback_target and \
-                hasattr(self.forward_callback_target, 'preload_record_data'):
+        if self.forward_callback_target and hasattr(
+            self.forward_callback_target, "preload_record_data"
+        ):
             kwargs.update(self.forward_callback_target.preload_record_data(obj))
         return kwargs
 
     def get_object_pk(self, obj):
-        """ Returns the object's ``pk`` value. """
+        """Returns the object's ``pk`` value."""
         return obj.pk
 
     def get_extra_record_data(self, obj):
-        """ Returns a dictionary of JSON-friendly data sent to the client as ``"DT_RowData"``. """
+        """Returns a dictionary of JSON-friendly data sent to the client as ``"DT_RowData"``."""
         data = {}
-        if self.forward_callback_target and \
-                hasattr(self.forward_callback_target, 'get_extra_record_data'):
+        if self.forward_callback_target and hasattr(
+            self.forward_callback_target, "get_extra_record_data"
+        ):
             data.update(self.forward_callback_target.get_extra_record_data(obj))
         return data
 
@@ -803,15 +847,18 @@ class Datatable(metaclass=DatatableMetaclass):
 
         preloaded_kwargs = self.preload_record_data(obj)
         data = {
-            'pk': self.get_object_pk(obj),
-            '_extra_data': self.get_extra_record_data(obj),
+            "pk": self.get_object_pk(obj),
+            "_extra_data": self.get_extra_record_data(obj),
         }
         for i, (name, column) in enumerate(self.columns.items()):
-            kwargs = dict(column.get_processor_kwargs(**preloaded_kwargs), **{
-                'datatable': self,
-                'view': self.view,
-                'field_name': column.name,
-            })
+            kwargs = dict(
+                column.get_processor_kwargs(**preloaded_kwargs),
+                **{
+                    "datatable": self,
+                    "view": self.view,
+                    "field_name": column.name,
+                },
+            )
             value = self.get_column_value(obj, column, **kwargs)
             processor = self.get_processor_method(column, i)
             if processor:
@@ -828,7 +875,7 @@ class Datatable(metaclass=DatatableMetaclass):
         return data
 
     def get_column_value(self, obj, column, **kwargs):
-        """ Returns whatever the column derived as the source value. """
+        """Returns whatever the column derived as the source value."""
         return column.value(obj, **kwargs)
 
     def get_processor_method(self, column, i):
@@ -869,25 +916,25 @@ class Datatable(metaclass=DatatableMetaclass):
 
         column_name = column.name
         if isinstance(self, LegacyDatatable):
-            name = force_str(column.label, errors='ignore')
+            name = force_str(column.label, errors="ignore")
             if not name:
                 name = column.sources[0]
-            column_name = re.sub(r'[\W_]+', '_', name)
+            column_name = re.sub(r"[\W_]+", "_", name)
 
         if self.forward_callback_target:
-            f = getattr(self.forward_callback_target, 'get_column_%s_data' % (column_name,), None)
+            f = getattr(self.forward_callback_target, "get_column_%s_data" % (column_name,), None)
             if f:
                 return f
 
-            f = getattr(self.forward_callback_target, 'get_column_%d_data' % (i,), None)
+            f = getattr(self.forward_callback_target, "get_column_%d_data" % (i,), None)
             if f:
                 return f
 
-        f = getattr(self, 'get_column_%s_data' % (column_name,), None)
+        f = getattr(self, "get_column_%s_data" % (column_name,), None)
         if f:
             return f
 
-        f = getattr(self, 'get_column_%d_data' % (i,), None)
+        f = getattr(self, "get_column_%d_data" % (i,), None)
         if f:
             return f
 
@@ -895,23 +942,23 @@ class Datatable(metaclass=DatatableMetaclass):
 
     # Template rendering features
     def __str__(self):
-        """ Renders ``structure_template`` with ``self`` as a context variable. """
+        """Renders ``structure_template`` with ``self`` as a context variable."""
 
-        if not hasattr(self, 'config'):
+        if not hasattr(self, "config"):
             self.configure()
 
         context = {
-            'url': self.url,
-            'config': self.config,
-            'datatable': self,
-            'columns': self.columns.values(),
+            "url": self.url,
+            "config": self.config,
+            "datatable": self,
+            "columns": self.columns.values(),
         }
-        return render_to_string(self.config['structure_template'], context)
+        return render_to_string(self.config["structure_template"], context)
 
     def __iter__(self):
-        """ Yields each column in order. """
+        """Yields each column in order."""
 
-        if not hasattr(self, 'config'):
+        if not hasattr(self, "config"):
             self.configure()
 
         for column in self.columns.values():
@@ -930,11 +977,9 @@ class ValuesDatatable(Datatable):
 
     def get_valuesqueryset(self, queryset):
         # Figure out the full list of ORM path names
-        self.value_queries = OrderedDict({'pk': 'pk'})
+        self.value_queries = OrderedDict({"pk": "pk"})
         for name, column in self.columns.items():
-            self.value_queries.update(OrderedDict([
-                (source, name) for source in column.sources
-            ]))
+            self.value_queries.update(OrderedDict([(source, name) for source in column.sources]))
 
         return queryset.values(*self.value_queries.keys())
 
@@ -952,7 +997,7 @@ class ValuesDatatable(Datatable):
         Correctly reads the pk from the ValuesQuerySet entry, as a dict item instead of an
         attribute.
         """
-        return obj['pk']
+        return obj["pk"]
 
     def preload_record_data(self, obj):
         """
@@ -1008,11 +1053,13 @@ class LegacyDatatable(Datatable):
         instances to match the behavior of the old syntax.
         """
         from .views.legacy import get_field_definition
+
         virtual_columns = {}
         for name in names:
             field = get_field_definition(name)
-            column = TextColumn(sources=field.fields, label=field.pretty_name,
-                                processor=field.callback)
+            column = TextColumn(
+                sources=field.fields, label=field.pretty_name, processor=field.callback
+            )
             column.name = field.pretty_name if field.pretty_name else field.fields[0]
             virtual_columns[name] = column
 

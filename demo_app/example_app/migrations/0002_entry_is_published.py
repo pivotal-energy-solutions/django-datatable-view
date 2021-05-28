@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('example_app', '0001_initial'),
+        ("example_app", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='entry',
-            name='is_published',
+            model_name="entry",
+            name="is_published",
             field=models.BooleanField(default=False),
         ),
     ]

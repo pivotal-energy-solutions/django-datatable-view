@@ -26,13 +26,13 @@ log = logging.getLogger(__name__)
 COLUMN_CLASSES = []
 
 STRPTIME_PLACEHOLDERS = {
-    'year': ('%y', '%Y'),
-    'month': ('%m', '%b', '%B'),
-    'day': ('%d',),  # '%a', '%A'),  # day names are hard because they depend on other date info
-    'hour': ('%H', '%I'),
-    'minute': ('%M',),
-    'second': ('%S',),
-    'week_day': ('%w',),
+    "year": ("%y", "%Y"),
+    "month": ("%m", "%b", "%B"),
+    "day": ("%d",),  # '%a', '%A'),  # day names are hard because they depend on other date info
+    "hour": ("%H", "%I"),
+    "minute": ("%M",),
+    "second": ("%S",),
+    "week_day": ("%w",),
 }
 
 
@@ -42,7 +42,7 @@ def register_simple_modelfield(model_field):
 
 
 def get_column_for_modelfield(model_field):
-    """ Return the built-in Column class for a model field class. """
+    """Return the built-in Column class for a model field class."""
 
     # If the field points to another model, we want to get the pk field of that other model and use
     # that as the real field.  It is possible that a ForeignKey points to a model with table
@@ -62,13 +62,13 @@ def get_attribute_value(obj, bit):
         value = None
     else:
         if callable(value) and not isinstance(value, Manager):
-            if not hasattr(value, 'alters_data') or value.alters_data is not True:
+            if not hasattr(value, "alters_data") or value.alters_data is not True:
                 value = value()
     return value
 
 
 class ColumnMetaclass(type):
-    """ Column type for automatic registration of column types as ModelField handlers. """
+    """Column type for automatic registration of column types as ModelField handlers."""
 
     def __new__(cls, name, bases, attrs):
         new_class = super(ColumnMetaclass, cls).__new__(cls, name, bases, attrs)
@@ -81,7 +81,7 @@ class ColumnMetaclass(type):
 
 # Corollary to django.forms.fields.Field
 class Column(metaclass=ColumnMetaclass):
-    """ Generic table column using CharField for rendering. """
+    """Generic table column using CharField for rendering."""
 
     model_field_class = None
     handles_field_classes = []
@@ -91,10 +91,21 @@ class Column(metaclass=ColumnMetaclass):
     # Tracks each time a Field instance is created. Used to retain order.
     creation_counter = 0
 
-    def __init__(self, label=None, sources=None, processor=None, source=None,
-                 separator=DEFAULT_MULTIPLE_SEPARATOR, empty_value=DEFAULT_EMPTY_VALUE,
-                 model_field_class=None, sortable=True, visible=True, localize=False,
-                 allow_regex=False, allow_full_text_search=False):
+    def __init__(
+        self,
+        label=None,
+        sources=None,
+        processor=None,
+        source=None,
+        separator=DEFAULT_MULTIPLE_SEPARATOR,
+        empty_value=DEFAULT_EMPTY_VALUE,
+        model_field_class=None,
+        sortable=True,
+        visible=True,
+        localize=False,
+        allow_regex=False,
+        allow_full_text_search=False,
+    ):
         if model_field_class:
             self.model_field_class = model_field_class
 
@@ -205,14 +216,14 @@ class Column(metaclass=ColumnMetaclass):
         ``Column`` instances will have sources of their own and need to return a value per nested
         source.
         """
-        if hasattr(source, '__call__'):
+        if hasattr(source, "__call__"):
             value = source(obj)
         elif isinstance(obj, Model):
-            value = reduce(get_attribute_value, [obj] + source.split('__'))
+            value = reduce(get_attribute_value, [obj] + source.split("__"))
         elif isinstance(obj, dict):  # ValuesQuerySet item
             value = obj[source]
         else:
-            raise ValueError('Unknown object type %r' % (repr(obj),))
+            raise ValueError("Unknown object type %r" % (repr(obj),))
         return [value]
 
     def get_processor_kwargs(self, **extra_kwargs):
@@ -221,7 +232,7 @@ class Column(metaclass=ColumnMetaclass):
         callback.
         """
         kwargs = {
-            'localize': self.localize,
+            "localize": self.localize,
         }
         kwargs.update(extra_kwargs)
         return kwargs
@@ -261,7 +272,7 @@ class Column(metaclass=ColumnMetaclass):
     def resolve_source(self, model, source):
         # Try to fetch the leaf attribute.  If this fails, the attribute is not database-backed and
         # the search for the first non-database field should end.
-        if hasattr(source, '__call__'):
+        if hasattr(source, "__call__"):
             return None
         try:
             return resolve_orm_path(model, source)
@@ -269,7 +280,7 @@ class Column(metaclass=ColumnMetaclass):
             return None
 
     def get_source_handler(self, model, source):
-        """ Return handler instance for lookup types and term coercion. """
+        """Return handler instance for lookup types and term coercion."""
         return self
 
     # Interactivity features
@@ -283,29 +294,31 @@ class Column(metaclass=ColumnMetaclass):
         multi_terms = None
 
         if isinstance(term, str):
-            if lookup_type == 'in':
-                in_bits = re.split(r',\s*', term)
+            if lookup_type == "in":
+                in_bits = re.split(r",\s*", term)
                 if len(in_bits) > 1:
                     multi_terms = in_bits
                 else:
                     term = None
 
-            if lookup_type == 'range':
-                range_bits = re.split(r'\s*-\s*', term)
+            if lookup_type == "range":
+                range_bits = re.split(r"\s*-\s*", term)
                 if len(range_bits) == 2:
                     multi_terms = range_bits
                 else:
                     term = None
 
         if multi_terms:
-            return filter(None, (self.prep_search_value(multi_term, lookup_type) for multi_term in
-                                 multi_terms))
+            return filter(
+                None,
+                (self.prep_search_value(multi_term, lookup_type) for multi_term in multi_terms),
+            )
 
         model_field = self.model_field_class()
         try:
             term = model_field.get_prep_value(term)
         except Exception as err:
-            log.info(f'model_field.get_prep_value({term}) - {err}')
+            log.info(f"model_field.get_prep_value({term}) - {err}")
             term = None
 
         return term
@@ -320,10 +333,10 @@ class Column(metaclass=ColumnMetaclass):
             lookup_types = handler.lookup_types
 
         # Add regex and MySQL 'search' operators if requested for the original column definition
-        if self.allow_regex and 'iregex' not in lookup_types:
-            lookup_types += ('iregex',)
-        if self.allow_full_text_search and 'search' not in lookup_types:
-            lookup_types += ('search',)
+        if self.allow_regex and "iregex" not in lookup_types:
+            lookup_types += ("iregex",)
+        if self.allow_full_text_search and "search" not in lookup_types:
+            lookup_types += ("search",)
         return lookup_types
 
     def search(self, model, term, lookup_types=None):
@@ -350,14 +363,14 @@ class Column(metaclass=ColumnMetaclass):
 
             for sub_source in self.expand_source(source):
                 modelfield = resolve_orm_path(model, sub_source)
-                if hasattr(modelfield, 'choices') and modelfield.choices:
-                    if hasattr(modelfield, 'get_choices'):
+                if hasattr(modelfield, "choices") and modelfield.choices:
+                    if hasattr(modelfield, "get_choices"):
                         choices = modelfield.get_choices()
                     else:
                         choices = modelfield.get_flatchoices()
                     for db_value, label in choices:
                         if term.lower() in label.lower():
-                            k = '%s__exact' % (sub_source,)
+                            k = "%s__exact" % (sub_source,)
                             column_queries.append(Q(**{k: str(db_value)}))
 
                 if not lookup_types:
@@ -367,11 +380,11 @@ class Column(metaclass=ColumnMetaclass):
                     if coerced_term is None:
                         # Skip terms that don't work with the lookup_type
                         continue
-                    elif lookup_type in ('in', 'range') and not isinstance(coerced_term, tuple):
+                    elif lookup_type in ("in", "range") and not isinstance(coerced_term, tuple):
                         # Skip attempts to build multi-component searches if we only have one term
                         continue
 
-                    k = '%s__%s' % (sub_source, lookup_type)
+                    k = "%s__%s" % (sub_source, lookup_type)
                     column_queries.append(Q(**{k: coerced_term}))
 
         if column_queries:
@@ -386,11 +399,15 @@ class Column(metaclass=ColumnMetaclass):
         Renders a simple ``<th>`` element with ``data-name`` attribute.  All items found in the
         ``self.attributes`` dict are also added as dom attributes.
         """
-        return mark_safe(u"""<th data-name="{name_slug}"{attrs}>{label}</th>""".format(**{
-            'name_slug': slugify(self.label),
-            'attrs': self.attributes,
-            'label': self.label,
-        }))
+        return mark_safe(
+            """<th data-name="{name_slug}"{attrs}>{label}</th>""".format(
+                **{
+                    "name_slug": slugify(self.label),
+                    "attrs": self.attributes,
+                    "label": self.label,
+                }
+            )
+        )
 
     @property
     def attributes(self):
@@ -401,24 +418,33 @@ class Column(metaclass=ColumnMetaclass):
         applicable) ``data-config-sorting`` to hold information about the initial sorting state.
         """
         attributes = {
-            'data-config-sortable': 'true' if self.sortable else 'false',
-            'data-config-visible': 'true' if self.visible else 'false',
+            "data-config-sortable": "true" if self.sortable else "false",
+            "data-config-visible": "true" if self.visible else "false",
         }
 
         if self.sort_priority is not None:
-            attributes['data-config-sorting'] = ','.join(map(str, [
-                self.sort_priority,
-                self.index,
-                self.sort_direction,
-            ]))
+            attributes["data-config-sorting"] = ",".join(
+                map(
+                    str,
+                    [
+                        self.sort_priority,
+                        self.index,
+                        self.sort_direction,
+                    ],
+                )
+            )
 
         return flatatt(attributes)
 
 
 class TextColumn(Column):
     model_field_class = models.CharField
-    handles_field_classes = [models.CharField, models.TextField, models.FileField,
-                             models.GenericIPAddressField]
+    handles_field_classes = [
+        models.CharField,
+        models.TextField,
+        models.FileField,
+        models.GenericIPAddressField,
+    ]
 
     # Add UUIDField if present in this version of Django
     try:
@@ -426,16 +452,16 @@ class TextColumn(Column):
     except AttributeError:
         pass
 
-    lookup_types = ('icontains', 'in')
+    lookup_types = ("icontains", "in")
 
 
 class DateColumn(Column):
     model_field_class = models.DateField
     handles_field_classes = [models.DateField]
-    lookup_types = ('exact', 'in', 'range', 'year', 'month', 'day', 'week_day')
+    lookup_types = ("exact", "in", "range", "year", "month", "day", "week_day")
 
     def prep_search_value(self, term, lookup_type):
-        if lookup_type in ('exact', 'in', 'range'):
+        if lookup_type in ("exact", "in", "range"):
             try:
                 date_obj = dateutil.parser.parse(term)
             except ValueError:
@@ -447,13 +473,13 @@ class DateColumn(Column):
             else:
                 return date_obj
 
-        if lookup_type not in ('exact', 'in', 'range'):
+        if lookup_type not in ("exact", "in", "range"):
             test_term = term
-            if lookup_type == 'week_day':
+            if lookup_type == "week_day":
                 try:
                     test_term = int(test_term) - 1  # Django ORM uses 1-7, python strptime uses 0-6
                 except Exception as err:
-                    log.info(f'int({test_term}) - 1 -- {err}')
+                    log.info(f"int({test_term}) - 1 -- {err}")
                     return None
                 else:
                     test_term = str(test_term)
@@ -465,8 +491,10 @@ class DateColumn(Column):
                 except ValueError:
                     pass
                 else:
-                    if lookup_type == 'week_day':
-                        term = date_obj.weekday() + 1  # Django ORM uses 1-7, python strptime uses 0-6
+                    if lookup_type == "week_day":
+                        term = (
+                            date_obj.weekday() + 1
+                        )  # Django ORM uses 1-7, python strptime uses 0-6
                     else:
                         term = getattr(date_obj, lookup_type)
                     return str(term)
@@ -479,19 +507,29 @@ class DateTimeColumn(DateColumn):
     model_field_class = models.DateTimeField
     handles_field_classes = [models.DateTimeField]
     lookup_types = (
-        'exact', 'in', 'range', 'year', 'month', 'day', 'week_day', 'hour', 'minute', 'second')
+        "exact",
+        "in",
+        "range",
+        "year",
+        "month",
+        "day",
+        "week_day",
+        "hour",
+        "minute",
+        "second",
+    )
 
 
 class TimeColumn(DateColumn):
     model_field_class = models.TimeField
     handles_field_classes = [models.TimeField]
-    lookup_types = ('exact', 'in', 'range', 'hour', 'minute', 'second')
+    lookup_types = ("exact", "in", "range", "hour", "minute", "second")
 
 
 class BooleanColumn(Column):
     model_field_class = models.BooleanField
     handles_field_classes = [models.BooleanField, models.NullBooleanField]
-    lookup_types = ('exact', 'in')
+    lookup_types = ("exact", "in")
 
     def prep_search_value(self, term, lookup_type):
         try:
@@ -503,12 +541,12 @@ class BooleanColumn(Column):
         try:
             label = self.label.lower()
         except AttributeError:
-            label = ''
+            label = ""
 
         # Allow column's own label to represent a true value
-        if term in ['True', 'true'] or term in label:
+        if term in ["True", "true"] or term in label:
             term = True
-        elif term in ['False', 'false']:
+        elif term in ["False", "false"]:
             term = False
         else:
             return None
@@ -519,13 +557,13 @@ class BooleanColumn(Column):
 class IntegerColumn(Column):
     model_field_class = models.IntegerField
     handles_field_classes = [models.IntegerField, models.AutoField]
-    lookup_types = ('exact', 'in')
+    lookup_types = ("exact", "in")
 
 
 class FloatColumn(Column):
     model_field_class = models.FloatField
     handles_field_classes = [models.FloatField, models.DecimalField]
-    lookup_types = ('exact', 'in')
+    lookup_types = ("exact", "in")
 
 
 class CompoundColumn(Column):
@@ -571,7 +609,7 @@ class CompoundColumn(Column):
         return self._get_flat_db_sources(model)
 
     def _get_flat_db_sources(self, model):
-        """ Return a flattened representation of the individual ``sources`` lists. """
+        """Return a flattened representation of the individual ``sources`` lists."""
         sources = []
         for source in self.sources:
             for sub_source in self.expand_source(source):
@@ -581,7 +619,7 @@ class CompoundColumn(Column):
         return sources
 
     def get_source_handler(self, model, source):
-        """ Allow the nested Column source to be its own handler. """
+        """Allow the nested Column source to be its own handler."""
         if isinstance(source, Column):
             return source
 
@@ -607,7 +645,7 @@ class CheckBoxSelectColumn(DisplayColumn):
     Example here: https://datatables.net/extensions/select/examples/initialisation/checkbox.html
     """
 
-    def __init__(self, label='Select all', show_select_checkbox=True, *args, **kwargs):
+    def __init__(self, label="Select all", show_select_checkbox=True, *args, **kwargs):
         if show_select_checkbox:
             label += """
                 <input
@@ -624,4 +662,4 @@ class CheckBoxSelectColumn(DisplayColumn):
         super(CheckBoxSelectColumn, self).__init__(label=label, *args, **kwargs)
 
     def value(self, obj, **kwargs):
-        return ''
+        return ""

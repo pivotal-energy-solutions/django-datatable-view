@@ -10,26 +10,26 @@ from ..datatables import LegacyDatatable
 
 log = logging.getLogger(__name__)
 
-FieldDefinitionTuple = namedtuple('FieldDefinitionTuple', ['pretty_name', 'fields', 'callback'])
-ColumnOrderingTuple = namedtuple('ColumnOrderingTuple', ['order', 'column_index', 'direction'])
-ColumnInfoTuple = namedtuple('ColumnInfoTuple', ['pretty_name', 'attrs'])
+FieldDefinitionTuple = namedtuple("FieldDefinitionTuple", ["pretty_name", "fields", "callback"])
+ColumnOrderingTuple = namedtuple("ColumnOrderingTuple", ["order", "column_index", "direction"])
+ColumnInfoTuple = namedtuple("ColumnInfoTuple", ["pretty_name", "attrs"])
 
 DEFAULT_OPTIONS = {
-    'columns': [],  # table headers
-    'ordering': [],  # override to Model._meta.ordering
-    'start_offset': 0,  # results to skip ahead
-    'page_length': 25,  # length of a single result page
-    'search': '',  # client search string
-    'search_fields': [],  # extra ORM paths to search; not displayed
-    'unsortable_columns': [],  # table headers not allowed to be sorted
-    'hidden_columns': [],  # table headers to be generated, but hidden by the client
-    'structure_template': 'datatableview/legacy_structure.html',
-    'result_counter_id': 'id_count',  # HTML element ID to display the total results
+    "columns": [],  # table headers
+    "ordering": [],  # override to Model._meta.ordering
+    "start_offset": 0,  # results to skip ahead
+    "page_length": 25,  # length of a single result page
+    "search": "",  # client search string
+    "search_fields": [],  # extra ORM paths to search; not displayed
+    "unsortable_columns": [],  # table headers not allowed to be sorted
+    "hidden_columns": [],  # table headers to be generated, but hidden by the client
+    "structure_template": "datatableview/legacy_structure.html",
+    "result_counter_id": "id_count",  # HTML element ID to display the total results
 }
 
 
 def get_field_definition(field_definition):
-    """ Normalizes a field definition into its component parts, even if some are missing. """
+    """Normalizes a field definition into its component parts, even if some are missing."""
     if not isinstance(field_definition, (tuple, list)):
         field_definition = [field_definition]
     else:
@@ -42,7 +42,7 @@ def get_field_definition(field_definition):
     elif len(field_definition) == 3:
         field = field_definition
     else:
-        raise ValueError('Invalid field definition format.')
+        raise ValueError("Invalid field definition format.")
 
     if not isinstance(field[1], (tuple, list)):
         field[1] = (field[1],)
@@ -70,13 +70,13 @@ class LegacyDatatableMixin(DatatableMixin):
         return self.datatable_options
 
     def _get_datatable_options(self):
-        """ Helps to keep the promise that we only run ``get_datatable_options()`` once. """
-        if not hasattr(self, '_datatable_options'):
+        """Helps to keep the promise that we only run ``get_datatable_options()`` once."""
+        if not hasattr(self, "_datatable_options"):
             self._datatable_options = self.get_datatable_options()
 
             # Convert sources from list to tuple, so that modern Column tracking dicts can hold the
             # field definitions as keys.
-            columns = self._datatable_options.get('columns', [])
+            columns = self._datatable_options.get("columns", [])
             for i, column in enumerate(columns):
                 if len(column) >= 2 and isinstance(column[1], list):
                     column = list(column)
@@ -87,7 +87,7 @@ class LegacyDatatableMixin(DatatableMixin):
 
     def get_datatable_kwargs(self, **kwargs):
         kwargs = super(LegacyDatatableMixin, self).get_datatable_kwargs(**kwargs)
-        kwargs['callback_target'] = self
+        kwargs["callback_target"] = self
         kwargs.update(self._get_datatable_options())
         return kwargs
 
