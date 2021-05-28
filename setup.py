@@ -8,7 +8,7 @@ with open("README.md") as f:
 
 setup(
     name="django-datatable-view",
-    version="2.1.5",
+    version="2.1.6",
     description="This package is used in conjunction with the jQuery plugin "
     "(http://http://datatables.net/), and supports state-saving detection"
     " with (http://datatables.net/plug-ins/api).  The package consists of "
