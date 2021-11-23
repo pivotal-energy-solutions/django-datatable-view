@@ -87,7 +87,7 @@ jobs:
           pip install bandit
 
       - name: Bandit
-        run: bandit -r datatableview -x datatableview/tests -s B101 -f json -o report.json
+        run: bandit -r datatableview -x datatableview/tests -s B303,B308,B703 -f json -o report.json
 
       - name: Show report
         if: ${{ success() || failure() }}
@@ -158,10 +158,12 @@ jobs:
           GOOGLE_MAPS_CLIENT_ID: ${{ secrets.GOOGLE_MAPS_CLIENT_ID }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
+          export PYTHONPATH=`pwd`
           demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
 
       - name: Django source code check
         run: |
+          export PYTHONPATH=`pwd`
           python demo_app/manage.py check
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
@@ -191,6 +193,7 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           coverage erase
+          export PYTHONPATH=`pwd`
           coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
           coverage xml -o ./coverage.xml
 
