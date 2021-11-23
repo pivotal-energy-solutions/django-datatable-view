@@ -1,4 +1,4 @@
-# This is used for simulations
+# This is used for DatatableView
 
 name: Djagno Datatable View Tests
 
@@ -87,7 +87,7 @@ jobs:
           pip install bandit
 
       - name: Bandit
-        run: bandit -r simulation -x simulation/tests -s B101 -f json -o report.json
+        run: bandit -r datatableview -x datatableview/tests -s B101 -f json -o report.json
 
       - name: Show report
         if: ${{ success() || failure() }}
@@ -158,7 +158,7 @@ jobs:
           GOOGLE_MAPS_CLIENT_ID: ${{ secrets.GOOGLE_MAPS_CLIENT_ID }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
-          demo_app/manage.py test --noinput --settings=demo_app.settings_test simulation
+          demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
 
       - name: Django source code check
         run: |
@@ -191,7 +191,7 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           coverage erase
-          coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test simulation
+          coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
           coverage xml -o ./coverage.xml
 
       - name: Show report
@@ -235,4 +235,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
-          bumper.py --directory . --exclude=.idea,.github,demo_app --version_files simulation/__init__.py --repo=pivotal-energy-solutions/simulation -v
+          bumper.py --directory . --exclude=.idea,.github,demo_app --version_files datatableview/__init__.py --repo=pivotal-energy-solutions/django-datatable-view -v
