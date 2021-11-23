@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 """setup.py: Django django-datatables-view"""
 
+__name__ = "datatableview"
+__author__ = "Autumn Valenta"
+__version_info__ = (2, 1, 6)
+__version__ = "2.1.6"
+__date__ = "2013/11/14 2:00:00 PM"
+__credits__ = ["Autumn Valenta", "Steven Klass"]
+__license__ = "See the file LICENSE.txt for licensing information."
+
+
 from setuptools import setup, find_packages
 
 with open("README.md") as f:
@@ -24,8 +33,6 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Framework :: Django",
-        "Framework :: Django :: 2.1",
-        "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.0",
         "Framework :: Django :: 3.1",
         "Framework :: Django :: 3.2",
@@ -43,5 +50,5 @@ setup(
     packages=find_packages(),
     package_data={"datatableview": ["static/js/*.js", "templates/datatableview/*.html"]},
     include_package_data=True,
-    install_requires=["django>=2.1", "python-dateutil"],
+    install_requires=["django>=3.0", "python-dateutil"],
 )

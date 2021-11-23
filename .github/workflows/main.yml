@@ -1,0 +1,238 @@
+# This is used for simulations
+
+name: Djagno Datatable View Tests
+
+on: push
+
+jobs:
+  cancel:
+    name: Canceling Outstanding Jobs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+  outdated:
+    name: Outdated packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --user
+          pip install -r requirements_dev.txt --user
+
+      - name: outdated
+        run: pip list --outdated --not-required --user | grep . && echo "There are outdated packages" && exit 1 || echo "All packages up to date"
+
+  black:
+    name: Black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+
+      - name: Black
+        run: black --check .
+
+  pre-commit:
+    name: Pre-Commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+          pre-commit install
+
+      - name: Pre-Commit
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  security:
+    name: Bandit Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          pip install bandit
+
+      - name: Bandit
+        run: bandit -r simulation -x simulation/tests -s B101 -f json -o report.json
+
+      - name: Show report
+        if: ${{ success() || failure() }}
+        run: cat report.json
+
+      - name: upload report
+        if: ${{ success() || failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Bandit Security Report
+          path: report.json
+
+  django_matrix:
+    name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        db: [ sqlite, mysql ]
+        django-version: [ "~=3.2" ]
+        python-version: [ 3.8, 3.9, "3.10"]
+        experimental: [ false ]
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Verify MySQL connection from host
+        if: matrix.db == 'mysql'
+        run: |
+          mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -e "SHOW DATABASES" 2>&1 > /dev/null
+
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner for ${{ matrix.python-version }}."
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+          pip uninstall -y Django
+          pip install Django${{ matrix.django-version }}
+
+      - name: Run Django Tests
+        env:
+          PYTHONWARNINGS: once::DeprecationWarning
+          TASK_ALWAYS_EAGER: 1
+          GOOGLE_MAPS_CLIENT_ID: ${{ secrets.GOOGLE_MAPS_CLIENT_ID }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          demo_app/manage.py test --noinput --settings=demo_app.settings_test simulation
+
+      - name: Django source code check
+        run: |
+          python demo_app/manage.py check
+
+      - run: echo "🍏 This job's status is ${{ job.status }}."
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: django_matrix
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+
+      - name: Run Django Coverage Test
+        env:
+          PYTHONWARNINGS: once::DeprecationWarning
+          TASK_ALWAYS_EAGER: 1
+          GOOGLE_MAPS_CLIENT_ID: ${{ secrets.GOOGLE_MAPS_CLIENT_ID }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          coverage erase
+          coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test simulation
+          coverage xml -o ./coverage.xml
+
+      - name: Show report
+        if: ${{ success() || failure() }}
+        run:
+          coverage report -m
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
+      - name: Upload Report
+        if: ${{ success() || failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Coverage Report
+          path: coverage.xml
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: ['cancel', 'outdated', 'black', 'pre-commit', 'security', 'django_matrix', 'coverage']
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python setup.py install
+          python -m pip install --upgrade pip
+          pip install git+https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/pivotal-energy-solutions/tensor-infrastructure@master#egg=infrastructure
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          bumper.py --directory . --exclude=.idea,.github,demo_app --version_files simulation/__init__.py --repo=pivotal-energy-solutions/simulation -v
