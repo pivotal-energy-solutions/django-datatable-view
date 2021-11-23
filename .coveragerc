@@ -6,7 +6,7 @@ omit =
     */test*
 
 [report]
-fail_under = 70
+fail_under = 25
 omit =
     demo_app/*
     */migrations/*
