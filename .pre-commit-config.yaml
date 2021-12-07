@@ -1,6 +1,8 @@
+default_language_version:
+  python: python3.10
 repos:
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.0.1
     hooks:
       - id: check-added-large-files
         args: [ '--maxkb=500' ]
@@ -19,10 +21,11 @@ repos:
         exclude: .idea/.*
       - id: check-json
   -   repo: https://github.com/ambv/black
-      rev: stable
+      rev: 21.12b0
       hooks:
       - id: black
+        language_version: python3.10
   -   repo: https://gitlab.com/pycqa/flake8
-      rev: 3.9.2
+      rev: 4.0.1
       hooks:
       - id: flake8

@@ -1,6 +1,6 @@
 python-decouple
-python-dateutil~=2.8.1
+python-dateutil
 six
 
-Django~=3.2
-pytz~=2020.5
+Django
+pytz
