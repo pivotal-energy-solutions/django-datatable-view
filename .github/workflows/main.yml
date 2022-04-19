@@ -87,7 +87,7 @@ jobs:
           pip install bandit
 
       - name: Bandit
-        run: bandit -r datatableview -x datatableview/tests -s B303,B308,B703 -f json -o report.json
+        run: bandit -r datatableview -x datatableview/tests -s B303,B308,B323,B324,B703 -f json -o report.json
 
       - name: Show report
         if: ${{ success() || failure() }}
