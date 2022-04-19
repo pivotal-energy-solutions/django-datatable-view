@@ -11,7 +11,22 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+import logging
 import os
+import sys
+
+import environ
+
+env = environ.Env(
+    DEBUG=(bool, False),
+    DEBUG_LEVEL=(int, logging.WARNING),
+    SECRET_KEY=(str, "SECRET_KEY"),
+    MYSQL_DATABASE=(str, "db"),
+    MYSQL_USER=(str, "root"),
+    MYSQL_PASSWORD=(str, "password"),
+    MYSQL_HOST=(str, "127.0.0.1"),
+    MYSQL_PORT=(str, "3306"),
+)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,10 +36,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "l1o&c2t&jp14_3ez8p6e=@2!m)vn62m5a3p=56%h2k#v#tterv"
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -79,8 +94,12 @@ WSGI_APPLICATION = "demo_app.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": env("MYSQL_DATABASE"),
+        "USER": env("MYSQL_USER"),
+        "PASSWORD": env("MYSQL_PASSWORD"),
+        "HOST": env("MYSQL_HOST"),
+        "PORT": env("DOCKER_MYSQL_PORT", default=env("MYSQL_PORT", default="3306")),
     }
 }
 
@@ -89,18 +108,10 @@ DATABASES = {
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
@@ -113,8 +124,6 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
 
 
@@ -124,3 +133,52 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] - %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "null": {
+            "level": "DEBUG",
+            "class": "logging.NullHandler",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "standard",
+            "stream": sys.stdout,
+        },
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": True},
+        "django.request": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.security": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.server": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.db.backends": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.template": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        # 'django_celery_beat': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        # 'celery': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        # 'amqp': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        # 'kombu': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        "requests": {"handlers": ["console"], "level": "WARNING"},
+        "multiprocessing": {"handlers": ["console"], "level": "WARNING"},
+        "py.warnings": {"handlers": ["console"], "level": "WARNING"},
+        "registration": {
+            "handlers": ["console"],
+            "level": env("DEBUG_LEVEL", "WARNING"),
+            "propagate": False,
+        },
+        "demo_app": {
+            "handlers": ["console"],
+            "level": env("DEBUG_LEVEL", "ERROR"),
+            "propagate": False,
+        },
+        "": {"handlers": ["console"], "level": env("DEBUG_LEVEL", "ERROR"), "propagate": True},
+    },
+}
