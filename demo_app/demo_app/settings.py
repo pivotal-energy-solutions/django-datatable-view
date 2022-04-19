@@ -100,6 +100,12 @@ DATABASES = {
         "PASSWORD": env("MYSQL_PASSWORD"),
         "HOST": env("MYSQL_HOST"),
         "PORT": env("DOCKER_MYSQL_PORT", default=env("MYSQL_PORT", default="3306")),
+        "OPTIONS": {"charset": "utf8mb4"},
+        "TEST": {
+            "MIGRATE": False,
+            "CHARSET": "utf8mb4",
+            "COLLATION": "utf8mb4_unicode_520_ci",
+        },
     }
 }
 
