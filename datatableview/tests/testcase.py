@@ -11,6 +11,5 @@ class DatatableViewTestCase(TestCase):
         Asks the management script to re-sync the database.  Having test-only models is a pain.
         """
         apps.clear_cache()
-        call_command("migrate", interactive=False, verbosity=0)
         call_command("loaddata", "initial_data", verbosity=0)
         super(DatatableViewTestCase, self)._pre_setup()
