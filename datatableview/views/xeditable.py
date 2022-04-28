@@ -181,7 +181,11 @@ class XEditableMixin(object):
         # all the choices are visible.
         if formfield.limit_choices_to:
             formfield.queryset = formfield.queryset.filter(**formfield.limit_choices_to)
-        return formfield.choices
+        
+        # return formfield.choices
+        # formfield choices deconstructed to get ModelChoiceIteratorValue correctly (>= Django 3.1)
+        # https://docs.djangoproject.com/en/3.2/ref/forms/fields/#django.forms.ModelChoiceIteratorValue.value
+        return [(i[0].__str__(), i[1]) for i in formfield.choices]
 
     def _get_default_choices(self, field, field_name):
         return field.choices
