@@ -74,10 +74,17 @@ var datatableview = (function(){
             "pageLength": datatable.attr('data-page-length'),
             "infoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre){
                 $("#" + datatable.attr('data-result-counter-id')).html(parseInt(iTotal).toLocaleString());
-                var infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
-                if (iMax != iTotal) {
-                    infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
+                var infoString;
+                if (iTotal == 0) {
+                    infoString = oSettings.oLanguage.sInfoEmpty.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
                 }
+                else {
+                    infoString = oSettings.oLanguage.sInfo.replace('_START_',iStart).replace('_END_',iEnd).replace('_TOTAL_',iTotal);
+                    if (iMax != iTotal) {
+                        infoString += oSettings.oLanguage.sInfoFiltered.replace('_MAX_',iMax);
+                    }
+                }
+
                 return infoString;
             }
         });
