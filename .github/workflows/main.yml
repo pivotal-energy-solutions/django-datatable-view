@@ -239,4 +239,9 @@ jobs:
           PYTHONWARNINGS: once::DeprecationWarning
           GITHUB_TOKEN: ${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}
         run: |
-          bumper.py --directory . --exclude=.idea,.github,demo_app --version_files datatableview/__init__.py --repo=pivotal-energy-solutions/django-datatable-view -v
+          bumper.py --directory . --exclude=.idea,.github,demo_app \
+            --version_files datatableview/__init__.py \
+            --repo=pivotal-energy-solutions/django-datatable-view > out.json
+          echo "bumped=$(jq '.bumped' out.json)" >> $GITHUB_OUTPUT
+          echo "bump_version=$(jq '.bump_version' out.json)" >> $GITHUB_OUTPUT
+          echo "bump_sha=$(jq '.bump_sha' out.json)" >> $GITHUB_OUTPUT
