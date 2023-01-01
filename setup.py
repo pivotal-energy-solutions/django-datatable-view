@@ -3,8 +3,8 @@
 
 __name__ = "datatableview"
 __author__ = "Autumn Valenta"
-__version_info__ = (2, 1, 17)
-__version__ = "2.1.17"
+__version_info__ = (2, 1, 18)
+__version__ = "2.1.18"
 __date__ = "2013/11/14 2:00:00 PM"
 __credits__ = ["Autumn Valenta", "Steven Klass"]
 __license__ = "See the file LICENSE.txt for licensing information."
@@ -17,7 +17,7 @@ with open("README.md") as f:
 
 setup(
     name="django-datatable-view",
-    version="2.1.17",
+    version="2.1.18",
     description="This package is used in conjunction with the jQuery plugin "
     "(http://http://datatables.net/), and supports state-saving detection"
     " with (http://datatables.net/plug-ins/api).  The package consists of "
