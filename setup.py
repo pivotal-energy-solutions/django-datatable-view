@@ -44,7 +44,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Software Development",
     ],
-    python_requires=">=3.9.*",
+    python_requires=">=3.9",
     install_requires=["django>=3.2", "python-dateutil"],
     packages=find_packages(),
     package_data={"datatableview": ["static/js/*.js", "templates/datatableview/*.html"]},
