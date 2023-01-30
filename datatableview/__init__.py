@@ -17,8 +17,8 @@ from .exceptions import SkipRecord
 
 __name__ = "datatableview"
 __author__ = "Autumn Valenta"
-__version_info__ = (2, 1, 19)
-__version__ = "2.1.19"
+__version_info__ = (2, 1, 20)
+__version__ = "2.1.20"
 __date__ = "2013/11/14 2:00:00 PM"
 __credits__ = ["Autumn Valenta", "Steven Klass"]
 __license__ = "See the file LICENSE.txt for licensing information."
