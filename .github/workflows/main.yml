@@ -119,12 +119,12 @@ jobs:
   tests:
     name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.django-version == '~=4.2' }}
+    continue-on-error: ${{ matrix.django-version == '~=4.2.0' }}
     strategy:
       max-parallel: 4
       matrix:
         db: [ sqlite, mysql ]
-        django-version: ["<4.2", "~=4.2" ]
+        django-version: ["~=4.1.0", "~=4.2.0" ]
         python-version: [ "3.10" ]
 
     services:
@@ -160,8 +160,8 @@ jobs:
         run: |
           python setup.py install
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements_dev.txt
+          pip install -r requirements.txt --retries 3
+          pip install -r requirements_dev.txt --retries 3
           pip uninstall -y Django
           pip install Django${{ matrix.django-version }}
 

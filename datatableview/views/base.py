@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 
 class DatatableJSONResponseMixin(object):
     def dispatch(self, request, *args, **kwargs):
-
         try:
             is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
         except AttributeError:
