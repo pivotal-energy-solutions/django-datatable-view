@@ -21,11 +21,11 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEBUG_LEVEL=(int, logging.WARNING),
     SECRET_KEY=(str, "SECRET_KEY"),
-    MYSQL_DATABASE=(str, "db"),
-    MYSQL_USER=(str, "root"),
-    MYSQL_PASSWORD=(str, "password"),
-    MYSQL_HOST=(str, "127.0.0.1"),
-    MYSQL_PORT=(str, "3306"),
+    MARIADB_DATABASE=(str, "db"),
+    MARIADB_USER=(str, "root"),
+    MARIADB_PASSWORD=(str, "password"),
+    MARIADB_HOST=(str, "127.0.0.1"),
+    MARIADB_PORT=(str, "3306"),
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -95,11 +95,11 @@ WSGI_APPLICATION = "demo_app.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env("MYSQL_DATABASE"),
-        "USER": env("MYSQL_USER"),
-        "PASSWORD": env("MYSQL_PASSWORD"),
-        "HOST": env("MYSQL_HOST"),
-        "PORT": env("DOCKER_MYSQL_PORT", default=env("MYSQL_PORT", default="3306")),
+        "NAME": env("MARIADB_DATABASE"),
+        "USER": env("MARIADB_USER"),
+        "PASSWORD": env("MARIADB_PASSWORD"),
+        "HOST": env("MARIADB_HOST"),
+        "PORT": env("DOCKER_MYSQL_PORT", default=env("MARIADB_PORT", default="3306")),
         "OPTIONS": {"charset": "utf8mb4"},
         "TEST": {
             "MIGRATE": False,
