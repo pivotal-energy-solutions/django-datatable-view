@@ -91,7 +91,7 @@ jobs:
           pip install .[test]
 
       - name: Bandit
-        run: bandit -r datatableview -x datatableview/tests -s B303,B308,B323,B324,B703 -f json -o report.json
+        run: bandit -c pyproject.toml -f json -o report.json .
 
       - name: Show report
         if: ${{ success() || failure() }}
@@ -107,7 +107,7 @@ jobs:
   tests:
     name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
     runs-on: ubuntu-latest
-#    continue-on-error: ${{ matrix.django-version == '~=4.2.0' }}
+#    continue-on-error: ${{ matrix.django-version == '~=5.0' }}
     strategy:
       max-parallel: 4
       matrix:
@@ -153,8 +153,7 @@ jobs:
         env:
           PYTHONWARNINGS: once::DeprecationWarning
           DB_TYPE: ${{ matrix.db }}
-        run: export PYTHONPATH=`pwd` && coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
-
+        run: export PYTHONPATH=`pwd` && coverage run
       - name: "Upload Coverage Results for PY:${{ matrix.python-version }} DB:${{ matrix.db}} DJ:${{ matrix.django-version }}"
         uses: actions/upload-artifact@v3
         with:
@@ -163,8 +162,7 @@ jobs:
           retention-days: 1
 
       - name: Django Check
-        run: |
-          python demo_app/manage.py check
+        run: python demo_app/manage.py check
 
   coverage:
     name: Upload Coverage to Codecov
@@ -223,9 +221,7 @@ jobs:
           PYTHONWARNINGS: once::DeprecationWarning
           GITHUB_TOKEN: ${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}
         run: |
-          bumper.py --directory . --exclude=.idea,.github,demo_app \
-            --version_files datatableview/__init__.py \
-            --repo=pivotal-energy-solutions/django-datatable-view > out.json
+          bumper -P
           echo "bumped=$(jq '.bumped' out.json)" >> $GITHUB_OUTPUT
           echo "bump_version=$(jq '.bump_version' out.json)" >> $GITHUB_OUTPUT
           echo "bump_sha=$(jq '.bump_sha' out.json)" >> $GITHUB_OUTPUT
