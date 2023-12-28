@@ -1,6 +1,6 @@
 # This is used for DatatableView
 
-name: Djagno Datatable View Tests
+name: Django Datatable View Tests
 
 on:
   push:
@@ -48,7 +48,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install hatch
           pip install .
           pip install .[test]
 
@@ -91,7 +90,7 @@ jobs:
           pip install .[test]
 
       - name: Bandit
-        run: bandit -c pyproject.toml -f json -o report.json .
+        run: bandit -c pyproject.toml -r -f json -o report.json .
 
       - name: Show report
         if: ${{ success() || failure() }}
