@@ -91,7 +91,7 @@ exclude = '''
 '''
 
 [tool.bandit]
-targets = ['datatableview']
+targets = ['datatableview', "demo_app"]
 exclude_dirs = ["datatableview/tests"]
 skips = ["B303", "B308", "B323", "B324", "B703"]
 
