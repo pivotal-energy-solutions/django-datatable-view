@@ -188,7 +188,7 @@ jobs:
       - name: Combine Report Coverage
         run: |
           coverage combine coverage-*/.coverage
-            coverage report --precision=1 --sort=cover --skip-covered --skip-empty
+          coverage report
           coverage xml
 
       - name: Upload coverage to Codecov
