@@ -104,5 +104,5 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 65
+fail_under = 69
 ignore_errors = true
