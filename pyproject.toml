@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "django-decouple",
+    "django-environ",
     "mysqlclient",
     "flake8",
     "coverage",
