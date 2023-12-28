@@ -23,20 +23,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: 'pip'
-          cache-dependency-path: |
-            setup.py
-            requirements*.txt
+
       - name: Install dependencies
         run: |
-          python setup.py install
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --user
-          pip install -r requirements_dev.txt --user
+          pip install .
+          pip install .[test]
 
       - name: outdated
-        run: pip list --outdated --not-required --exclude=django --user | grep . && echo "There are outdated packages" && exit 1 || echo "All packages up to date"
+        run: pip list --outdated --not-required --user | grep . && echo "There are outdated packages" && exit 1 || echo "All packages up to date"
 
   black:
     name: Black
@@ -45,17 +42,15 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: 'pip'
-          cache-dependency-path: |
-            setup.py
-            requirements*.txt
+
       - name: Install dependencies
         run: |
-          python setup.py install
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements_dev.txt
+          pip install hatch
+          pip install .
+          pip install .[test]
 
       - name: Black
         run: black --check .
@@ -67,17 +62,14 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: 'pip'
-          cache-dependency-path: |
-            setup.py
-            requirements*.txt
+
       - name: Install dependencies
         run: |
-          python setup.py install
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements_dev.txt
+          pip install .
+          pip install .[test]
           pre-commit install
 
       - name: Pre-Commit
@@ -90,16 +82,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: 'pip'
-          cache-dependency-path: |
-            setup.py
-            requirements*.txt
 
       - name: Install dependencies
         run: |
-          python setup.py install
-          pip install bandit
+          pip install .
+          pip install .[test]
 
       - name: Bandit
         run: bandit -r datatableview -x datatableview/tests -s B303,B308,B323,B324,B703 -f json -o report.json
@@ -123,8 +112,8 @@ jobs:
       max-parallel: 4
       matrix:
         db: [ sqlite, mariadb ]
-        django-version: ["~=4.2.0" ]
-        python-version: [ "3.10" ]
+        django-version: ["~=4.2.0", "~=5.0"]
+        python-version: [ "3.12" ]
 
     services:
       mariadb:
@@ -152,16 +141,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: |
-            setup.py
-            requirements*.txt
 
       - name: Install dependencies
         run: |
-          python setup.py install
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt --retries 3
-          pip install -r requirements_dev.txt --retries 3
+          pip install .
+          pip install .[test]
           pip uninstall -y Django
           pip install Django${{ matrix.django-version }}
 
@@ -169,9 +153,7 @@ jobs:
         env:
           PYTHONWARNINGS: once::DeprecationWarning
           DB_TYPE: ${{ matrix.db }}
-        run: |
-          export PYTHONPATH=`pwd`
-          coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
+        run: export PYTHONPATH=`pwd` && coverage run demo_app/manage.py test --noinput --settings=demo_app.settings_test datatableview
 
       - name: "Upload Coverage Results for PY:${{ matrix.python-version }} DB:${{ matrix.db}} DJ:${{ matrix.django-version }}"
         uses: actions/upload-artifact@v3
@@ -192,10 +174,12 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -q coverage
+        run: |
+          pip install .
+          pip install .[test]
 
       - uses: actions/download-artifact@v3
         with:
@@ -229,7 +213,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install dependencies
         run: |
           pip install git+https://${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}@github.com/pivotal-energy-solutions/tensor-infrastructure@master#egg=infrastructure

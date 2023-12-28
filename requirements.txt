@@ -1,6 +1,0 @@
-python-decouple
-python-dateutil
-six
-
-Django
-pytz

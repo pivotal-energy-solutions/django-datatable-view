@@ -1,4 +1,0 @@
-include README.md
-include requirements.txt
-recursive-include datatableview/static *
-recursive-include datatableview/templates *

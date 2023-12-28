@@ -1,8 +1,0 @@
-django-environ
-mysqlclient
-mock
-flake8
-tox
-coverage
-pre-commit
-black
