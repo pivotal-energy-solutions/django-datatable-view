@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
 from inspect import isgenerator
 
-import pytz
 from django.apps import apps
 
 from .testcase import DatatableViewTestCase
@@ -300,9 +300,15 @@ class DatatableTests(DatatableViewTestCase):
         obj1 = ExampleModel.objects.create(name="a")
         obj2 = ExampleModel.objects.create(name="a")
         obj3 = ExampleModel.objects.create(name="b")
-        obj1.date_created = (obj1.date_created + timedelta(days=3)).replace(tzinfo=pytz.UTC)
-        obj2.date_created = (obj2.date_created + timedelta(days=1)).replace(tzinfo=pytz.UTC)
-        obj3.date_created = (obj3.date_created + timedelta(days=2)).replace(tzinfo=pytz.UTC)
+        obj1.date_created = (obj1.date_created + timedelta(days=3)).replace(
+            tzinfo=datetime.timezone.utc
+        )
+        obj2.date_created = (obj2.date_created + timedelta(days=1)).replace(
+            tzinfo=datetime.timezone.utc
+        )
+        obj3.date_created = (obj3.date_created + timedelta(days=2)).replace(
+            tzinfo=datetime.timezone.utc
+        )
         obj1.save()
         obj2.save()
         obj3.save()
