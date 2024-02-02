@@ -42,7 +42,7 @@ XEDITABLE_FIELD_TYPES = {
     "PositiveSmallIntegerField": "number",
     "SlugField": "text",
     "SmallIntegerField": "number",
-    "TextField": "text",
+    "TextField": "textarea",
     "TimeField": "text",
     "ForeignKey": "select",
 }
