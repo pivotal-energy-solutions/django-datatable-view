@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,7 +7,7 @@ name = "django-datatable-view"
 dynamic = ["version"]
 description = "This package is used in conjunction with the jQuery plugin (http://http://datatables.net/), and supports state-saving detection with (http://datatables.net/plug-ins/api).  The package consists of a class-based view, and a small collection of utilities for rendering table data from models."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     { name = "Pivotal Energy Solutions", email = "steve@pivotal.energy" },
 ]
@@ -24,9 +24,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Utilities",
@@ -58,7 +55,7 @@ Thanks = "https://saythanks.io/to/rh0dium"
 Source = "https://github.com/pivotal-energy-solutions/django-datatable-view/"
 
 [tool.hatch.version]
-path = "datatableview/__init__.py"
+source = "vcs"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -78,17 +75,11 @@ include = [
 line-length = 100
 target-version = ['py311']
 include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | build
-  | dist
-)/
-'''
+exclude = '(\.git|.venv|_build|build|dist|.*\/__pycache__\/)'
+
+[tool.ruff]
+line-length = 100
+lint.ignore = ["F401"]
 
 [tool.bandit]
 targets = ['datatableview', "demo_app"]
