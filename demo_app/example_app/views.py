@@ -39,7 +39,7 @@ class IndexView(TemplateView):
         db_works = True
         try:
             list(Entry.objects.all()[:1])
-        except:
+        except Exception:
             db_works = False
         context["db_works"] = db_works
 

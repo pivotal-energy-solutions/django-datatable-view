@@ -47,7 +47,7 @@ class DatatableTests(DatatableViewTestCase):
             pass
 
         with self.assertRaises(NoError):
-            dt = DT([], "/")
+            DT([], "/")
             raise NoError()
 
     def test_column_names_list_raises_related_columns(self):
@@ -74,7 +74,7 @@ class DatatableTests(DatatableViewTestCase):
             pass
 
         with self.assertRaises(NoError):
-            dt = DT([], "/")
+            DT([], "/")
             raise NoError()
 
     def test_get_ordering_splits(self):
@@ -148,7 +148,7 @@ class DatatableTests(DatatableViewTestCase):
 
     def test_populate_records_searches(self):
         obj1 = ExampleModel.objects.create(name="test name 1", value=False)
-        obj2 = ExampleModel.objects.create(name="test name 2", value=True)
+        ExampleModel.objects.create(name="test name 2", value=True)
         queryset = ExampleModel.objects.all()
 
         class DT(Datatable):
@@ -195,7 +195,7 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(list(dt._records), [obj2, obj1])
 
     def test_populate_records_avoids_column_callbacks(self):
-        obj1 = ExampleModel.objects.create(name="test name 1")
+        ExampleModel.objects.create(name="test name 1")
         queryset = ExampleModel.objects.all()
 
         class DT(Datatable):
@@ -211,7 +211,7 @@ class DatatableTests(DatatableViewTestCase):
             raise
 
     def test_preload_record_data_calls_view(self):
-        obj1 = ExampleModel.objects.create(name="test name 1")
+        ExampleModel.objects.create(name="test name 1")
         queryset = ExampleModel.objects.all()
 
         class Dummy(object):
@@ -453,7 +453,7 @@ class DatatableTests(DatatableViewTestCase):
 
     def test_get_extra_record_data_passes_through_to_object_serialization(self):
         obj1 = ExampleModel.objects.create(name="test name 1")
-        queryset = ExampleModel.objects.all()
+        ExampleModel.objects.all()
 
         class DT(Datatable):
             def get_extra_record_data(self, obj):
@@ -466,7 +466,7 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(data["_extra_data"]["custom"], "data")
 
     def test_get_extra_record_data_passes_through_to_json_response(self):
-        obj1 = ExampleModel.objects.create(name="test name 1")
+        ExampleModel.objects.create(name="test name 1")
         queryset = ExampleModel.objects.all()
 
         class DT(Datatable):
@@ -672,9 +672,9 @@ class DatatableTests(DatatableViewTestCase):
         self.assertEqual(list(dt._records), [])
 
     def test_search_term_boolean(self):
-        obj1 = ExampleModel.objects.create(name="test name 1", value=True)
-        obj2 = ExampleModel.objects.create(name="test name 2", value=True)
-        obj3 = ExampleModel.objects.create(name="test name 12", value=False)
+        ExampleModel.objects.create(name="test name 1", value=True)
+        ExampleModel.objects.create(name="test name 2", value=True)
+        ExampleModel.objects.create(name="test name 12", value=False)
         queryset = ExampleModel.objects.all()
 
         class DT(Datatable):

@@ -135,40 +135,40 @@ class ViewsTests(DatatableViewTestCase):
         view = ColumnBackedByMethodDatatableView
         url = reverse("column-backed-by-method")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
 
     def test_compound_columns_datatable_view(self):
         view = CompoundColumnsDatatableView
         url = reverse("compound-columns")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
 
     def test_many_to_many_fields_datatable_view(self):
         view = ManyToManyFieldsDatatableView
         url = reverse("many-to-many-fields")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
 
     def test_default_callback_names_datatable_view(self):
         view = DefaultCallbackNamesDatatableView
         url = reverse("default-callback-names")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
 
     def test_helpers_reference_datatable_view(self):
         view = HelpersReferenceDatatableView
         url = reverse("helpers-reference")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
 
     def test_satellite_datatable_view(self):
         view = SatelliteDatatableView
         url = reverse("satellite")
         view.request = FakeRequest(url)
-        response = self.client.get(url)
-        obj = self.get_json_response(url)
+        self.client.get(url)
+        self.get_json_response(url)
