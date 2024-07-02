@@ -213,6 +213,7 @@ jobs:
     if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     needs: ['outdated', 'black', 'pre-commit', 'security', 'tests', 'coverage' ]
+    permissions: write-all
     outputs:
       bumped: ${{ steps.release.outputs.bumped }}
       bump_version: ${{ steps.release.outputs.bump_version }}
