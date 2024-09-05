@@ -169,6 +169,8 @@ jobs:
       - name: "Upload Coverage Results for PY:${{ matrix.python-version }} DB:${{ matrix.db}} DJ:${{ matrix.django-version }}"
         uses: actions/upload-artifact@v4
         with:
+          include-hidden-files: true
+          if-no-files-found: warn
           name: coverage-${{ matrix.python-version }}-${{ matrix.db}}-${{ matrix.django-version }}
           path: .coverage
           retention-days: 1
