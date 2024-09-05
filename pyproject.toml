@@ -18,7 +18,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Framework :: Django",
-    "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
@@ -29,7 +28,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "django>=4.2",
+    "django>=5.0",
     "python-dateutil",
 ]
 

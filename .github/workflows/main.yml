@@ -124,7 +124,7 @@ jobs:
       max-parallel: 4
       matrix:
         db: [ sqlite, mariadb ]
-        django-version: ["~=4.2.0", "~=5.0"]
+        django-version: [ "~=5.0" ]
         python-version: [ "3.12" ]
 
     services:
