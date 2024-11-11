@@ -1,3 +1,24 @@
+<link href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
+<script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+
+<style>
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    box-sizing: border-box;
+    display: inline-block;
+    min-width: 0.5em;
+    padding: 0.1em 0.1em;
+    margin: 0.5px;
+    text-align: center;
+    text-decoration: none !important;
+    cursor: pointer;
+    color: #333 !important;
+    border: 1px solid transparent;
+    border-radius: 2px;
+}
+
+</style>
+
 <table class="display datatable table table-striped table-bordered" data-source-url="{{ url }}" id="{{ config.id }}"
        data-ajax-method="{{ config.request_method }}"
        data-result-counter-id="{{ config.result_counter_id }}"
@@ -13,7 +34,7 @@
     <tfoot>
         <tr>
             {% for column in datatable %}
-                <th>{{ column.label }}</th>
+                <th data-name="{{ column.label|slugify }}">{{ column.label }}</th>
             {% endfor %}
         </tr>
     </tfoot>
