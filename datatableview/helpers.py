@@ -339,8 +339,9 @@ def make_xeditable(instance=None, extra_attrs=[], *args, **kwargs):  # noqa: C90
         field_name = field_name[1]
         if isinstance(field_name, (tuple, list)):
             raise ValueError(
-                "'make_xeditable' helper needs a single-field data column,"
-                " not {0!r}".format(field_name)
+                "'make_xeditable' helper needs a single-field data column," " not {0!r}".format(
+                    field_name
+                )
             )
     attrs["data-name"] = field_name
 
