@@ -12,7 +12,6 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
       - id: detect-private-key
-      - id: fix-encoding-pragma
       - id: end-of-file-fixer
         exclude: .idea/.*|.*\.blg|.*\.json|.*\.dat
       - id: trailing-whitespace

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from django import template
 from django import get_version
 from django.urls import reverse

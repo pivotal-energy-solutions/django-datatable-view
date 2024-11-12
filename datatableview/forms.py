@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from django import forms
 from django.forms import ValidationError
 from django.forms.models import fields_for_model

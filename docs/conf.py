@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # django-datatable-view documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct 20 13:00:37 2015.

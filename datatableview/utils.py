@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from functools import reduce
 
 from django.utils.text import smart_split

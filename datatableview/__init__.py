@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from .datatables import Datatable, ValuesDatatable, LegacyDatatable
 from .columns import (
     Column,

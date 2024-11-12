@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 import operator
 from datetime import datetime

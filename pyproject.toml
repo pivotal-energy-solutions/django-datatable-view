@@ -37,7 +37,6 @@ dependencies = [
 test = [
     "django-environ",
     "mysqlclient",
-    "flake8",
     "coverage",
     "pre-commit",
     "black",

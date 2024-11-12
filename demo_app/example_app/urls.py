@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 
 from django.urls import re_path
