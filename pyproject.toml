@@ -56,6 +56,10 @@ Source = "https://github.com/pivotal-energy-solutions/django-datatable-view/"
 
 [tool.hatch.version]
 source = "vcs"
+fallback-version = "0.0.0.0"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -105,6 +109,5 @@ sort = "cover"
 
 [tool.bumper]
 exclude = [".idea", ".github", "demo_app"]
-version_files = ["datatableview/__init__.py"]
 repo = "pivotal-energy-solutions/django-datatable-view"
 report = "out.json"
