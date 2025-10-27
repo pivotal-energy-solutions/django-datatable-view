@@ -14,10 +14,14 @@ from ..compat import escape_uri_path
 
 log = logging.getLogger(__name__)
 
+# https://stackoverflow.com/a/70419609
+def is_ajax(request):
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
 
 class DatatableJSONResponseMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        if request.is_ajax() or getattr(request, request.method).get('ajax') == 'true':
+        if is_ajax(request) or getattr(request, request.method).get('ajax') == 'true':
             datatable = self.get_datatable()
             datatable.configure()
             if request.method == datatable.config['request_method']:

@@ -15,7 +15,7 @@ from django.db.models import QuerySet
 try:
     from django.utils.encoding import force_text
 except ImportError:
-    from django.utils.encoding import force_unicode as force_text
+    from django.utils.encoding import force_str as force_text
 try:
     from django.utils.encoding import python_2_unicode_compatible
 except ImportError:
