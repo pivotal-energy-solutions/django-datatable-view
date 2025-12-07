@@ -119,13 +119,16 @@ jobs:
   tests:
     name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
     runs-on: ubuntu-latest
-#    continue-on-error: ${{ matrix.django-version == '~=5.0' }}
+    continue-on-error: ${{ matrix.django-version == '~=6.0' || matrix.python-version == '3.14' }}
     strategy:
-      max-parallel: 4
+      max-parallel: 6
       matrix:
         db: [ sqlite, mariadb ]
-        django-version: [ "~=5.0" ]
-        python-version: ["3.12", "3.13" ]
+        django-version: [ "~=5.2", "~=6.0" ]
+        python-version: ["3.12", "3.13", "3.14" ]
+        exclude:
+          - python-version: "3.12"
+            django-version: "~=6.0"
 
     services:
       mariadb:
