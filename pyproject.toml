@@ -7,7 +7,7 @@ name = "django-datatable-view"
 dynamic = ["version"]
 description = "This package is used in conjunction with the jQuery plugin (http://http://datatables.net/), and supports state-saving detection with (http://datatables.net/plug-ins/api).  The package consists of a class-based view, and a small collection of utilities for rendering table data from models."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [
     { name = "Pivotal Energy Solutions", email = "steve@pivotal.energy" },
 ]
@@ -18,18 +18,19 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Framework :: Django",
-    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Utilities",
 ]
 dependencies = [
-    "django>=5.0",
+    "django>=5.2",
     "python-dateutil",
 ]
 
@@ -77,13 +78,44 @@ include = [
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ['py312']
 include = '\.pyi?$'
 exclude = '(\.git|.venv|_build|build|dist|.*\/__pycache__\/)'
 
 [tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".nox",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+]
 line-length = 100
-lint.ignore = ["F401"]
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = ["F401", "E402"]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.bandit]
 targets = ['datatableview', "demo_app"]
