@@ -2,7 +2,8 @@ name: Django Datatable View Tests
 
 on:
   push:
-  merge_group:
+    branches-ignore:
+      - master  # release.yml handles master
   schedule:
     - cron: '0 1 * * 5'
 
@@ -13,6 +14,7 @@ concurrency:
 jobs:
   outdated:
     name: Outdated packages
+    if: ${{ !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +33,7 @@ jobs:
         run: pip list --outdated --not-required --user | grep . && echo "There are outdated packages" && exit 1 || echo "All packages up to date"
 
   ruff:
-    name: Ruff Format
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +55,7 @@ jobs:
         run: ruff check
 
   security:
-    name: Bandit Security
+    name: Security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,6 +84,7 @@ jobs:
           path: report.json
 
   tests:
+    if: ${{ !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
     name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.django-version == '~=6.0' || matrix.python-version == '3.14' }}
@@ -147,7 +150,8 @@ jobs:
         run: python demo_app/manage.py check
 
   coverage:
-    name: Upload Coverage to Codecov
+    name: Coverage
+    if: ${{ !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
     needs: [ tests ]
     runs-on: ubuntu-latest
     steps:
@@ -177,35 +181,3 @@ jobs:
           directory: .
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    needs: ['outdated', 'ruff', 'security', 'tests', 'coverage']
-    if: always() && github.ref == 'refs/heads/master' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
-    permissions: write-all
-    outputs:
-      bumped: ${{ steps.release.outputs.bumped }}
-      bump_version: ${{ steps.release.outputs.bump_version }}
-      bump_sha: ${{ steps.release.outputs.bump_sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: master
-          fetch-depth: 0  # Need full history for git tags and version calculation
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Install dependencies
-        run: |
-          pip install git+https://${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}@github.com/pivotal-energy-solutions/tensor-infrastructure@master#egg=infrastructure
-      - name: Release
-        id: release
-        env:
-          PYTHONWARNINGS: once::DeprecationWarning
-          GITHUB_TOKEN: ${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}
-        run: |
-          bumper -P
-          echo "bumped=$(jq '.bumped' out.json)" >> $GITHUB_OUTPUT
-          echo "bump_version=$(jq '.bump_version' out.json)" >> $GITHUB_OUTPUT
-          echo "bump_sha=$(jq '.bump_sha' out.json)" >> $GITHUB_OUTPUT
