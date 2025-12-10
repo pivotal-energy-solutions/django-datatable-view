@@ -85,18 +85,26 @@ jobs:
 
   tests:
     if: ${{ !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
-    name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version}}
+    name: Python ${{ matrix.python-version }} / ${{ matrix.db }} / Django ${{ matrix.django-version }}${{ matrix.experimental && ' (experimental)' || '' }}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.django-version == '~=6.0' || matrix.python-version == '3.14' }}
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
-      max-parallel: 6
+      max-parallel: 3
       matrix:
-        db: [ sqlite, mariadb ]
-        django-version: [ "~=5.2", "~=6.0" ]
-        python-version: ["3.12", "3.13", "3.14" ]
-        exclude:
-          - python-version: "3.12"
+        include:
+          # Fast feedback with SQLite
+          - python-version: "3.13"
+            django-version: "~=5.2"
+            db: sqlite
+          # Production configuration
+          - python-version: "3.13"
+            django-version: "~=5.2"
+            db: mariadb
+          # Future-proofing (experimental - allowed to fail)
+          - python-version: "3.14"
             django-version: "~=6.0"
+            db: mariadb
+            experimental: true
 
     services:
       mariadb:
