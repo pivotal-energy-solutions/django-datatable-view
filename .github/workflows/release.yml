@@ -15,7 +15,7 @@ jobs:
       bump_version: ${{ steps.release.outputs.bump_version }}
       bump_sha: ${{ steps.release.outputs.bump_sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: master
           fetch-depth: 0
@@ -75,10 +75,10 @@ jobs:
         run: |
           echo "⚠️ Release skipped - commit did not meet release criteria"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: steps.verify.outputs.should_release == 'true'
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         if: steps.verify.outputs.should_release == 'true'
