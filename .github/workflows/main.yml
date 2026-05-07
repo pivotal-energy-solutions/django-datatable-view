@@ -17,10 +17,10 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache: 'pip'
 
       - name: Install dependencies
@@ -36,10 +36,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache: 'pip'
 
       - name: Install dependencies
@@ -58,10 +58,10 @@ jobs:
     name: Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache: 'pip'
 
       - name: Install dependencies
@@ -78,7 +78,7 @@ jobs:
 
       - name: "Upload Coverage Results"
         if: ${{ success() || failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Bandit Security Report
           path: report.json
@@ -93,18 +93,13 @@ jobs:
       matrix:
         include:
           # Fast feedback with SQLite
-          - python-version: "3.13"
-            django-version: "~=5.2"
+          - python-version: "3.14"
+            django-version: "~=6.0"
             db: sqlite
           # Production configuration
-          - python-version: "3.13"
-            django-version: "~=5.2"
-            db: mariadb
-          # Future-proofing (experimental - allowed to fail)
           - python-version: "3.14"
             django-version: "~=6.0"
             db: mariadb
-            experimental: true
 
     services:
       mariadb:
@@ -126,9 +121,9 @@ jobs:
           mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -e "SHOW DATABASES" 2>&1 > /dev/null
           mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -V
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -146,7 +141,7 @@ jobs:
           DB_TYPE: ${{ matrix.db }}
         run: export PYTHONPATH=`pwd` && coverage run
       - name: "Upload Coverage Results for PY:${{ matrix.python-version }} DB:${{ matrix.db}} DJ:${{ matrix.django-version }}"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           include-hidden-files: true
           if-no-files-found: warn
@@ -163,17 +158,17 @@ jobs:
     needs: [ tests ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: |
           pip install .
           pip install .[test]
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: .
 
@@ -184,7 +179,7 @@ jobs:
             coverage xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v6
         with:
           directory: .
           token: ${{ secrets.CODECOV_TOKEN }}
