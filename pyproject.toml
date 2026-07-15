@@ -119,7 +119,7 @@ line-ending = "auto"
 [tool.bandit]
 targets = ['datatableview', "demo_app"]
 exclude_dirs = ["datatableview/tests"]
-skips = ["B303", "B308", "B323", "B324", "B703"]
+skips = ["B308", "B323", "B703"]
 
 [tool.coverage.run]
 branch = true
