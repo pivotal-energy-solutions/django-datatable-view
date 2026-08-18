@@ -159,7 +159,12 @@ jobs:
           retention-days: 1
 
       - name: Django Check
-        run: python demo_app/manage.py check
+        # Use the test settings: the default settings point at MariaDB database "db",
+        # which CI never creates. This only passed before because Django <6.1 did not
+        # need a live connection to run these field checks.
+        env:
+          DB_TYPE: ${{ matrix.db }}
+        run: export PYTHONPATH=`pwd` && python demo_app/manage.py check --settings=demo_app.settings_test
 
   coverage:
     name: Coverage
