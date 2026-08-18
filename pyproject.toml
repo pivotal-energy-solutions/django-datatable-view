@@ -19,6 +19,7 @@ classifiers = [
     "Environment :: Web Environment",
     "Framework :: Django",
     "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
@@ -105,6 +106,9 @@ indent-width = 4
 target-version = "py312"
 
 [tool.ruff.lint]
+# Pin the rule set: ruff 0.16 broadened its implicit default well beyond E/F. Opt into
+# wider rules deliberately, not via a ruff upgrade.
+select = ["E4", "E7", "E9", "F"]
 ignore = ["F401", "E402"]
 fixable = ["ALL"]
 unfixable = []

@@ -37,13 +37,15 @@ Add to ``INSTALLED_APPS`` (so default templates and js can be discovered), and u
 ```python
 # settings.py
 INSTALLED_APPS = [
-    'datatableview',
+    "datatableview",
     # ...
 ]
 
 
 # views.py
 from datatableview.views import DatatableView
+
+
 class ZeroConfigurationDatatableView(DatatableView):
     model = MyModel
 ```
