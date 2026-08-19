@@ -92,13 +92,22 @@ jobs:
       max-parallel: 3
       matrix:
         include:
+          # Pin the SERIES, not 6.x: "~=6.0" means >=6.0,<7.0, so the matrix silently rolls
+          # onto each new Django minor. "~=6.0.0" means >=6.0.0,<6.1.0 — new minors are a
+          # deliberate matrix addition.
           # Fast feedback with SQLite
           - python-version: "3.14"
-            django-version: "~=6.0"
+            django-version: "~=6.0.0"
             db: sqlite
           # Production configuration
           - python-version: "3.14"
-            django-version: "~=6.0"
+            django-version: "~=6.0.0"
+            db: mariadb
+          - python-version: "3.14"
+            django-version: "~=6.1.0"
+            db: sqlite
+          - python-version: "3.14"
+            django-version: "~=6.1.0"
             db: mariadb
 
     services:
@@ -150,7 +159,12 @@ jobs:
           retention-days: 1
 
       - name: Django Check
-        run: python demo_app/manage.py check
+        # Use the test settings: the default settings point at MariaDB database "db",
+        # which CI never creates. This only passed before because Django <6.1 did not
+        # need a live connection to run these field checks.
+        env:
+          DB_TYPE: ${{ matrix.db }}
+        run: export PYTHONPATH=`pwd` && python demo_app/manage.py check --settings=demo_app.settings_test
 
   coverage:
     name: Coverage
