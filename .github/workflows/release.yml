@@ -80,10 +80,14 @@ jobs:
         with:
           python-version: "3.14"
 
+      # Header auth, never the token in the URL, removed once the install is done - see
+      # .github/actions/github-auth.
       - name: Install dependencies
         if: steps.verify.outputs.should_release == 'true'
-        run: |
-          pip install git+https://${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}@github.com/pivotal-energy-solutions/tensor-infrastructure@master#egg=infrastructure
+        uses: ./.github/actions/github-auth
+        with:
+          token: ${{ secrets.ORGANIZATIONAL_REPO_TOKEN }}
+          run: pip install git+https://github.com/pivotal-energy-solutions/tensor-infrastructure@master#egg=infrastructure
 
       - name: Release
         id: release
