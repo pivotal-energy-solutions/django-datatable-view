@@ -1,0 +1,43 @@
+name: "Run with GitHub auth for private Pivotal repos"
+description: "Run a command (pip install ...) that clones private pivotal-energy-solutions repos, with no token in any URL"
+
+# An auth header, as actions/checkout does - the axis python-setup recipe (axis#3394).
+# Not the token as a URL's username: on runner image ubuntu24/20261018.339.1 (curl
+# 8.5.0-2ubuntu10.16 + git 2.55) a token-only URL fails with "could not read
+# Username". Standard: axis docs/claude/specs/2026-10-20-github-token-auth-standard.md.
+# Hosts use a credential helper instead - see set_github_token in
+# infrastructure/server/core.py.
+#
+# The header only lives for `run`. git takes http.<url>.* from the most specific URL, so a
+# leftover org-scoped header would beat actions/checkout's github.com one and bumper's
+# `git push` in release.yml would quietly use this token instead of the Actions token.
+#
+# Used by django-datatable-view's release.yml to install tensor-infrastructure (bumper).
+
+inputs:
+  token:
+    description: "Token with read access to the private repos (ORGANIZATIONAL_REPO_TOKEN)"
+    required: true
+  run:
+    description: "Command to run while git can authenticate, e.g. a pip install"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run with git configured for private repos
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        RUN: ${{ inputs.run }}
+      run: |
+        if [ -z "$TOKEN" ]; then
+          echo "::error::No token for private repos - is ORGANIZATIONAL_REPO_TOKEN available here?"
+          exit 1
+        fi
+        key=http.https://github.com/pivotal-energy-solutions/.extraheader
+        trap 'git config --global --unset-all "$key" || true' EXIT
+        basic=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+        echo "::add-mask::$basic"
+        git config --global "$key" "AUTHORIZATION: basic $basic"
+        bash -eo pipefail -c "$RUN"
