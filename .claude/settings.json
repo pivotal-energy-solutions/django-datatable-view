@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "pivotal": {
+      "source": {
+        "source": "github",
+        "repo": "pivotal-energy-solutions/claude-plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "pivotal-common@pivotal": true,
+    "skill-creator@claude-plugins-official": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -qs '\"pivotal-common@pivotal\"' \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/installed_plugins.json\" || echo '{\"systemMessage\": \"⚠️ The pivotal-common plugin is not installed, so the shared Pivotal skills (support-investigation, zendesk-triage, team, pdf-generation) are missing. Ask Claude to set it up: https://github.com/pivotal-energy-solutions/claude-plugins#setup\", \"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"The pivotal-common plugin is not installed. Tell the user once that the shared Pivotal skills are unavailable and offer to set it up following the Setup section of the README in https://github.com/pivotal-energy-solutions/claude-plugins.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
